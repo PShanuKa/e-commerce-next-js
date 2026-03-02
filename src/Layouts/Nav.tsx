@@ -10,11 +10,11 @@ import { MdOutlineLocalShipping } from "react-icons/md";
 
 const NAV_LINKS = [
   { label: "Home", path: "/" },
-  { label: "Deals", path: "/deals" },
-  { label: "Electronics", path: "/electronics" },
-  { label: "Fashion", path: "/fashion" },
-  { label: "Home & Garden", path: "/home-garden" },
-  { label: "Sports", path: "/sports" },
+  { label: "Shop", path: "/shop" },
+  { label: "Hot Deals", path: "/shop" },
+  { label: "Electronics", path: "/shop" },
+  { label: "Fashion", path: "/shop" },
+  { label: "About Us", path: "/about" },
 ];
 
 const Navbar = () => {
@@ -249,7 +249,7 @@ const Navbar = () => {
             </Link>
 
             <Link
-              to="/login"
+              to="/account"
               style={{
                 display: "flex",
                 flexDirection: "column",
