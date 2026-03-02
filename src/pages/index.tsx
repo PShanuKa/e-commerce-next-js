@@ -1,48 +1,19 @@
-import { CategoryCard } from "../components/common/Category"
-import { ProductCard } from "../components/common/Product"
+// This file is kept as placeholder for component demos.
+// Main home page is at src/pages/Home/index.tsx
 
-const Home = () => {
-    return (
-        <div className=" p-10 bg-[#EEEFF1]">
-     
-        
-        <div className="grid grid-cols-8 gap-3">
-            <CategoryCard image="https://res.cloudinary.com/dldtrjalo/image/upload/v1772456745/akkgbvfv19aklzrpkujr.jpg" name="Category" />
-            <CategoryCard image="https://res.cloudinary.com/dldtrjalo/image/upload/v1772456745/akkgbvfv19aklzrpkujr.jpg" name="Category" />
-            <CategoryCard image="https://res.cloudinary.com/dldtrjalo/image/upload/v1772456745/akkgbvfv19aklzrpkujr.jpg" name="Category" />
-            <CategoryCard image="https://res.cloudinary.com/dldtrjalo/image/upload/v1772456745/akkgbvfv19aklzrpkujr.jpg" name="Category" />
-            <CategoryCard image="https://res.cloudinary.com/dldtrjalo/image/upload/v1772456745/akkgbvfv19aklzrpkujr.jpg" name="Category" />
-            <CategoryCard image="https://res.cloudinary.com/dldtrjalo/image/upload/v1772456745/akkgbvfv19aklzrpkujr.jpg" name="Category" />
-            <CategoryCard image="https://res.cloudinary.com/dldtrjalo/image/upload/v1772456745/akkgbvfv19aklzrpkujr.jpg" name="Category" />
-            <CategoryCard image="https://res.cloudinary.com/dldtrjalo/image/upload/v1772456745/akkgbvfv19aklzrpkujr.jpg" name="Category" />
-            <CategoryCard image="https://res.cloudinary.com/dldtrjalo/image/upload/v1772456745/akkgbvfv19aklzrpkujr.jpg" name="Category" />
-           
-        </div>
+const ComponentDemo = () => {
+  return (
+    <div
+      style={{
+        padding: 40,
+        textAlign: "center",
+        color: "var(--text-secondary)",
+      }}
+    >
+      <h2>Component Demo Page</h2>
+      <p>This page is for development demos only.</p>
+    </div>
+  );
+};
 
-         <div className="grid grid-cols-5 gap-3 mt-10">
-            <ProductCard  />
-            <ProductCard  />
-            <ProductCard  />
-            <ProductCard  />
-            <ProductCard  />
-            
-           
-        </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-        </div>
-    )
-}
-
-export default Home
+export default ComponentDemo;

@@ -1,0 +1,356 @@
+# 📁 Mabarana Group Admin Dashboard — Project Documentation
+
+## 1. Folder Structure (සම්පූර්ණ)
+
+```
+mabarana-group-admin-dashboard/
+├── public/                        # Static files (favicon, etc.)
+├── src/
+│   ├── app/
+│   │   └── store.ts               # Redux store configuration
+│   ├── assets/                    # Images, icons, static assets
+│   ├── components/
+│   │   ├── common/                # Shared reusable components (10 files)
+│   │   ├── ui/                    # ShadCN UI components (8 files)
+│   │   ├── BranchDialog.tsx       # Branch create/edit dialog
+│   │   ├── BranchTable.tsx        # Branch data table
+│   │   ├── KpiCard.tsx            # KPI summary card (variant 1)
+│   │   ├── KpiCard2.tsx           # KPI summary card (variant 2)
+│   │   ├── KpiCard3.tsx           # KPI summary card (variant 3)
+│   │   ├── MerchantUsersTable.tsx # Merchant users data table
+│   │   ├── NotificationsTable.tsx # Notifications data table
+│   │   └── UserDialog.tsx         # User create/edit dialog
+│   ├── constants/                 # App-wide constant values (2 files)
+│   ├── features/
+│   │   ├── authSlice.ts           # Redux slice: auth state (user, tokens)
+│   │   └── metaSlice.ts           # Redux slice: UI state (sidebar)
+│   ├── hooks/
+│   │   └── useToggle.tsx          # Custom hook: boolean toggle
+│   ├── Layouts/
+│   │   ├── AuthDefault.tsx        # Layout for auth pages (login etc.)
+│   │   ├── Default.tsx            # Main layout (sidebar + navbar + content)
+│   │   ├── LeftSidebar.tsx        # Sidebar navigation component
+│   │   ├── Loading.tsx            # Full-page loading spinner
+│   │   └── Navbar.tsx             # Top navigation bar
+│   ├── lib/
+│   │   └── utils.ts               # Utility helpers (cn, etc.)
+│   ├── pages/
+│   │   ├── Auth/                  # Login, BranchSelect, ForgotPassword, ResetPassword
+│   │   ├── CashierPages/          # DiscountManagement (cashier role)
+│   │   ├── CustomerManagement/    # Customer list + ViewCustomer
+│   │   ├── Dashboard/             # Admin dashboard page
+│   │   ├── DashboardMerchant/     # Merchant dashboard page
+│   │   ├── ManagerPages/          # UserManagement, BranchManagement
+│   │   ├── MerchantManagement/    # Merchant list + Add/View/Edit
+│   │   ├── OrganizationManagement/# Organization list + Add/View/Edit
+│   │   ├── Profile/               # User profile page
+│   │   ├── Reports/               # Merchant-Wise, Discount, Subscription, Referral reports
+│   │   ├── Settings/              # Subscription, Banner, Notification settings
+│   │   ├── SubscriptionManagement/# ViewSubscriptionInstance
+│   │   ├── VerifyEmail/           # Email verification page
+│   │   ├── payment/               # Payment page
+│   │   └── InputDemo.tsx          # Dev/demo page for UI components
+│   ├── routes/
+│   │   ├── index.tsx              # Route definitions (role-based groups)
+│   │   └── Routes.tsx             # Route renderer with auth guard
+│   ├── services/
+│   │   ├── apiSlice.ts            # RTK Query base API + token refresh logic
+│   │   ├── authSlice.ts           # RTK Query endpoints: login, logout, refresh
+│   │   ├── bannerSlice.ts         # RTK Query endpoints: banners
+│   │   ├── branchSlice.ts         # RTK Query endpoints: branches
+│   │   ├── customerSlice.ts       # RTK Query endpoints: customers
+│   │   ├── discountSlice.ts       # RTK Query endpoints: discounts
+│   │   ├── merchantSlice.ts       # RTK Query endpoints: merchants
+│   │   ├── metricsSlice.ts        # RTK Query endpoints: dashboard metrics
+│   │   ├── notificationSlice.ts   # RTK Query endpoints: notifications
+│   │   ├── organizationSlice.ts   # RTK Query endpoints: organizations
+│   │   ├── subscriptionSlice.ts   # RTK Query endpoints: subscriptions
+│   │   ├── uploadSlice.ts         # RTK Query endpoints: file uploads
+│   │   └── userSlice.ts           # RTK Query endpoints: users
+│   ├── utils/                     # Helper utility functions (2 files)
+│   ├── App.tsx                    # Root App component
+│   ├── index.css                  # Global CSS styles
+│   └── main.tsx                   # Entry point — mounts app with Redux Provider
+├── .env                           # Environment variables (API URL etc.)
+├── package.json                   # Dependencies and scripts
+├── vite.config.ts                 # Vite bundler config
+├── tsconfig.json                  # TypeScript config
+├── Dockerfile                     # Docker container config
+└── nginx.conf                     # Nginx server config (for Docker deployment)
+```
+
+---
+
+## 2. Redux Architecture
+
+මේ project එකේ **Redux Toolkit (RTK)** + **RTK Query** use කරනවා. Parts 3 කට divide කරන්න පුලුවන්:
+
+```
+Redux
+├── State Slices (features/)   → Local global state (auth, UI)
+├── RTK Query (services/)      → Server state, API calls, caching
+└── Store (app/store.ts)       → ඔක්කොම bind කරන central store
+```
+
+---
+
+## 3. Redux Store — [src/app/store.ts](file:///c:/Users/shanu/Desktop/Project%20Git/mabarana-group-admin-dashboard/src/app/store.ts)
+
+```ts
+export const store = configureStore({
+  reducer: {
+    meta: metaSlice.reducer,   // UI state
+    auth: authSlice.reducer,   // Auth state
+    [apiSlice.reducerPath]: apiSlice.reducer, // RTK Query cache
+  },
+  middleware(getDefaultMiddleware) {
+    return getDefaultMiddleware().concat(apiSlice.middleware); // RTK Query middleware
+  },
+  devTools: true,
+});
+
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;
+```
+
+| Reducer key | Source | Purpose |
+|---|---|---|
+| `meta` | `features/metaSlice` | Left sidebar open/close state |
+| [auth](file:///c:/Users/shanu/Desktop/Project%20Git/mabarana-group-admin-dashboard/src/services/apiSlice.ts#39-110) | `features/authSlice` | User info + JWT tokens |
+| `api` | `services/apiSlice` | RTK Query cache + API state |
+
+---
+
+## 4. Feature Slices (Local State)
+
+### 4.1 `authSlice` — [src/features/authSlice.ts](file:///c:/Users/shanu/Desktop/Project%20Git/mabarana-group-admin-dashboard/src/features/authSlice.ts)
+
+Authentication state manage කරන slice. **Redux + localStorage** sync කරනවා.
+
+**Initial State:**
+```ts
+{
+  userInfo: JSON.parse(localStorage.getItem("user")),
+  selectedBranch: JSON.parse(localStorage.getItem("selectedBranch")),
+  accessToken: localStorage.getItem("accessToken"),
+  refreshToken: localStorage.getItem("refreshToken"),
+}
+```
+
+**Actions (Reducers):**
+
+| Action | Description |
+|---|---|
+| [setUserInfo(payload)](file:///c:/Users/shanu/Desktop/Project%20Git/mabarana-group-admin-dashboard/src/features/authSlice.ts#30-34) | User info set කරනවා + localStorage update |
+| [setTokens({ accessToken, refreshToken })](file:///c:/Users/shanu/Desktop/Project%20Git/mabarana-group-admin-dashboard/src/features/authSlice.ts#44-50) | JWT tokens update + localStorage |
+| [setBranchInfo(payload)](file:///c:/Users/shanu/Desktop/Project%20Git/mabarana-group-admin-dashboard/src/features/authSlice.ts#50-54) | Selected branch save කරනවා + localStorage |
+| [logout()](file:///c:/Users/shanu/Desktop/Project%20Git/mabarana-group-admin-dashboard/src/features/authSlice.ts#34-44) | State + localStorage clear කරනවා |
+| [logoutBranch()](file:///c:/Users/shanu/Desktop/Project%20Git/mabarana-group-admin-dashboard/src/features/authSlice.ts#54-58) | Branch selection clear කරනවා |
+
+**Usage example:**
+```tsx
+import { useDispatch, useSelector } from "react-redux";
+import { logout, setUserInfo } from "@/features/authSlice";
+import type { RootState } from "@/app/store";
+
+const dispatch = useDispatch();
+const userInfo = useSelector((state: RootState) => state.auth.userInfo);
+
+dispatch(setUserInfo({ name: "John", role: "admin" }));
+dispatch(logout());
+```
+
+---
+
+### 4.2 `metaSlice` — [src/features/metaSlice.ts](file:///c:/Users/shanu/Desktop/Project%20Git/mabarana-group-admin-dashboard/src/features/metaSlice.ts)
+
+UI meta-state (sidebar) manage කරන slice.
+
+**Initial State:**
+```ts
+{ leftSidebarOpen: true }
+```
+
+**Actions:**
+
+| Action | Description |
+|---|---|
+| [setLeftSidebarOpen(boolean)](file:///c:/Users/shanu/Desktop/Project%20Git/mabarana-group-admin-dashboard/src/features/metaSlice.ts#11-14) | Sidebar open/close control |
+
+**Usage example:**
+```tsx
+import { setLeftSidebarOpen } from "@/features/metaSlice";
+dispatch(setLeftSidebarOpen(false)); // Sidebar close
+```
+
+---
+
+## 5. RTK Query — API Layer
+
+### 5.1 `apiSlice` — [src/services/apiSlice.ts](file:///c:/Users/shanu/Desktop/Project%20Git/mabarana-group-admin-dashboard/src/services/apiSlice.ts)
+
+**Base API** slice — සියලුම service slices මේකෙන් `injectEndpoints` කරනවා.
+
+#### 🔑 Key Features:
+
+**1. Automatic Token Refresh (Mutex-protected)**
+
+Access token expire (401) වුණාම automatically refresh token use කරලා retry කරනවා. Concurrent requests handle කරන්න `async-mutex` use කරනවා.
+
+```
+Request → 401 TOKEN_EXPIRED
+       → Mutex acquire (prevent parallel refreshes)
+       → POST /users/refresh-token (with refreshToken)
+       → New tokens save (Redux + localStorage)
+       → Original request retry
+       → Mutex release
+```
+
+**2. Tag Types (Cache Invalidation)**
+```ts
+tagTypes: [
+  "Auth", "Merchants", "Branches", "Users",
+  "Organizations", "Subscriptions", "Banners",
+  "Customers", "Discounts", "Notifications", "Metrics"
+]
+```
+> Tag type use කරලා endpoint data invalidate/refetch කරන්න පුලුවන්. E.g., merchant add කළාට පස්සේ `"Merchants"` tag invalidate කරනවා.
+
+**3. Two Base Queries**
+
+| Query | Token Used | Purpose |
+|---|---|---|
+| [baseQuery](file:///c:/Users/shanu/Desktop/Project%20Git/mabarana-group-admin-dashboard/src/services/apiSlice.ts#39-110) | `accessToken` | Normal API calls |
+| `baseQueryWithToken` | `refreshToken` | Token refresh endpoint only |
+
+---
+
+### 5.2 Service Slices — `src/services/`
+
+සියලුම service slices `apiSlice.injectEndpoints()` use කරලා endpoints add කරනවා.
+
+| File | Tag | Key Endpoints |
+|---|---|---|
+| `authSlice.ts` | `Auth` | login, logout, refreshToken |
+| `merchantSlice.ts` | `Merchants` | getMerchants, addMerchant, editMerchant |
+| `branchSlice.ts` | `Branches` | getBranches, addBranch, editBranch |
+| `userSlice.ts` | `Users` | getUsers, addUser, editUser |
+| `organizationSlice.ts` | `Organizations` | getOrganizations, addOrg |
+| `subscriptionSlice.ts` | `Subscriptions` | getSubscriptions, manageSubscription |
+| `bannerSlice.ts` | `Banners` | getBanners, addBanner, deleteBanner |
+| `customerSlice.ts` | `Customers` | getCustomers, getCustomerById |
+| `discountSlice.ts` | `Discounts` | getDiscounts, addDiscount |
+| `notificationSlice.ts` | `Notifications` | getNotifications |
+| `metricsSlice.ts` | `Metrics` | getDashboardMetrics |
+| `uploadSlice.ts` | — | uploadFile (S3/storage) |
+
+---
+
+## 6. Routing Architecture — `src/routes/`
+
+### Route Groups (Role-Based)
+
+| Export | Role | Pages |
+|---|---|---|
+| `allAdminRoutes` | `admin` | Dashboard, Merchant, Organization, Customer, Reports, Settings |
+| `allManagerRoutes` | `manager` | MerchantDashboard, UserManagement, BranchManagement, Profile |
+| `allCashierRoutes` | `cashier` | DiscountManagement, Profile |
+| `authRoutes` | guest | Login |
+| `allSelectBranchRoutes` | guest | BranchSelect |
+| `allPublicRoutes` | guest | ForgotPassword, ResetPassword |
+
+### Route Interface
+```ts
+interface IRoute {
+  path: string;
+  element: React.ReactNode;
+  name: string;
+  children?: IRoute[];
+  role?: string[] | "admin" | "user" | "guest" | "all";
+}
+```
+
+### Example: Admin Route with Children
+```ts
+{
+  path: "/merchant",
+  element: <MerchantManagement />,
+  role: ["admin"],
+  children: [
+    { path: "/merchant/add",      element: <AddNewMerchant type="add" /> },
+    { path: "/merchant/:id",      element: <AddNewMerchant type="view" /> },
+    { path: "/merchant/edit/:id", element: <AddNewMerchant type="edit" /> },
+  ]
+}
+```
+
+---
+
+## 7. App Entry Point — `src/main.tsx`
+
+```tsx
+<StrictMode>
+  <BrowserRouter>
+    <Provider store={store}>  {/* Redux Provider — store inject */}
+      <App />
+    </Provider>
+  </BrowserRouter>
+</StrictMode>
+```
+
+---
+
+## 8. Data Flow Diagram
+
+```
+User Action
+    │
+    ▼
+React Component
+    │
+    ├──► dispatch(action)        → Feature Slice (authSlice / metaSlice)
+    │         │                         │
+    │         └──────────────────► Redux Store State
+    │
+    └──► useGetXxxQuery() /     → RTK Query (service slice)
+         useMutateXxxMutation()       │
+                                      ▼
+                               apiSlice (baseQueryWithReauth)
+                                      │
+                                      ├─► API Server (VITE_API_URL)
+                                      │
+                                      └─► 401? → Token Refresh → Retry
+```
+
+---
+
+## 9. Quick Reference: Common Patterns
+
+### Reading State from Redux
+```tsx
+import { useSelector } from "react-redux";
+import type { RootState } from "@/app/store";
+
+const userInfo = useSelector((state: RootState) => state.auth.userInfo);
+const sidebarOpen = useSelector((state: RootState) => state.meta.leftSidebarOpen);
+```
+
+### Calling an API (RTK Query)
+```tsx
+// Query (GET)
+const { data, isLoading, error } = useGetMerchantsQuery();
+
+// Mutation (POST/PUT/DELETE)
+const [addMerchant, { isLoading }] = useAddMerchantMutation();
+await addMerchant({ name: "New Merchant" }).unwrap();
+```
+
+### Dispatching an Action
+```tsx
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "@/app/store";
+
+const dispatch = useDispatch<AppDispatch>();
+dispatch(setLeftSidebarOpen(false));
+dispatch(logout());
+```
