@@ -1,3 +1,5 @@
+import Default from "./Layouts/Default"
+import AllRoutes from "./routes/Routes"
 
 
 function App() {
@@ -5,7 +7,7 @@ function App() {
 
   return (
     <>
-      123
+      <Default children={<AllRoutes />} />
     </>
   )
 }
