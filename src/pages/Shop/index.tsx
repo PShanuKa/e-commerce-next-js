@@ -17,6 +17,7 @@ import {
 import { MdSearch } from "react-icons/md";
 import { useGetProductsQuery, type Product } from "@/services/productSlice";
 import { useGetCategoriesQuery } from "@/services/categorySlice";
+import ProductCard from "@/components/ProductCard";
 
 /* ─── Constants ─────────────────────────────────────────────── */
 const SORT_OPTIONS = [
@@ -98,399 +99,399 @@ const FilterSection = ({
 };
 
 /* ─── Product Card ───────────────────────────────────────────── */
-const ProductCard = ({
-  product,
-  view,
-}: {
-  product: Product;
-  view: "grid" | "list";
-}) => {
-  const [wishlisted, setWishlisted] = useState(false);
-  const [added, setAdded] = useState(false);
+// const ProductCard = ({
+//   product,
+//   view,
+// }: {
+//   product: Product;
+//   view: "grid" | "list";
+// }) => {
+//   const [wishlisted, setWishlisted] = useState(false);
+//   const [added, setAdded] = useState(false);
 
-  const discount =
-    product.originalPrice && product.originalPrice > product.price
-      ? Math.round(
-          ((product.originalPrice - product.price) / product.originalPrice) *
-            100,
-        )
-      : null;
+//   const discount =
+//     product.originalPrice && product.originalPrice > product.price
+//       ? Math.round(
+//           ((product.originalPrice - product.price) / product.originalPrice) *
+//             100,
+//         )
+//       : null;
 
-  const badge = product.badge
-    ? (BADGE_COLORS[product.badge] ?? { bg: "#F1F5F9", color: "#475569" })
-    : null;
-  const avail = AVAILABILITY_LABELS[product.availability];
+//   const badge = product.badge
+//     ? (BADGE_COLORS[product.badge] ?? { bg: "#F1F5F9", color: "#475569" })
+//     : null;
+//   const avail = AVAILABILITY_LABELS[product.availability];
 
-  const handleCart = () => {
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
-  };
+//   const handleCart = () => {
+//     setAdded(true);
+//     setTimeout(() => setAdded(false), 2000);
+//   };
 
-  const img = (
-    <img
-      src={product.image || "https://via.placeholder.com/400x400?text=No+Image"}
-      alt={product.name}
-      style={{
-        width: "100%",
-        height: view === "list" ? 160 : 200,
-        objectFit: "cover",
-        transition: "transform 0.4s ease",
-        display: "block",
-      }}
-      onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.07)")}
-      onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-    />
-  );
+//   const img = (
+//     <img
+//       src={product.image || "https://via.placeholder.com/400x400?text=No+Image"}
+//       alt={product.name}
+//       style={{
+//         width: "100%",
+//         height: view === "list" ? 160 : 200,
+//         objectFit: "cover",
+//         transition: "transform 0.4s ease",
+//         display: "block",
+//       }}
+//       onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.07)")}
+//       onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+//     />
+//   );
 
-  if (view === "list") {
-    return (
-      <div
-        className="card"
-        style={{ display: "flex", gap: 0, overflow: "hidden" }}
-      >
-        <Link
-          to={`/product/${product.id}`}
-          style={{
-            flexShrink: 0,
-            width: 200,
-            overflow: "hidden",
-            background: "#F8FAFC",
-          }}
-        >
-          {img}
-        </Link>
-        <div
-          style={{
-            flex: 1,
-            padding: "16px 20px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-          }}
-        >
-          <div>
-            <div
-              style={{
-                display: "flex",
-                gap: 8,
-                marginBottom: 6,
-                flexWrap: "wrap",
-              }}
-            >
-              {badge && (
-                <span
-                  style={{
-                    ...badge,
-                    fontSize: 10,
-                    fontWeight: 700,
-                    padding: "2px 8px",
-                    borderRadius: "var(--radius-full)",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {product.badge}
-                </span>
-              )}
-              {avail && (
-                <span
-                  style={{ fontSize: 10, color: avail.color, fontWeight: 600 }}
-                >
-                  ● {avail.label}
-                </span>
-              )}
-            </div>
-            <Link to={`/product/${product.id}`}>
-              <h3
-                style={{
-                  fontSize: 15,
-                  fontWeight: 600,
-                  color: "var(--text-primary)",
-                  marginBottom: 6,
-                  lineHeight: 1.4,
-                }}
-              >
-                {product.name}
-              </h3>
-            </Link>
-            {product.category_name && (
-              <span
-                style={{
-                  fontSize: 11,
-                  color: "var(--text-muted)",
-                  fontWeight: 500,
-                  textTransform: "uppercase",
-                }}
-              >
-                {product.category_name}
-              </span>
-            )}
-          </div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginTop: 12,
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-              <span
-                style={{
-                  fontSize: 20,
-                  fontWeight: 800,
-                  color: "var(--primary)",
-                }}
-              >
-                Rs. {product.price.toLocaleString()}
-              </span>
-              {product.originalPrice && (
-                <span
-                  style={{
-                    fontSize: 13,
-                    color: "var(--text-muted)",
-                    textDecoration: "line-through",
-                  }}
-                >
-                  Rs. {product.originalPrice.toLocaleString()}
-                </span>
-              )}
-              {discount && (
-                <span
-                  style={{
-                    background: "var(--error)",
-                    color: "white",
-                    fontSize: 11,
-                    fontWeight: 700,
-                    padding: "2px 7px",
-                    borderRadius: "var(--radius-sm)",
-                  }}
-                >
-                  -{discount}%
-                </span>
-              )}
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button
-                onClick={() => setWishlisted(!wishlisted)}
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: "var(--radius-sm)",
-                  border: "1.5px solid var(--border)",
-                  background: "white",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {wishlisted ? (
-                  <IoHeart color="#EF4444" size={16} />
-                ) : (
-                  <IoHeartOutline size={16} color="var(--text-muted)" />
-                )}
-              </button>
-              <button
-                onClick={handleCart}
-                style={{
-                  padding: "0 20px",
-                  height: 36,
-                  background: added ? "var(--accent)" : "var(--primary)",
-                  color: "white",
-                  borderRadius: "var(--radius-sm)",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  border: "none",
-                  cursor: "pointer",
-                  transition: "var(--transition)",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                <HiOutlineShoppingCart size={15} />
-                {added ? "Added ✓" : "Add to Cart"}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+//   if (view === "list") {
+//     return (
+//       <div
+//         className="card"
+//         style={{ display: "flex", gap: 0, overflow: "hidden" }}
+//       >
+//         <Link
+//           to={`/product/${product.id}`}
+//           style={{
+//             flexShrink: 0,
+//             width: 200,
+//             overflow: "hidden",
+//             background: "#F8FAFC",
+//           }}
+//         >
+//           {img}
+//         </Link>
+//         <div
+//           style={{
+//             flex: 1,
+//             padding: "16px 20px",
+//             display: "flex",
+//             flexDirection: "column",
+//             justifyContent: "space-between",
+//           }}
+//         >
+//           <div>
+//             <div
+//               style={{
+//                 display: "flex",
+//                 gap: 8,
+//                 marginBottom: 6,
+//                 flexWrap: "wrap",
+//               }}
+//             >
+//               {badge && (
+//                 <span
+//                   style={{
+//                     ...badge,
+//                     fontSize: 10,
+//                     fontWeight: 700,
+//                     padding: "2px 8px",
+//                     borderRadius: "var(--radius-full)",
+//                     textTransform: "uppercase",
+//                   }}
+//                 >
+//                   {product.badge}
+//                 </span>
+//               )}
+//               {avail && (
+//                 <span
+//                   style={{ fontSize: 10, color: avail.color, fontWeight: 600 }}
+//                 >
+//                   ● {avail.label}
+//                 </span>
+//               )}
+//             </div>
+//             <Link to={`/product/${product.id}`}>
+//               <h3
+//                 style={{
+//                   fontSize: 15,
+//                   fontWeight: 600,
+//                   color: "var(--text-primary)",
+//                   marginBottom: 6,
+//                   lineHeight: 1.4,
+//                 }}
+//               >
+//                 {product.name}
+//               </h3>
+//             </Link>
+//             {product.category_name && (
+//               <span
+//                 style={{
+//                   fontSize: 11,
+//                   color: "var(--text-muted)",
+//                   fontWeight: 500,
+//                   textTransform: "uppercase",
+//                 }}
+//               >
+//                 {product.category_name}
+//               </span>
+//             )}
+//           </div>
+//           <div
+//             style={{
+//               display: "flex",
+//               alignItems: "center",
+//               justifyContent: "space-between",
+//               marginTop: 12,
+//             }}
+//           >
+//             <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+//               <span
+//                 style={{
+//                   fontSize: 20,
+//                   fontWeight: 800,
+//                   color: "var(--primary)",
+//                 }}
+//               >
+//                 Rs. {product.price.toLocaleString()}
+//               </span>
+//               {product.originalPrice && (
+//                 <span
+//                   style={{
+//                     fontSize: 13,
+//                     color: "var(--text-muted)",
+//                     textDecoration: "line-through",
+//                   }}
+//                 >
+//                   Rs. {product.originalPrice.toLocaleString()}
+//                 </span>
+//               )}
+//               {discount && (
+//                 <span
+//                   style={{
+//                     background: "var(--error)",
+//                     color: "white",
+//                     fontSize: 11,
+//                     fontWeight: 700,
+//                     padding: "2px 7px",
+//                     borderRadius: "var(--radius-sm)",
+//                   }}
+//                 >
+//                   -{discount}%
+//                 </span>
+//               )}
+//             </div>
+//             <div style={{ display: "flex", gap: 8 }}>
+//               <button
+//                 onClick={() => setWishlisted(!wishlisted)}
+//                 style={{
+//                   width: 36,
+//                   height: 36,
+//                   borderRadius: "var(--radius-sm)",
+//                   border: "1.5px solid var(--border)",
+//                   background: "white",
+//                   cursor: "pointer",
+//                   display: "flex",
+//                   alignItems: "center",
+//                   justifyContent: "center",
+//                 }}
+//               >
+//                 {wishlisted ? (
+//                   <IoHeart color="#EF4444" size={16} />
+//                 ) : (
+//                   <IoHeartOutline size={16} color="var(--text-muted)" />
+//                 )}
+//               </button>
+//               <button
+//                 onClick={handleCart}
+//                 style={{
+//                   padding: "0 20px",
+//                   height: 36,
+//                   background: added ? "var(--accent)" : "var(--primary)",
+//                   color: "white",
+//                   borderRadius: "var(--radius-sm)",
+//                   fontSize: 13,
+//                   fontWeight: 600,
+//                   display: "flex",
+//                   alignItems: "center",
+//                   gap: 6,
+//                   border: "none",
+//                   cursor: "pointer",
+//                   transition: "var(--transition)",
+//                   whiteSpace: "nowrap",
+//                 }}
+//               >
+//                 <HiOutlineShoppingCart size={15} />
+//                 {added ? "Added ✓" : "Add to Cart"}
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+//     );
+//   }
 
-  return (
-    <div
-      className="card"
-      style={{ overflow: "hidden", display: "flex", flexDirection: "column" }}
-    >
-      <div
-        style={{
-          position: "relative",
-          overflow: "hidden",
-          background: "#F8FAFC",
-        }}
-      >
-        <Link to={`/product/${product.id}`}>{img}</Link>
-        {discount && (
-          <div
-            style={{
-              position: "absolute",
-              top: 10,
-              left: 10,
-              background: "var(--error)",
-              color: "white",
-              fontSize: 11,
-              fontWeight: 700,
-              padding: "3px 7px",
-              borderRadius: "var(--radius-sm)",
-            }}
-          >
-            -{discount}%
-          </div>
-        )}
-        {badge && (
-          <div
-            style={{
-              position: "absolute",
-              top: 10,
-              right: 10,
-              ...badge,
-              fontSize: 10,
-              fontWeight: 700,
-              padding: "3px 7px",
-              borderRadius: "var(--radius-sm)",
-              textTransform: "uppercase",
-            }}
-          >
-            {product.badge}
-          </div>
-        )}
-        <button
-          onClick={() => setWishlisted(!wishlisted)}
-          style={{
-            position: "absolute",
-            bottom: 10,
-            right: 10,
-            width: 32,
-            height: 32,
-            borderRadius: "50%",
-            background: "white",
-            boxShadow: "var(--shadow-sm)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          {wishlisted ? (
-            <IoHeart color="#EF4444" size={14} />
-          ) : (
-            <IoHeartOutline size={14} color="var(--text-muted)" />
-          )}
-        </button>
-      </div>
-      <div
-        style={{
-          padding: 14,
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: 4,
-          }}
-        >
-          <span
-            style={{
-              fontSize: 10,
-              color: "var(--text-muted)",
-              fontWeight: 500,
-              textTransform: "uppercase",
-            }}
-          >
-            {product.category_name ?? ""}
-          </span>
-          {avail && (
-            <span style={{ fontSize: 9, color: avail.color, fontWeight: 600 }}>
-              ● {avail.label}
-            </span>
-          )}
-        </div>
-        <Link to={`/product/${product.id}`} style={{ flex: 1 }}>
-          <p
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: "var(--text-primary)",
-              lineHeight: 1.45,
-              marginBottom: 8,
-              overflow: "hidden",
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-            }}
-          >
-            {product.name}
-          </p>
-        </Link>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "baseline",
-            gap: 6,
-            marginBottom: 12,
-          }}
-        >
-          <span
-            style={{ fontSize: 17, fontWeight: 800, color: "var(--primary)" }}
-          >
-            Rs. {product.price.toLocaleString()}
-          </span>
-          {product.originalPrice && (
-            <span
-              style={{
-                fontSize: 12,
-                color: "var(--text-muted)",
-                textDecoration: "line-through",
-              }}
-            >
-              Rs. {product.originalPrice.toLocaleString()}
-            </span>
-          )}
-        </div>
-        <button
-          onClick={handleCart}
-          style={{
-            width: "100%",
-            padding: "9px",
-            background: added ? "var(--accent)" : "var(--primary)",
-            color: "white",
-            borderRadius: "var(--radius-sm)",
-            fontSize: 13,
-            fontWeight: 600,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 6,
-            transition: "var(--transition)",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          <HiOutlineShoppingCart size={15} />
-          {added ? "Added to Cart ✓" : "Add to Cart"}
-        </button>
-      </div>
-    </div>
-  );
-};
+//   return (
+//     <div
+//       className="card"
+//       style={{ overflow: "hidden", display: "flex", flexDirection: "column" }}
+//     >
+//       <div
+//         style={{
+//           position: "relative",
+//           overflow: "hidden",
+//           background: "#F8FAFC",
+//         }}
+//       >
+//         <Link to={`/product/${product.id}`}>{img}</Link>
+//         {discount && (
+//           <div
+//             style={{
+//               position: "absolute",
+//               top: 10,
+//               left: 10,
+//               background: "var(--error)",
+//               color: "white",
+//               fontSize: 11,
+//               fontWeight: 700,
+//               padding: "3px 7px",
+//               borderRadius: "var(--radius-sm)",
+//             }}
+//           >
+//             -{discount}%
+//           </div>
+//         )}
+//         {badge && (
+//           <div
+//             style={{
+//               position: "absolute",
+//               top: 10,
+//               right: 10,
+//               ...badge,
+//               fontSize: 10,
+//               fontWeight: 700,
+//               padding: "3px 7px",
+//               borderRadius: "var(--radius-sm)",
+//               textTransform: "uppercase",
+//             }}
+//           >
+//             {product.badge}
+//           </div>
+//         )}
+//         <button
+//           onClick={() => setWishlisted(!wishlisted)}
+//           style={{
+//             position: "absolute",
+//             bottom: 10,
+//             right: 10,
+//             width: 32,
+//             height: 32,
+//             borderRadius: "50%",
+//             background: "white",
+//             boxShadow: "var(--shadow-sm)",
+//             display: "flex",
+//             alignItems: "center",
+//             justifyContent: "center",
+//             border: "none",
+//             cursor: "pointer",
+//           }}
+//         >
+//           {wishlisted ? (
+//             <IoHeart color="#EF4444" size={14} />
+//           ) : (
+//             <IoHeartOutline size={14} color="var(--text-muted)" />
+//           )}
+//         </button>
+//       </div>
+//       <div
+//         style={{
+//           padding: 14,
+//           flex: 1,
+//           display: "flex",
+//           flexDirection: "column",
+//         }}
+//       >
+//         <div
+//           style={{
+//             display: "flex",
+//             alignItems: "center",
+//             justifyContent: "space-between",
+//             marginBottom: 4,
+//           }}
+//         >
+//           <span
+//             style={{
+//               fontSize: 10,
+//               color: "var(--text-muted)",
+//               fontWeight: 500,
+//               textTransform: "uppercase",
+//             }}
+//           >
+//             {product.category_name ?? ""}
+//           </span>
+//           {avail && (
+//             <span style={{ fontSize: 9, color: avail.color, fontWeight: 600 }}>
+//               ● {avail.label}
+//             </span>
+//           )}
+//         </div>
+//         <Link to={`/product/${product.id}`} style={{ flex: 1 }}>
+//           <p
+//             style={{
+//               fontSize: 13,
+//               fontWeight: 600,
+//               color: "var(--text-primary)",
+//               lineHeight: 1.45,
+//               marginBottom: 8,
+//               overflow: "hidden",
+//               display: "-webkit-box",
+//               WebkitLineClamp: 2,
+//               WebkitBoxOrient: "vertical",
+//             }}
+//           >
+//             {product.name}
+//           </p>
+//         </Link>
+//         <div
+//           style={{
+//             display: "flex",
+//             alignItems: "baseline",
+//             gap: 6,
+//             marginBottom: 12,
+//           }}
+//         >
+//           <span
+//             style={{ fontSize: 17, fontWeight: 800, color: "var(--primary)" }}
+//           >
+//             Rs. {product.price.toLocaleString()}
+//           </span>
+//           {product.originalPrice && (
+//             <span
+//               style={{
+//                 fontSize: 12,
+//                 color: "var(--text-muted)",
+//                 textDecoration: "line-through",
+//               }}
+//             >
+//               Rs. {product.originalPrice.toLocaleString()}
+//             </span>
+//           )}
+//         </div>
+//         <button
+//           onClick={handleCart}
+//           style={{
+//             width: "100%",
+//             padding: "9px",
+//             background: added ? "var(--accent)" : "var(--primary)",
+//             color: "white",
+//             borderRadius: "var(--radius-sm)",
+//             fontSize: 13,
+//             fontWeight: 600,
+//             display: "flex",
+//             alignItems: "center",
+//             justifyContent: "center",
+//             gap: 6,
+//             transition: "var(--transition)",
+//             border: "none",
+//             cursor: "pointer",
+//           }}
+//         >
+//           <HiOutlineShoppingCart size={15} />
+//           {added ? "Added to Cart ✓" : "Add to Cart"}
+//         </button>
+//       </div>
+//     </div>
+//   );
+// };
 
 /* ─── Skeleton Card ──────────────────────────────────────────── */
 const SkeletonCard = () => (

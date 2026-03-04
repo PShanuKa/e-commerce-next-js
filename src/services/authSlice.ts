@@ -1,34 +1,55 @@
 import { apiSlice } from "@/services/apiSlice";
+import type { AuthUser } from "@/features/authSlice";
 
+/* ─── Types ──────────────────────────────────────── */
+export interface MeResponse {
+  success: boolean;
+  user: AuthUser;
+}
 
-export const authSlice = apiSlice.injectEndpoints({
+export interface UpdateMeBody {
+  name?: string;
+  phone?: string;
+  avatar_url?: string;
+}
+
+export interface ChangePasswordBody {
+  currentPassword: string;
+  newPassword: string;
+}
+
+/* ─── RTK endpoints ──────────────────────────────── */
+export const authApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     login: builder.mutation({
       invalidatesTags: ["Auth"],
-      query: (data) => ({
-        url: "auth/login",
-        method: "POST",
-        body: data,
-      }),
+      query: (data) => ({ url: "auth/login", method: "POST", body: data }),
     }),
     register: builder.mutation({
       invalidatesTags: ["Auth"],
-      query: (data) => ({
-        url: "auth/register",
-        method: "POST",
-        body: data,
-      }),
+      query: (data) => ({ url: "auth/register", method: "POST", body: data }),
     }),
-    getMe: builder.query({
+    getMe: builder.query<MeResponse, void>({
       providesTags: ["Auth"],
-      query: () => ({
-        url: "auth/me",
-        method: "GET",
-      }),
+      query: () => "auth/me",
     }),
-    
+    updateMe: builder.mutation<MeResponse, UpdateMeBody>({
+      invalidatesTags: ["Auth"],
+      query: (body) => ({ url: "auth/me", method: "PUT", body }),
+    }),
+    changePassword: builder.mutation<
+      { success: boolean; message: string },
+      ChangePasswordBody
+    >({
+      query: (body) => ({ url: "auth/me/password", method: "PUT", body }),
+    }),
   }),
 });
 
-export const { useLoginMutation, useRegisterMutation, useGetMeQuery } =
-  authSlice;
+export const {
+  useLoginMutation,
+  useRegisterMutation,
+  useGetMeQuery,
+  useUpdateMeMutation,
+  useChangePasswordMutation,
+} = authApiSlice;
