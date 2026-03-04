@@ -1,172 +1,278 @@
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import {
-  IoStarSharp,
   IoHeartOutline,
   IoHeart,
   IoShareSocialOutline,
   IoShieldCheckmarkOutline,
   IoCheckmarkCircle,
+  IoChevronBackOutline,
 } from "react-icons/io5";
 import { HiOutlineShoppingCart } from "react-icons/hi";
 import { TbTruckDelivery, TbRefresh } from "react-icons/tb";
 import { FaMinus, FaPlus } from "react-icons/fa";
+import {
+  useGetProductQuery,
+  useGetProductsQuery,
+} from "@/services/productSlice";
+import { useAddToCartMutation } from "@/services/cartSlice";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/app/store";
 
-const PRODUCTS: Record<
-  string,
-  {
+/* ─── Availability labels ──────────────────────────── */
+const AVAIL: Record<string, { label: string; color: string }> = {
+  in_stock: { label: "In Stock", color: "var(--accent)" },
+  ships_2_3_days: { label: "Ships in 2–3 Days", color: "#D97706" },
+  pre_order: { label: "Pre Order", color: "#7C3AED" },
+};
+
+const BADGE_COLORS: Record<string, { bg: string; color: string }> = {
+  "Best Seller": { bg: "#FEF3C7", color: "#B45309" },
+  New: { bg: "#ECFDF5", color: "#065F46" },
+  "Top Rated": { bg: "#EFF6FF", color: "#1D4ED8" },
+  Sale: { bg: "#FEF2F2", color: "#B91C1C" },
+  Hot: { bg: "#FFF7ED", color: "#C2410C" },
+};
+
+/* ─── Image Placeholder ─────────────────────────────── */
+const PLACEHOLDER = "https://via.placeholder.com/600x600?text=No+Image";
+
+/* ─── Skeleton ──────────────────────────────────────── */
+const Skeleton = () => (
+  <div style={{ padding: "28px 0 60px", background: "var(--bg-base)" }}>
+    <div className="container">
+      <div
+        style={{ display: "grid", gridTemplateColumns: "520px 1fr", gap: 36 }}
+      >
+        {/* image skeleton */}
+        <div>
+          <div
+            style={{
+              height: 420,
+              borderRadius: "var(--radius-lg)",
+              background:
+                "linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%)",
+              backgroundSize: "200% 100%",
+              animation: "shimmer 1.4s infinite",
+              marginBottom: 12,
+            }}
+          />
+          <div style={{ display: "flex", gap: 8 }}>
+            {[0, 1, 2, 3].map((i) => (
+              <div
+                key={i}
+                style={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: "var(--radius-sm)",
+                  background: "#f0f0f0",
+                  animation: "shimmer 1.4s infinite",
+                }}
+              />
+            ))}
+          </div>
+        </div>
+        {/* info skeleton */}
+        <div style={{ paddingTop: 8 }}>
+          {[40, 80, 60, 50, 90, 70].map((w, i) => (
+            <div
+              key={i}
+              style={{
+                height: i === 2 ? 36 : 16,
+                background: "#f0f0f0",
+                borderRadius: 6,
+                marginBottom: 18,
+                width: `${w}%`,
+                animation: "shimmer 1.4s infinite",
+              }}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+    <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
+  </div>
+);
+
+/* ─── Related Product Card ───────────────────────────── */
+const RelatedCard = ({
+  product,
+}: {
+  product: {
     id: number;
     name: string;
     price: number;
-    originalPrice: number;
-    rating: number;
-    reviews: number;
-    category: string;
-    badge: string;
-    image: string;
-    images: string[];
-    description: string;
-    specs: { label: string; value: string }[];
-    inStock: boolean;
-    brand: string;
-  }
-> = {
-  "1": {
-    id: 1,
-    name: "Sony WH-1000XM5 Wireless Noise Cancelling Headphones",
-    price: 34500,
-    originalPrice: 48000,
-    rating: 4.8,
-    reviews: 2341,
-    category: "Electronics",
-    badge: "Best Seller",
-    brand: "Sony",
-    image:
-      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&h=600&fit=crop",
-    images: [
-      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&h=600&fit=crop",
-      "https://images.unsplash.com/photo-1524678606370-a47ad25cb82a?w=600&h=600&fit=crop",
-      "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=600&h=600&fit=crop",
-      "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=600&h=600&fit=crop",
-    ],
-    description:
-      "Industry-leading noise canceling with Dual Noise Sensor Technology. Next-level music with Sony's proprietary Integrated Processor V1. Up to 30-hour battery life with quick charging (3 min charge for 3 hours of playback).",
-    specs: [
-      { label: "Driver Unit", value: "30mm" },
-      { label: "Frequency Response", value: "4Hz-40,000Hz" },
-      { label: "Battery Life", value: "30 hours" },
-      { label: "Charging Time", value: "3.5 hours" },
-      { label: "Connectivity", value: "Bluetooth 5.2" },
-      { label: "Weight", value: "250g" },
-      { label: "Color", value: "Midnight Black / Platinum Silver" },
-      { label: "Microphone", value: "5 microphones" },
-    ],
-    inStock: true,
-  },
-};
+    originalPrice?: number | null;
+    image?: string | null;
+    category_name?: string | null;
+  };
+}) => (
+  <Link to={`/product/${product.id}`} style={{ textDecoration: "none" }}>
+    <div
+      className="card"
+      style={{ overflow: "hidden", transition: "var(--transition)" }}
+      onMouseEnter={(e) =>
+        (e.currentTarget.style.transform = "translateY(-4px)")
+      }
+      onMouseLeave={(e) => (e.currentTarget.style.transform = "none")}
+    >
+      <img
+        src={product.image || PLACEHOLDER}
+        alt={product.name}
+        style={{
+          width: "100%",
+          height: 160,
+          objectFit: "cover",
+          display: "block",
+        }}
+      />
+      <div style={{ padding: "12px 14px" }}>
+        <p
+          style={{
+            fontSize: 10,
+            color: "var(--text-muted)",
+            fontWeight: 500,
+            textTransform: "uppercase",
+            marginBottom: 4,
+          }}
+        >
+          {product.category_name}
+        </p>
+        <p
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            color: "var(--text-primary)",
+            lineHeight: 1.4,
+            marginBottom: 8,
+            overflow: "hidden",
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+          }}
+        >
+          {product.name}
+        </p>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+          <span
+            style={{ fontSize: 16, fontWeight: 800, color: "var(--primary)" }}
+          >
+            Rs. {product.price.toLocaleString()}
+          </span>
+          {product.originalPrice && (
+            <span
+              style={{
+                fontSize: 12,
+                color: "var(--text-muted)",
+                textDecoration: "line-through",
+              }}
+            >
+              Rs. {product.originalPrice.toLocaleString()}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  </Link>
+);
 
-const REVIEWS = [
-  {
-    id: 1,
-    user: "Kasun P.",
-    rating: 5,
-    date: "Feb 15, 2025",
-    verified: true,
-    comment:
-      "Absolutely amazing sound quality! The noise cancellation is top-notch, blocking out everything from office chatter to airplane noise. Battery lasts forever too.",
-  },
-  {
-    id: 2,
-    user: "Nimali S.",
-    rating: 4,
-    date: "Feb 10, 2025",
-    verified: true,
-    comment:
-      "Great headphones overall. Very comfortable for long sessions. The call quality could be slightly better but sound quality for music is excellent.",
-  },
-  {
-    id: 3,
-    user: "Tharaka M.",
-    rating: 5,
-    date: "Jan 28, 2025",
-    verified: true,
-    comment:
-      "Worth every rupee! I use these daily for work from home calls and music. The ANC is phenomenal. Highly recommend!",
-  },
-  {
-    id: 4,
-    user: "Ishara R.",
-    rating: 4,
-    date: "Jan 20, 2025",
-    verified: false,
-    comment:
-      "Solid product. Build quality is premium and the companion app has many useful features. Takes a bit to get used to the touch controls.",
-  },
-];
-
-const RELATED = [
-  {
-    id: 3,
-    name: "Apple AirPods Pro (2nd Gen)",
-    price: 58000,
-    originalPrice: 65000,
-    rating: 4.9,
-    image:
-      "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=300&h=300&fit=crop",
-  },
-  {
-    id: 6,
-    name: "Logitech MX Master 3S Mouse",
-    price: 22000,
-    originalPrice: 27500,
-    rating: 4.9,
-    image:
-      "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=300&h=300&fit=crop",
-  },
-  {
-    id: 13,
-    name: "JBL Charge 5 Bluetooth Speaker",
-    price: 26000,
-    originalPrice: 31500,
-    rating: 4.7,
-    image:
-      "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=300&h=300&fit=crop",
-  },
-  {
-    id: 10,
-    name: "Kindle Paperwhite (16GB)",
-    price: 19500,
-    originalPrice: 22000,
-    rating: 4.8,
-    image:
-      "https://images.unsplash.com/photo-1592434134753-a70baf7979d5?w=300&h=300&fit=crop",
-  },
-];
-
+/* ─── Main Page ──────────────────────────────────────── */
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const product = PRODUCTS[id ?? "1"] ?? PRODUCTS["1"];
+  const navigate = useNavigate();
+  const { isAuthenticated } = useSelector((s: RootState) => s.auth);
 
+  const { data, isLoading, isError } = useGetProductQuery(Number(id));
+  const product = data?.product;
+
+  // Fetch 4 related products from same category
+  const { data: relatedData } = useGetProductsQuery(
+    { limit: 5, category: product?.category_slug ?? "" },
+    { skip: !product?.category_slug },
+  );
+  const related = (relatedData?.products ?? [])
+    .filter((p) => p.id !== product?.id)
+    .slice(0, 4);
+
+  const [addToCart, { isLoading: addingToCart }] = useAddToCartMutation();
   const [activeImage, setActiveImage] = useState(0);
   const [qty, setQty] = useState(1);
   const [wishlisted, setWishlisted] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
-  const [activeTab, setActiveTab] = useState<
-    "description" | "specs" | "reviews"
-  >("description");
-  const discount = Math.round(
-    ((product.originalPrice - product.price) / product.originalPrice) * 100,
-  );
 
-  const handleAddToCart = () => {
-    setAddedToCart(true);
-    setTimeout(() => setAddedToCart(false), 2500);
+  const handleCart = async () => {
+    if (!isAuthenticated || !product) return;
+    try {
+      await addToCart({ product_id: product.id, quantity: qty }).unwrap();
+      setAddedToCart(true);
+      setTimeout(() => setAddedToCart(false), 2500);
+    } catch {
+      // silently fail – user can see cart for error details
+    }
   };
+
+  if (isLoading) return <Skeleton />;
+
+  if (isError || !product) {
+    return (
+      <div
+        style={{
+          padding: "80px 0",
+          textAlign: "center",
+          background: "var(--bg-base)",
+        }}
+      >
+        <div style={{ fontSize: 48, marginBottom: 16 }}>😕</div>
+        <h2
+          style={{
+            fontSize: 22,
+            fontWeight: 700,
+            color: "var(--text-primary)",
+            marginBottom: 8,
+          }}
+        >
+          Product Not Found
+        </h2>
+        <p style={{ color: "var(--text-muted)", marginBottom: 24 }}>
+          This product may have been removed or doesn't exist.
+        </p>
+        <button
+          onClick={() => navigate(-1)}
+          style={{
+            padding: "10px 28px",
+            background: "var(--primary)",
+            color: "white",
+            border: "none",
+            borderRadius: "var(--radius-sm)",
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          Go Back
+        </button>
+      </div>
+    );
+  }
+
+  const images = product.images?.length
+    ? product.images
+    : [product.image || PLACEHOLDER];
+  const discount =
+    product.originalPrice && product.originalPrice > product.price
+      ? Math.round(
+          ((product.originalPrice - product.price) / product.originalPrice) *
+            100,
+        )
+      : null;
+  const badge = product.badge
+    ? (BADGE_COLORS[product.badge] ?? { bg: "#F1F5F9", color: "#475569" })
+    : null;
+  const avail = AVAIL[product.availability] ?? AVAIL["in_stock"];
 
   return (
     <div style={{ padding: "28px 0 60px", background: "var(--bg-base)" }}>
       <div className="container">
-        {/* Breadcrumb */}
+        {/* ── Breadcrumb ── */}
         <div
           style={{
             display: "flex",
@@ -182,16 +288,27 @@ const ProductDetail = () => {
             Home
           </Link>{" "}
           <span>/</span>
-          <Link to="/shop" style={{ color: "var(--primary)" }}>
+          <Link to="/products" style={{ color: "var(--primary)" }}>
             Shop
           </Link>{" "}
           <span>/</span>
+          {product.category_name && (
+            <>
+              <Link
+                to={`/products?category=${product.category_slug}`}
+                style={{ color: "var(--primary)" }}
+              >
+                {product.category_name}
+              </Link>{" "}
+              <span>/</span>
+            </>
+          )}
           <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>
             {product.name}
           </span>
         </div>
 
-        {/* Main Content */}
+        {/* ── Main Grid ── */}
         <div
           style={{
             display: "grid",
@@ -200,7 +317,7 @@ const ProductDetail = () => {
             marginBottom: 48,
           }}
         >
-          {/* ── Image Gallery ── */}
+          {/* Image Gallery */}
           <div style={{ width: 520 }}>
             <div
               style={{
@@ -213,7 +330,7 @@ const ProductDetail = () => {
               }}
             >
               <img
-                src={product.images[activeImage]}
+                src={Array.isArray(images) ? images[activeImage] : images}
                 alt={product.name}
                 style={{
                   width: "100%",
@@ -221,73 +338,118 @@ const ProductDetail = () => {
                   objectFit: "cover",
                   display: "block",
                 }}
+                onError={(e) => (e.currentTarget.src = PLACEHOLDER)}
               />
-              <div
-                style={{
-                  position: "absolute",
-                  top: 12,
-                  left: 12,
-                  background: "var(--error)",
-                  color: "white",
-                  fontSize: 12,
-                  fontWeight: 700,
-                  padding: "4px 10px",
-                  borderRadius: "var(--radius-sm)",
-                }}
-              >
-                -{discount}%
-              </div>
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              {product.images.map((img, i) => (
-                <button
-                  key={i}
-                  onClick={() => setActiveImage(i)}
+              {discount && (
+                <div
                   style={{
-                    width: 80,
-                    height: 80,
-                    border: `2px solid ${activeImage === i ? "var(--primary)" : "var(--border)"}`,
+                    position: "absolute",
+                    top: 12,
+                    left: 12,
+                    background: "var(--error)",
+                    color: "white",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    padding: "4px 10px",
                     borderRadius: "var(--radius-sm)",
-                    overflow: "hidden",
-                    cursor: "pointer",
-                    padding: 0,
-                    background: "none",
-                    flexShrink: 0,
                   }}
                 >
-                  <img
-                    src={img}
-                    alt=""
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
-                  />
-                </button>
-              ))}
+                  -{discount}%
+                </div>
+              )}
+              {badge && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 12,
+                    right: 12,
+                    ...badge,
+                    fontSize: 10,
+                    fontWeight: 700,
+                    padding: "4px 10px",
+                    borderRadius: "var(--radius-sm)",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {product.badge}
+                </div>
+              )}
             </div>
+            {/* Thumbnails */}
+            {Array.isArray(images) && images.length > 1 && (
+              <div style={{ display: "flex", gap: 8 }}>
+                {images.map((img, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveImage(i)}
+                    style={{
+                      width: 80,
+                      height: 80,
+                      border: `2px solid ${activeImage === i ? "var(--primary)" : "var(--border)"}`,
+                      borderRadius: "var(--radius-sm)",
+                      overflow: "hidden",
+                      cursor: "pointer",
+                      padding: 0,
+                      background: "none",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <img
+                      src={img}
+                      alt=""
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
+                      onError={(e) => (e.currentTarget.src = PLACEHOLDER)}
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* ── Product Info ── */}
+          {/* Product Info */}
           <div>
-            <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-              <span className="badge badge-primary">{product.badge}</span>
-              <span
-                style={{
-                  fontSize: 12,
-                  color: "var(--text-muted)",
-                  display: "flex",
-                  alignItems: "center",
-                }}
-              >
-                {product.category} by{" "}
-                <strong style={{ color: "var(--text-primary)", marginLeft: 4 }}>
-                  {product.brand}
-                </strong>
-              </span>
+            {/* Meta */}
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                marginBottom: 10,
+                flexWrap: "wrap",
+                alignItems: "center",
+              }}
+            >
+              {badge && (
+                <span
+                  style={{
+                    ...badge,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    padding: "3px 10px",
+                    borderRadius: "var(--radius-full)",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {product.badge}
+                </span>
+              )}
+              {product.category_name && (
+                <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                  {product.category_name}
+                  {product.brand ? ` · ` : ""}
+                  {product.brand && (
+                    <strong style={{ color: "var(--text-primary)" }}>
+                      {product.brand}
+                    </strong>
+                  )}
+                </span>
+              )}
             </div>
 
+            {/* Title */}
             <h1
               style={{
                 fontSize: 24,
@@ -300,72 +462,35 @@ const ProductDetail = () => {
               {product.name}
             </h1>
 
+            {/* Availability */}
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 10,
+                gap: 8,
                 marginBottom: 16,
               }}
             >
-              <div style={{ display: "flex", gap: 2 }}>
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <IoStarSharp
-                    key={s}
-                    size={16}
-                    color={
-                      s <= Math.floor(product.rating) ? "#F59E0B" : "#E2E8F0"
-                    }
-                  />
-                ))}
-              </div>
-              <span
-                style={{
-                  fontSize: 15,
-                  fontWeight: 700,
-                  color: "var(--text-primary)",
-                }}
-              >
-                {product.rating}
-              </span>
               <span
                 style={{
                   fontSize: 13,
-                  color: "var(--primary)",
-                  cursor: "pointer",
+                  color: avail.color,
+                  fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
                 }}
               >
-                ({product.reviews.toLocaleString()} reviews)
+                <IoCheckmarkCircle size={15} /> {avail.label}
               </span>
-              <span
-                style={{ width: 1, height: 16, background: "var(--border)" }}
-              />
-              {product.inStock ? (
-                <span
-                  style={{
-                    fontSize: 13,
-                    color: "var(--accent)",
-                    fontWeight: 600,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 4,
-                  }}
-                >
-                  <IoCheckmarkCircle /> In Stock
-                </span>
-              ) : (
-                <span
-                  style={{
-                    fontSize: 13,
-                    color: "var(--error)",
-                    fontWeight: 600,
-                  }}
-                >
-                  Out of Stock
+              {product.stockQty > 0 && (
+                <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                  · {product.stockQty} units left
                 </span>
               )}
             </div>
 
+            {/* Price */}
             <div
               style={{
                 display: "flex",
@@ -386,35 +511,48 @@ const ProductDetail = () => {
               >
                 Rs. {product.price.toLocaleString()}
               </span>
-              <span
-                style={{
-                  fontSize: 18,
-                  color: "var(--text-muted)",
-                  textDecoration: "line-through",
-                }}
-              >
-                Rs. {product.originalPrice.toLocaleString()}
-              </span>
-              <span
-                style={{ fontSize: 14, color: "var(--error)", fontWeight: 700 }}
-              >
-                Save Rs.{" "}
-                {(product.originalPrice - product.price).toLocaleString()}
-              </span>
+              {product.originalPrice && (
+                <>
+                  <span
+                    style={{
+                      fontSize: 18,
+                      color: "var(--text-muted)",
+                      textDecoration: "line-through",
+                    }}
+                  >
+                    Rs. {product.originalPrice.toLocaleString()}
+                  </span>
+                  {discount && (
+                    <span
+                      style={{
+                        fontSize: 14,
+                        color: "var(--error)",
+                        fontWeight: 700,
+                      }}
+                    >
+                      Save Rs.{" "}
+                      {(product.originalPrice - product.price).toLocaleString()}
+                    </span>
+                  )}
+                </>
+              )}
             </div>
 
-            <p
-              style={{
-                fontSize: 14,
-                color: "var(--text-secondary)",
-                lineHeight: 1.7,
-                marginBottom: 24,
-              }}
-            >
-              {product.description}
-            </p>
+            {/* Description */}
+            {product.description && (
+              <p
+                style={{
+                  fontSize: 14,
+                  color: "var(--text-secondary)",
+                  lineHeight: 1.75,
+                  marginBottom: 24,
+                }}
+              >
+                {product.description}
+              </p>
+            )}
 
-            {/* Quantity & Actions */}
+            {/* Quantity */}
             <div
               style={{
                 display: "flex",
@@ -487,9 +625,11 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
+            {/* Actions */}
+            <div style={{ display: "flex", gap: 12, marginBottom: 28 }}>
               <button
-                onClick={handleAddToCart}
+                onClick={handleCart}
+                disabled={addingToCart || addedToCart || !isAuthenticated}
                 style={{
                   flex: 1,
                   padding: "14px",
@@ -503,12 +643,22 @@ const ProductDetail = () => {
                   justifyContent: "center",
                   gap: 8,
                   border: "none",
-                  cursor: "pointer",
+                  cursor:
+                    addingToCart || !isAuthenticated
+                      ? "not-allowed"
+                      : "pointer",
                   transition: "var(--transition)",
+                  opacity: !isAuthenticated ? 0.7 : 1,
                 }}
               >
                 <HiOutlineShoppingCart size={18} />{" "}
-                {addedToCart ? "Added to Cart ✓" : "Add to Cart"}
+                {addingToCart
+                  ? "Adding..."
+                  : addedToCart
+                    ? "Added to Cart ✓"
+                    : isAuthenticated
+                      ? "Add to Cart"
+                      : "Login to Add"}
               </button>
               <Link
                 to="/checkout"
@@ -588,8 +738,8 @@ const ProductDetail = () => {
                 },
                 {
                   icon: <IoShieldCheckmarkOutline size={20} color="#9333EA" />,
-                  title: "2 Year Warranty",
-                  sub: "Manufacturer warranty",
+                  title: "Genuine Product",
+                  sub: "100% authentic",
                 },
               ].map((g, i) => (
                 <div
@@ -624,426 +774,92 @@ const ProductDetail = () => {
           </div>
         </div>
 
-        {/* ── Tabs ── */}
-        <div className="card" style={{ marginBottom: 40, overflow: "hidden" }}>
-          <div
-            style={{ display: "flex", borderBottom: "1px solid var(--border)" }}
-          >
-            {(["description", "specs", "reviews"] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                style={{
-                  padding: "14px 28px",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color:
-                    activeTab === tab ? "var(--primary)" : "var(--text-muted)",
-                  borderBottom: `2px solid ${activeTab === tab ? "var(--primary)" : "transparent"}`,
-                  transition: "var(--transition)",
-                  textTransform: "capitalize",
-                }}
-              >
-                {tab} {tab === "reviews" && `(${REVIEWS.length})`}
-              </button>
-            ))}
+        {/* ── Description Tab ── */}
+        {product.description && (
+          <div className="card" style={{ marginBottom: 40, padding: 28 }}>
+            <h3
+              style={{
+                fontSize: 16,
+                fontWeight: 700,
+                color: "var(--text-primary)",
+                marginBottom: 16,
+              }}
+            >
+              Product Description
+            </h3>
+            <p
+              style={{
+                fontSize: 14,
+                color: "var(--text-secondary)",
+                lineHeight: 1.8,
+              }}
+            >
+              {product.description}
+            </p>
           </div>
-          <div style={{ padding: 28 }}>
-            {activeTab === "description" && (
-              <div>
-                <p
-                  style={{
-                    fontSize: 14,
-                    color: "var(--text-secondary)",
-                    lineHeight: 1.8,
-                    marginBottom: 16,
-                  }}
-                >
-                  {product.description}
-                </p>
-                <p
-                  style={{
-                    fontSize: 14,
-                    color: "var(--text-secondary)",
-                    lineHeight: 1.8,
-                  }}
-                >
-                  Experience the next level of silence with Sony's Dual Noise
-                  Sensor Technology featuring two microphones on each ear cup.
-                  The Integrated Processor V1 achieves even more precise noise
-                  canceling. Meanwhile, with 30-hour battery life and quick
-                  charging capability, your music keeps going even when you're
-                  on the move.
-                </p>
-              </div>
-            )}
-            {activeTab === "specs" && (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "0 40px",
-                }}
-              >
-                {product.specs.map((spec, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      padding: "10px 0",
-                      borderBottom: "1px solid var(--border)",
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: 13,
-                        color: "var(--text-muted)",
-                        fontWeight: 500,
-                      }}
-                    >
-                      {spec.label}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: 13,
-                        color: "var(--text-primary)",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {spec.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-            {activeTab === "reviews" && (
-              <div>
-                <div
-                  style={{
-                    display: "flex",
-                    gap: 40,
-                    marginBottom: 32,
-                    padding: 24,
-                    background: "var(--bg-muted)",
-                    borderRadius: "var(--radius-md)",
-                  }}
-                >
-                  <div style={{ textAlign: "center" }}>
-                    <div
-                      style={{
-                        fontSize: 56,
-                        fontWeight: 900,
-                        color: "var(--primary)",
-                        lineHeight: 1,
-                      }}
-                    >
-                      {product.rating}
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "center",
-                        margin: "6px 0",
-                      }}
-                    >
-                      {[1, 2, 3, 4, 5].map((s) => (
-                        <IoStarSharp
-                          key={s}
-                          size={16}
-                          color={
-                            s <= Math.floor(product.rating)
-                              ? "#F59E0B"
-                              : "#E2E8F0"
-                          }
-                        />
-                      ))}
-                    </div>
-                    <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
-                      {product.reviews.toLocaleString()} reviews
-                    </div>
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    {[5, 4, 3, 2, 1].map((star) => {
-                      const pct =
-                        star === 5
-                          ? 65
-                          : star === 4
-                            ? 22
-                            : star === 3
-                              ? 9
-                              : star === 2
-                                ? 3
-                                : 1;
-                      return (
-                        <div
-                          key={star}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 10,
-                            marginBottom: 6,
-                          }}
-                        >
-                          <span
-                            style={{
-                              fontSize: 12,
-                              color: "var(--text-muted)",
-                              width: 8,
-                            }}
-                          >
-                            {star}
-                          </span>
-                          <IoStarSharp size={12} color="#F59E0B" />
-                          <div
-                            style={{
-                              flex: 1,
-                              height: 8,
-                              background: "var(--border)",
-                              borderRadius: 4,
-                              overflow: "hidden",
-                            }}
-                          >
-                            <div
-                              style={{
-                                width: `${pct}%`,
-                                height: "100%",
-                                background: "#F59E0B",
-                                borderRadius: 4,
-                              }}
-                            />
-                          </div>
-                          <span
-                            style={{
-                              fontSize: 12,
-                              color: "var(--text-muted)",
-                              width: 28,
-                            }}
-                          >
-                            {pct}%
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-                <div
-                  style={{ display: "flex", flexDirection: "column", gap: 20 }}
-                >
-                  {REVIEWS.map((r) => (
-                    <div
-                      key={r.id}
-                      style={{
-                        padding: "20px 0",
-                        borderBottom: "1px solid var(--border)",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          marginBottom: 8,
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 10,
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: 36,
-                              height: 36,
-                              borderRadius: "50%",
-                              background:
-                                "linear-gradient(135deg, var(--primary), #7C3AED)",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              color: "white",
-                              fontWeight: 700,
-                              fontSize: 14,
-                            }}
-                          >
-                            {r.user[0]}
-                          </div>
-                          <div>
-                            <div
-                              style={{
-                                fontSize: 13,
-                                fontWeight: 700,
-                                color: "var(--text-primary)",
-                              }}
-                            >
-                              {r.user}
-                            </div>
-                            {r.verified && (
-                              <div
-                                style={{
-                                  fontSize: 11,
-                                  color: "var(--accent)",
-                                  fontWeight: 600,
-                                }}
-                              >
-                                ✓ Verified Purchase
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <span
-                          style={{ fontSize: 12, color: "var(--text-muted)" }}
-                        >
-                          {r.date}
-                        </span>
-                      </div>
-                      <div style={{ display: "flex", gap: 2, marginBottom: 8 }}>
-                        {[1, 2, 3, 4, 5].map((s) => (
-                          <IoStarSharp
-                            key={s}
-                            size={13}
-                            color={s <= r.rating ? "#F59E0B" : "#E2E8F0"}
-                          />
-                        ))}
-                      </div>
-                      <p
-                        style={{
-                          fontSize: 14,
-                          color: "var(--text-secondary)",
-                          lineHeight: 1.7,
-                        }}
-                      >
-                        {r.comment}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        )}
 
         {/* ── Related Products ── */}
-        <div>
-          <h2 className="section-heading" style={{ marginBottom: 20 }}>
-            You May Also Like
-          </h2>
-          <div
+        {related.length > 0 && (
+          <section>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 20,
+              }}
+            >
+              <h2 className="section-heading">Related Products</h2>
+              <Link
+                to={`/products?category=${product.category_slug}`}
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "var(--primary)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                }}
+              >
+                View All →
+              </Link>
+            </div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(4, 1fr)",
+                gap: 16,
+              }}
+            >
+              {related.map((p) => (
+                <RelatedCard key={p.id} product={p} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Back button */}
+        <div style={{ marginTop: 40 }}>
+          <button
+            onClick={() => navigate(-1)}
             style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: 16,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              color: "var(--text-muted)",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              fontSize: 13,
+              fontWeight: 600,
             }}
           >
-            {RELATED.map((p) => {
-              const disc = Math.round(
-                ((p.originalPrice - p.price) / p.originalPrice) * 100,
-              );
-              return (
-                <Link
-                  key={p.id}
-                  to={`/product/${p.id}`}
-                  style={{ textDecoration: "none" }}
-                >
-                  <div className="card" style={{ overflow: "hidden" }}>
-                    <div style={{ position: "relative", overflow: "hidden" }}>
-                      <img
-                        src={p.image}
-                        alt={p.name}
-                        style={{
-                          width: "100%",
-                          height: 180,
-                          objectFit: "cover",
-                          transition: "transform 0.3s",
-                        }}
-                        onMouseEnter={(e) =>
-                          (e.currentTarget.style.transform = "scale(1.06)")
-                        }
-                        onMouseLeave={(e) =>
-                          (e.currentTarget.style.transform = "scale(1)")
-                        }
-                      />
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: 8,
-                          left: 8,
-                          background: "var(--error)",
-                          color: "white",
-                          fontSize: 10,
-                          fontWeight: 700,
-                          padding: "2px 6px",
-                          borderRadius: "var(--radius-sm)",
-                        }}
-                      >
-                        -{disc}%
-                      </div>
-                    </div>
-                    <div style={{ padding: 12 }}>
-                      <p
-                        style={{
-                          fontSize: 13,
-                          fontWeight: 600,
-                          color: "var(--text-primary)",
-                          marginBottom: 6,
-                          lineHeight: 1.4,
-                          overflow: "hidden",
-                          display: "-webkit-box",
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical",
-                        }}
-                      >
-                        {p.name}
-                      </p>
-                      <div style={{ display: "flex", gap: 2, marginBottom: 6 }}>
-                        {[1, 2, 3, 4, 5].map((s) => (
-                          <IoStarSharp
-                            key={s}
-                            size={11}
-                            color={
-                              s <= Math.floor(p.rating) ? "#F59E0B" : "#E2E8F0"
-                            }
-                          />
-                        ))}
-                      </div>
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: 8,
-                          alignItems: "baseline",
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: 15,
-                            fontWeight: 800,
-                            color: "var(--primary)",
-                          }}
-                        >
-                          Rs. {p.price.toLocaleString()}
-                        </span>
-                        <span
-                          style={{
-                            fontSize: 11,
-                            color: "var(--text-muted)",
-                            textDecoration: "line-through",
-                          }}
-                        >
-                          Rs. {p.originalPrice.toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+            <IoChevronBackOutline size={16} /> Back
+          </button>
         </div>
       </div>
+      <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
     </div>
   );
 };

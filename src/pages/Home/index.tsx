@@ -11,6 +11,9 @@ import { MdLocalOffer, MdVerified } from "react-icons/md";
 import { TbTruckDelivery, TbShieldCheck } from "react-icons/tb";
 import { RiRefundLine } from "react-icons/ri";
 import { useGetProductsQuery, type Product } from "@/services/productSlice";
+import { useAddToCartMutation } from "@/services/cartSlice";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/app/store";
 
 /* ─── Data ─────────────────────────────────────────── */
 const CATEGORIES = [
@@ -144,6 +147,8 @@ const BADGE_COLORS: Record<string, { bg: string; color: string }> = {
 };
 
 const ProductCard = ({ product }: { product: Product }) => {
+  const { isAuthenticated } = useSelector((s: RootState) => s.auth);
+  const [addToCart, { isLoading: adding }] = useAddToCartMutation();
   const [wishlisted, setWishlisted] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
   const discount =
@@ -157,9 +162,15 @@ const ProductCard = ({ product }: { product: Product }) => {
     ? (BADGE_COLORS[product.badge] ?? { bg: "#F1F5F9", color: "#475569" })
     : null;
 
-  const handleAddToCart = () => {
-    setAddedToCart(true);
-    setTimeout(() => setAddedToCart(false), 2000);
+  const handleAddToCart = async () => {
+    if (!isAuthenticated) return;
+    try {
+      await addToCart({ product_id: product.id, quantity: 1 }).unwrap();
+      setAddedToCart(true);
+      setTimeout(() => setAddedToCart(false), 2000);
+    } catch {
+      /* ignore */
+    }
   };
 
   return (
@@ -322,6 +333,7 @@ const ProductCard = ({ product }: { product: Product }) => {
         </div>
         <button
           onClick={handleAddToCart}
+          disabled={adding || addedToCart || !isAuthenticated}
           style={{
             width: "100%",
             padding: "9px",
@@ -336,11 +348,18 @@ const ProductCard = ({ product }: { product: Product }) => {
             gap: 6,
             transition: "var(--transition)",
             border: "none",
-            cursor: "pointer",
+            cursor: adding || !isAuthenticated ? "not-allowed" : "pointer",
+            opacity: !isAuthenticated ? 0.7 : 1,
           }}
         >
           <HiOutlineShoppingCart size={15} />
-          {addedToCart ? "Added to Cart ✓" : "Add to Cart"}
+          {adding
+            ? "Adding..."
+            : addedToCart
+              ? "Added ✓"
+              : isAuthenticated
+                ? "Add to Cart"
+                : "Login to Add"}
         </button>
       </div>
     </div>

@@ -2,6 +2,9 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { IoHeart, IoHeartDislike, IoStarSharp } from "react-icons/io5";
 import { HiOutlineShoppingCart } from "react-icons/hi";
+import { useAddToCartMutation } from "@/services/cartSlice";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/app/store";
 
 const WISHLIST_ITEMS = [
   {
@@ -84,9 +87,21 @@ const WishlistPage = () => {
 
   const remove = (id: number) =>
     setItems((prev) => prev.filter((i) => i.id !== id));
-  const handleAddToCart = (id: number) => {
-    setAdded((prev) => [...prev, id]);
-    setTimeout(() => setAdded((prev) => prev.filter((x) => x !== id)), 2000);
+
+  const { isAuthenticated } = useSelector((s: RootState) => s.auth);
+  const [addToCart] = useAddToCartMutation();
+  const [adding, setAdding] = useState<number[]>([]);
+
+  const handleAddToCart = async (id: number) => {
+    if (!isAuthenticated) return;
+    setAdding((prev) => [...prev, id]);
+    try {
+      await addToCart({ product_id: id, quantity: 1 }).unwrap();
+      setAdded((prev) => [...prev, id]);
+      setTimeout(() => setAdded((prev) => prev.filter((x) => x !== id)), 2000);
+    } finally {
+      setAdding((prev) => prev.filter((x) => x !== id));
+    }
   };
 
   if (items.length === 0)
@@ -423,7 +438,11 @@ const WishlistPage = () => {
                   </div>
                   <button
                     onClick={() => handleAddToCart(item.id)}
-                    disabled={!item.inStock}
+                    disabled={
+                      !item.inStock ||
+                      adding.includes(item.id) ||
+                      !isAuthenticated
+                    }
                     style={{
                       width: "100%",
                       padding: "10px",
@@ -442,15 +461,23 @@ const WishlistPage = () => {
                       gap: 6,
                       transition: "var(--transition)",
                       border: "none",
-                      cursor: item.inStock ? "pointer" : "not-allowed",
+                      cursor:
+                        item.inStock && isAuthenticated
+                          ? "pointer"
+                          : "not-allowed",
+                      opacity: !isAuthenticated && item.inStock ? 0.7 : 1,
                     }}
                   >
                     <HiOutlineShoppingCart size={15} />{" "}
                     {!item.inStock
                       ? "Out of Stock"
-                      : isAdded
-                        ? "Added to Cart ✓"
-                        : "Add to Cart"}
+                      : adding.includes(item.id)
+                        ? "Adding..."
+                        : isAdded
+                          ? "Added to Cart ✓"
+                          : isAuthenticated
+                            ? "Add to Cart"
+                            : "Login to Add"}
                   </button>
                 </div>
               </div>

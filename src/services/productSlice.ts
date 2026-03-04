@@ -15,7 +15,8 @@ export interface Product {
   badge?: string | null;
   availability: "in_stock" | "ships_2_3_days" | "pre_order";
   isActive: boolean;
-  image?: string | null;
+  image?: string | null; // first image (from list endpoint)
+  images?: string[]; // all images (from single product endpoint)
   createdAt: string;
 }
 
