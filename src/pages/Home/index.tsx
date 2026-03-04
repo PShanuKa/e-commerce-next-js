@@ -12,6 +12,10 @@ import { TbTruckDelivery, TbShieldCheck } from "react-icons/tb";
 import { RiRefundLine } from "react-icons/ri";
 import { useGetProductsQuery, type Product } from "@/services/productSlice";
 import { useAddToCartMutation } from "@/services/cartSlice";
+import {
+  useAddToWishlistMutation,
+  useRemoveFromWishlistMutation,
+} from "@/services/wishlistSlice";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/app/store";
 
@@ -149,6 +153,8 @@ const BADGE_COLORS: Record<string, { bg: string; color: string }> = {
 const ProductCard = ({ product }: { product: Product }) => {
   const { isAuthenticated } = useSelector((s: RootState) => s.auth);
   const [addToCart, { isLoading: adding }] = useAddToCartMutation();
+  const [addToWishlist] = useAddToWishlistMutation();
+  const [removeFromWishlist] = useRemoveFromWishlistMutation();
   const [wishlisted, setWishlisted] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
   const discount =
@@ -243,7 +249,22 @@ const ProductCard = ({ product }: { product: Product }) => {
           </div>
         )}
         <button
-          onClick={() => setWishlisted(!wishlisted)}
+          onClick={async () => {
+            if (!isAuthenticated) return;
+            if (wishlisted) {
+              await removeFromWishlist(product.id);
+            } else {
+              await addToWishlist(product.id);
+            }
+            setWishlisted(!wishlisted);
+          }}
+          title={
+            isAuthenticated
+              ? wishlisted
+                ? "Remove from Wishlist"
+                : "Add to Wishlist"
+              : "Login to wishlist"
+          }
           style={{
             position: "absolute",
             bottom: 10,
@@ -257,7 +278,7 @@ const ProductCard = ({ product }: { product: Product }) => {
             alignItems: "center",
             justifyContent: "center",
             border: "none",
-            cursor: "pointer",
+            cursor: isAuthenticated ? "pointer" : "not-allowed",
             transition: "var(--transition)",
           }}
         >

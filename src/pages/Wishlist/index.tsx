@@ -1,110 +1,88 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { IoHeart, IoHeartDislike, IoStarSharp } from "react-icons/io5";
+import { IoHeart, IoHeartDislike } from "react-icons/io5";
 import { HiOutlineShoppingCart } from "react-icons/hi";
-import { useAddToCartMutation } from "@/services/cartSlice";
+import { MdLogin } from "react-icons/md";
+import { FaTrashAlt } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/app/store";
+import {
+  useGetWishlistQuery,
+  useRemoveFromWishlistMutation,
+} from "@/services/wishlistSlice";
+import { useAddToCartMutation } from "@/services/cartSlice";
 
-const WISHLIST_ITEMS = [
-  {
-    id: 1,
-    name: "Sony WH-1000XM5 Wireless Headphones",
-    price: 34500,
-    originalPrice: 48000,
-    rating: 4.8,
-    reviews: 2341,
-    inStock: true,
-    image:
-      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
-    category: "Electronics",
-  },
-  {
-    id: 2,
-    name: 'Samsung Galaxy Tab S9 Ultra 14.6"',
-    price: 189000,
-    originalPrice: 215000,
-    rating: 4.7,
-    reviews: 892,
-    inStock: true,
-    image:
-      "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400&h=400&fit=crop",
-    category: "Electronics",
-  },
-  {
-    id: 4,
-    name: "Nike Air Max 270 React",
-    price: 18500,
-    originalPrice: 24000,
-    rating: 4.6,
-    reviews: 1123,
-    inStock: false,
-    image:
-      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop",
-    category: "Fashion",
-  },
-  {
-    id: 7,
-    name: "IKEA MALM Bed Frame Queen",
-    price: 56000,
-    originalPrice: 68000,
-    rating: 4.5,
-    reviews: 776,
-    inStock: true,
-    image:
-      "https://images.unsplash.com/photo-1505693316919-1021ec6a9a07?w=400&h=400&fit=crop",
-    category: "Home",
-  },
-  {
-    id: 5,
-    name: "Canon EOS R50 Mirrorless Camera",
-    price: 135000,
-    originalPrice: 149000,
-    rating: 4.8,
-    reviews: 543,
-    inStock: true,
-    image:
-      "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&h=400&fit=crop",
-    category: "Electronics",
-  },
-  {
-    id: 16,
-    name: "Dyson V15 Detect Cordless Vacuum",
-    price: 115000,
-    originalPrice: 132000,
-    rating: 4.9,
-    reviews: 1023,
-    inStock: false,
-    image:
-      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop",
-    category: "Home",
-  },
-];
+/* ─── Badge colors ──────────────────────────────────── */
+const BADGE_COLORS: Record<string, { bg: string; color: string }> = {
+  "Best Seller": { bg: "#FEF3C7", color: "#B45309" },
+  New: { bg: "#ECFDF5", color: "#065F46" },
+  "Top Rated": { bg: "#EFF6FF", color: "#1D4ED8" },
+  Sale: { bg: "#FEF2F2", color: "#B91C1C" },
+  Hot: { bg: "#FFF7ED", color: "#C2410C" },
+};
 
+/* ─── Skeleton ──────────────────────────────────────── */
+const SkeletonCard = () => (
+  <div className="card" style={{ overflow: "hidden" }}>
+    <div
+      style={{
+        height: 200,
+        background:
+          "linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%)",
+        backgroundSize: "200% 100%",
+        animation: "shimmer 1.4s infinite",
+      }}
+    />
+    <div style={{ padding: 16 }}>
+      {[60, 90, 50, 40].map((w, i) => (
+        <div
+          key={i}
+          style={{
+            height: 12,
+            background: "#f0f0f0",
+            borderRadius: 4,
+            marginBottom: 10,
+            width: `${w}%`,
+            animation: "shimmer 1.4s infinite",
+          }}
+        />
+      ))}
+    </div>
+  </div>
+);
+
+/* ─── Wishlist Page ─────────────────────────────────── */
 const WishlistPage = () => {
-  const [items, setItems] = useState(WISHLIST_ITEMS);
-  const [added, setAdded] = useState<number[]>([]);
-
-  const remove = (id: number) =>
-    setItems((prev) => prev.filter((i) => i.id !== id));
-
   const { isAuthenticated } = useSelector((s: RootState) => s.auth);
+  const { data, isLoading } = useGetWishlistQuery(undefined, {
+    skip: !isAuthenticated,
+  });
+  const [removeFromWishlist] = useRemoveFromWishlistMutation();
   const [addToCart] = useAddToCartMutation();
-  const [adding, setAdding] = useState<number[]>([]);
 
-  const handleAddToCart = async (id: number) => {
-    if (!isAuthenticated) return;
-    setAdding((prev) => [...prev, id]);
+  const [cartAdded, setCartAdded] = useState<number[]>([]);
+  const [cartAdding, setCartAdding] = useState<number[]>([]);
+
+  const items = data?.wishlist ?? [];
+
+  const handleRemove = (productId: number) => removeFromWishlist(productId);
+
+  const handleAddToCart = async (productId: number) => {
+    setCartAdding((prev) => [...prev, productId]);
     try {
-      await addToCart({ product_id: id, quantity: 1 }).unwrap();
-      setAdded((prev) => [...prev, id]);
-      setTimeout(() => setAdded((prev) => prev.filter((x) => x !== id)), 2000);
+      await addToCart({ product_id: productId, quantity: 1 }).unwrap();
+      setCartAdded((prev) => [...prev, productId]);
+      setTimeout(
+        () => setCartAdded((prev) => prev.filter((x) => x !== productId)),
+        2000,
+      );
     } finally {
-      setAdding((prev) => prev.filter((x) => x !== id));
+      setCartAdding((prev) => prev.filter((x) => x !== productId));
     }
   };
 
-  if (items.length === 0)
+  /* ── Not logged in ── */
+  if (!isAuthenticated) {
     return (
       <div
         style={{
@@ -114,6 +92,63 @@ const WishlistPage = () => {
           justifyContent: "center",
           minHeight: "60vh",
           padding: 40,
+          textAlign: "center",
+        }}
+      >
+        <div style={{ fontSize: 72, marginBottom: 20 }}>🔒</div>
+        <h2
+          style={{
+            fontSize: 22,
+            fontWeight: 800,
+            color: "var(--text-primary)",
+            marginBottom: 8,
+          }}
+        >
+          Login Required
+        </h2>
+        <p
+          style={{
+            fontSize: 14,
+            color: "var(--text-muted)",
+            marginBottom: 28,
+            maxWidth: 320,
+          }}
+        >
+          Please log in to view and manage your wishlist.
+        </p>
+        <Link
+          to="/login"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "12px 32px",
+            background: "var(--primary)",
+            color: "white",
+            borderRadius: "var(--radius-sm)",
+            fontWeight: 700,
+            fontSize: 15,
+            textDecoration: "none",
+          }}
+        >
+          <MdLogin size={18} /> Login
+        </Link>
+      </div>
+    );
+  }
+
+  /* ── Empty ── */
+  if (!isLoading && items.length === 0) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "60vh",
+          padding: 40,
+          textAlign: "center",
         }}
       >
         <IoHeart size={64} color="#E2E8F0" style={{ marginBottom: 20 }} />
@@ -128,12 +163,7 @@ const WishlistPage = () => {
           Your wishlist is empty
         </h2>
         <p
-          style={{
-            fontSize: 14,
-            color: "var(--text-muted)",
-            marginBottom: 28,
-            textAlign: "center",
-          }}
+          style={{ fontSize: 14, color: "var(--text-muted)", marginBottom: 28 }}
         >
           Save items you love to your wishlist and shop them later.
         </p>
@@ -153,10 +183,12 @@ const WishlistPage = () => {
         </Link>
       </div>
     );
+  }
 
   return (
     <div style={{ padding: "28px 0 60px", background: "var(--bg-base)" }}>
       <div className="container">
+        {/* Breadcrumb */}
         <div
           style={{
             display: "flex",
@@ -176,6 +208,7 @@ const WishlistPage = () => {
           </span>
         </div>
 
+        {/* Header */}
         <div
           style={{
             display: "flex",
@@ -192,48 +225,71 @@ const WishlistPage = () => {
             }}
           >
             My Wishlist{" "}
-            <span
+            {!isLoading && (
+              <span
+                style={{
+                  fontSize: 16,
+                  color: "var(--text-muted)",
+                  fontWeight: 500,
+                }}
+              >
+                ({items.length} {items.length === 1 ? "item" : "items"})
+              </span>
+            )}
+          </h1>
+          {items.length > 0 && (
+            <button
+              onClick={() =>
+                items.forEach((i) => removeFromWishlist(i.product_id))
+              }
               style={{
-                fontSize: 16,
-                color: "var(--text-muted)",
-                fontWeight: 500,
+                fontSize: 13,
+                color: "var(--error)",
+                background: "none",
+                border: "1px solid #FECACA",
+                borderRadius: "var(--radius-sm)",
+                padding: "8px 16px",
+                cursor: "pointer",
+                fontWeight: 600,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
               }}
             >
-              ({items.length} items)
-            </span>
-          </h1>
-          <button
-            onClick={() => setItems([])}
-            style={{
-              fontSize: 13,
-              color: "var(--error)",
-              background: "none",
-              border: "1px solid #FECACA",
-              borderRadius: "var(--radius-sm)",
-              padding: "8px 16px",
-              cursor: "pointer",
-              fontWeight: 600,
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-            }}
-          >
-            <IoHeartDislike size={14} /> Clear All
-          </button>
+              <IoHeartDislike size={14} /> Clear All
+            </button>
+          )}
         </div>
 
+        {/* Grid */}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
+            gridTemplateColumns: "repeat(4, 1fr)",
             gap: 16,
           }}
         >
+          {/* Loading skeletons */}
+          {isLoading && [1, 2, 3, 4].map((i) => <SkeletonCard key={i} />)}
+
+          {/* Real items */}
           {items.map((item) => {
-            const disc = Math.round(
-              ((item.originalPrice - item.price) / item.originalPrice) * 100,
-            );
-            const isAdded = added.includes(item.id);
+            const disc =
+              item.original_price && item.original_price > item.price
+                ? Math.round(
+                    ((item.original_price - item.price) / item.original_price) *
+                      100,
+                  )
+                : null;
+            const badgeStyle = item.badge
+              ? (BADGE_COLORS[item.badge] ?? {
+                  bg: "#F1F5F9",
+                  color: "#475569",
+                })
+              : null;
+            const isAdded = cartAdded.includes(item.product_id);
+            const isAdding = cartAdding.includes(item.product_id);
+
             return (
               <div
                 key={item.id}
@@ -245,9 +301,9 @@ const WishlistPage = () => {
                   position: "relative",
                 }}
               >
-                {/* Remove from Wishlist */}
+                {/* Remove button */}
                 <button
-                  onClick={() => remove(item.id)}
+                  onClick={() => handleRemove(item.product_id)}
                   title="Remove from wishlist"
                   style={{
                     position: "absolute",
@@ -266,11 +322,12 @@ const WishlistPage = () => {
                     boxShadow: "var(--shadow-sm)",
                   }}
                 >
-                  <IoHeart color="#EF4444" size={16} />
+                  <FaTrashAlt size={13} color="#EF4444" />
                 </button>
 
+                {/* Image */}
                 <Link
-                  to={`/product/${item.id}`}
+                  to={`/product/${item.product_id}`}
                   style={{
                     position: "relative",
                     overflow: "hidden",
@@ -278,7 +335,10 @@ const WishlistPage = () => {
                   }}
                 >
                   <img
-                    src={item.image}
+                    src={
+                      item.image ||
+                      "https://via.placeholder.com/400x400?text=No+Image"
+                    }
                     alt={item.name}
                     style={{
                       width: "100%",
@@ -293,49 +353,50 @@ const WishlistPage = () => {
                     onMouseLeave={(e) =>
                       (e.currentTarget.style.transform = "scale(1)")
                     }
+                    onError={(e) =>
+                      (e.currentTarget.src =
+                        "https://via.placeholder.com/400x400?text=No+Image")
+                    }
                   />
-                  {!item.inStock && (
+                  {/* Discount badge */}
+                  {disc && (
                     <div
                       style={{
                         position: "absolute",
-                        inset: 0,
-                        background: "rgba(0,0,0,0.45)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
+                        top: 10,
+                        left: 10,
+                        background: "var(--error)",
+                        color: "white",
+                        fontSize: 10,
+                        fontWeight: 700,
+                        padding: "2px 6px",
+                        borderRadius: "var(--radius-sm)",
                       }}
                     >
-                      <span
-                        style={{
-                          color: "white",
-                          fontWeight: 800,
-                          fontSize: 14,
-                          background: "rgba(0,0,0,0.5)",
-                          padding: "6px 16px",
-                          borderRadius: "var(--radius-sm)",
-                        }}
-                      >
-                        Out of Stock
-                      </span>
+                      -{disc}%
                     </div>
                   )}
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: 10,
-                      left: 10,
-                      background: "var(--error)",
-                      color: "white",
-                      fontSize: 10,
-                      fontWeight: 700,
-                      padding: "2px 6px",
-                      borderRadius: "var(--radius-sm)",
-                    }}
-                  >
-                    -{disc}%
-                  </div>
+                  {/* Label badge */}
+                  {badgeStyle && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: 10,
+                        left: 10,
+                        ...badgeStyle,
+                        fontSize: 10,
+                        fontWeight: 700,
+                        padding: "2px 8px",
+                        borderRadius: "var(--radius-sm)",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      {item.badge}
+                    </div>
+                  )}
                 </Link>
 
+                {/* Info */}
                 <div
                   style={{
                     padding: 16,
@@ -344,25 +405,14 @@ const WishlistPage = () => {
                     flexDirection: "column",
                   }}
                 >
-                  <span
-                    style={{
-                      fontSize: 10,
-                      color: "var(--text-muted)",
-                      marginBottom: 4,
-                      fontWeight: 500,
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    {item.category}
-                  </span>
-                  <Link to={`/product/${item.id}`} style={{ flex: 1 }}>
+                  <Link to={`/product/${item.product_id}`} style={{ flex: 1 }}>
                     <p
                       style={{
                         fontSize: 13,
                         fontWeight: 600,
                         color: "var(--text-primary)",
                         lineHeight: 1.45,
-                        marginBottom: 8,
+                        marginBottom: 10,
                         overflow: "hidden",
                         display: "-webkit-box",
                         WebkitLineClamp: 2,
@@ -372,33 +422,8 @@ const WishlistPage = () => {
                       {item.name}
                     </p>
                   </Link>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 4,
-                      marginBottom: 10,
-                    }}
-                  >
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <IoStarSharp
-                        key={s}
-                        size={12}
-                        color={
-                          s <= Math.floor(item.rating) ? "#F59E0B" : "#E2E8F0"
-                        }
-                      />
-                    ))}
-                    <span
-                      style={{
-                        fontSize: 11,
-                        color: "var(--text-muted)",
-                        marginLeft: 2,
-                      }}
-                    >
-                      ({item.reviews.toLocaleString()})
-                    </span>
-                  </div>
+
+                  {/* Price */}
                   <div
                     style={{
                       display: "flex",
@@ -414,77 +439,109 @@ const WishlistPage = () => {
                         color: "var(--primary)",
                       }}
                     >
-                      Rs. {item.price.toLocaleString()}
+                      Rs. {Number(item.price).toLocaleString()}
                     </span>
-                    <span
-                      style={{
-                        fontSize: 12,
-                        color: "var(--text-muted)",
-                        textDecoration: "line-through",
-                      }}
-                    >
-                      Rs. {item.originalPrice.toLocaleString()}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: 11,
-                        color: "var(--accent)",
-                        fontWeight: 600,
-                      }}
-                    >
-                      Save Rs.{" "}
-                      {(item.originalPrice - item.price).toLocaleString()}
-                    </span>
+                    {item.original_price && (
+                      <>
+                        <span
+                          style={{
+                            fontSize: 12,
+                            color: "var(--text-muted)",
+                            textDecoration: "line-through",
+                          }}
+                        >
+                          Rs. {Number(item.original_price).toLocaleString()}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: 11,
+                            color: "var(--accent)",
+                            fontWeight: 600,
+                          }}
+                        >
+                          Save Rs.{" "}
+                          {(
+                            Number(item.original_price) - Number(item.price)
+                          ).toLocaleString()}
+                        </span>
+                      </>
+                    )}
                   </div>
-                  <button
-                    onClick={() => handleAddToCart(item.id)}
-                    disabled={
-                      !item.inStock ||
-                      adding.includes(item.id) ||
-                      !isAuthenticated
-                    }
-                    style={{
-                      width: "100%",
-                      padding: "10px",
-                      background: !item.inStock
-                        ? "var(--bg-muted)"
-                        : isAdded
+
+                  {/* Actions */}
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      onClick={() => handleAddToCart(item.product_id)}
+                      disabled={isAdding || isAdded}
+                      style={{
+                        flex: 1,
+                        padding: "9px 12px",
+                        background: isAdded
                           ? "var(--accent)"
                           : "var(--primary)",
-                      color: !item.inStock ? "var(--text-muted)" : "white",
-                      borderRadius: "var(--radius-sm)",
-                      fontSize: 13,
-                      fontWeight: 600,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 6,
-                      transition: "var(--transition)",
-                      border: "none",
-                      cursor:
-                        item.inStock && isAuthenticated
-                          ? "pointer"
-                          : "not-allowed",
-                      opacity: !isAuthenticated && item.inStock ? 0.7 : 1,
-                    }}
-                  >
-                    <HiOutlineShoppingCart size={15} />{" "}
-                    {!item.inStock
-                      ? "Out of Stock"
-                      : adding.includes(item.id)
+                        color: "white",
+                        borderRadius: "var(--radius-sm)",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 6,
+                        transition: "var(--transition)",
+                        border: "none",
+                        cursor: isAdding ? "not-allowed" : "pointer",
+                      }}
+                    >
+                      <HiOutlineShoppingCart size={14} />
+                      {isAdding
                         ? "Adding..."
                         : isAdded
-                          ? "Added to Cart ✓"
-                          : isAuthenticated
-                            ? "Add to Cart"
-                            : "Login to Add"}
-                  </button>
+                          ? "Added ✓"
+                          : "Add to Cart"}
+                    </button>
+                    <button
+                      onClick={() => handleRemove(item.product_id)}
+                      title="Remove"
+                      style={{
+                        width: 36,
+                        height: 36,
+                        background: "#FEF2F2",
+                        border: "1px solid #FECACA",
+                        borderRadius: "var(--radius-sm)",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <IoHeart color="#EF4444" size={16} />
+                    </button>
+                  </div>
                 </div>
               </div>
             );
           })}
         </div>
+
+        {/* Continue shopping */}
+        {!isLoading && items.length > 0 && (
+          <div style={{ marginTop: 32, textAlign: "center" }}>
+            <Link
+              to="/products"
+              style={{
+                color: "var(--primary)",
+                fontSize: 14,
+                fontWeight: 600,
+                textDecoration: "none",
+              }}
+            >
+              ← Continue Shopping
+            </Link>
+          </div>
+        )}
       </div>
+      <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
     </div>
   );
 };

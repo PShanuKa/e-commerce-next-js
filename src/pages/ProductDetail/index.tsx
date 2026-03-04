@@ -16,6 +16,10 @@ import {
   useGetProductsQuery,
 } from "@/services/productSlice";
 import { useAddToCartMutation } from "@/services/cartSlice";
+import {
+  useAddToWishlistMutation,
+  useRemoveFromWishlistMutation,
+} from "@/services/wishlistSlice";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/app/store";
 
@@ -195,6 +199,8 @@ const ProductDetail = () => {
     .slice(0, 4);
 
   const [addToCart, { isLoading: addingToCart }] = useAddToCartMutation();
+  const [addToWishlist] = useAddToWishlistMutation();
+  const [removeFromWishlist] = useRemoveFromWishlistMutation();
   const [activeImage, setActiveImage] = useState(0);
   const [qty, setQty] = useState(1);
   const [wishlisted, setWishlisted] = useState(false);
@@ -207,7 +213,7 @@ const ProductDetail = () => {
       setAddedToCart(true);
       setTimeout(() => setAddedToCart(false), 2500);
     } catch {
-      // silently fail – user can see cart for error details
+      // silently fail
     }
   };
 
@@ -681,18 +687,34 @@ const ProductDetail = () => {
                 Buy Now
               </Link>
               <button
-                onClick={() => setWishlisted(!wishlisted)}
+                onClick={async () => {
+                  if (!isAuthenticated || !product) return;
+                  if (wishlisted) {
+                    await removeFromWishlist(product.id);
+                  } else {
+                    await addToWishlist(product.id);
+                  }
+                  setWishlisted(!wishlisted);
+                }}
                 style={{
                   width: 50,
                   height: 50,
                   borderRadius: "var(--radius-sm)",
                   border: "1.5px solid var(--border)",
                   background: wishlisted ? "#FEF2F2" : "white",
-                  cursor: "pointer",
+                  cursor: isAuthenticated ? "pointer" : "not-allowed",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  opacity: !isAuthenticated ? 0.6 : 1,
                 }}
+                title={
+                  isAuthenticated
+                    ? wishlisted
+                      ? "Remove from Wishlist"
+                      : "Add to Wishlist"
+                    : "Login to wishlist"
+                }
               >
                 {wishlisted ? (
                   <IoHeart color="#EF4444" size={20} />
