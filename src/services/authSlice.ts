@@ -1,24 +1,9 @@
 import { apiSlice } from "@/services/apiSlice";
 
-// ─── Request Types ────────────────────────────────────────────────────────────
-
-interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-interface RegisterRequest {
-  name: string;
-  email: string;
-  password: string;
-  phone?: string;
-}
-
-// ─── Slice ────────────────────────────────────────────────────────────────────
 
 export const authSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    login: builder.mutation<unknown, LoginRequest>({
+    login: builder.mutation({
       invalidatesTags: ["Auth"],
       query: (data) => ({
         url: "auth/login",
@@ -26,7 +11,7 @@ export const authSlice = apiSlice.injectEndpoints({
         body: data,
       }),
     }),
-    register: builder.mutation<unknown, RegisterRequest>({
+    register: builder.mutation({
       invalidatesTags: ["Auth"],
       query: (data) => ({
         url: "auth/register",
@@ -34,7 +19,7 @@ export const authSlice = apiSlice.injectEndpoints({
         body: data,
       }),
     }),
-    getMe: builder.query<unknown, void>({
+    getMe: builder.query({
       providesTags: ["Auth"],
       query: () => ({
         url: "auth/me",

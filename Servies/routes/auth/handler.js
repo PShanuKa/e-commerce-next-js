@@ -75,12 +75,12 @@ const login = async (request, reply) => {
   const { passwordHash, ...safeUser } = user;
 
   reply
-    .setCookie("token", token, {
-      path: "/",
-      httpOnly: true,
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7,
-    })
+    // .setCookie("token", token, {
+    //   path: "/",
+    //   httpOnly: true,
+    //   sameSite: "lax",
+    //   maxAge: 60 * 60 * 24 * 7,
+    // })
     .send({
       success: true,
       message: "Login successful",

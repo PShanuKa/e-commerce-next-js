@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { useState, useMemo, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   IoStarSharp,
   IoHeartOutline,
@@ -10,6 +10,7 @@ import {
 } from "react-icons/io5";
 import { HiOutlineShoppingCart } from "react-icons/hi";
 import { FaAngleDown, FaAngleUp } from "react-icons/fa";
+import { useGetCategoriesQuery } from "@/services/categorySlice";
 
 /* ─── Mock Data ─────────────────────────────────── */
 const PRODUCTS = [
@@ -207,7 +208,6 @@ const PRODUCTS = [
   },
 ];
 
-const CATEGORIES = ["All", "Electronics", "Fashion", "Home", "Sports"];
 const SORT_OPTIONS = [
   { label: "Featured", value: "featured" },
   { label: "Price: Low to High", value: "price-asc" },
@@ -674,7 +674,22 @@ const FilterSection = ({
 
 /* ─── Main Page ──────────────────────────────────── */
 const ShopPage = () => {
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [searchParams] = useSearchParams();
+  const { data: catData } = useGetCategoriesQuery();
+
+  // Build category list from API: "All" + API slugs
+  const apiCategories = catData?.categories ?? [];
+
+  // Initialize selected category from URL param ?category=slug
+  const urlCategory = searchParams.get("category") ?? "all";
+  const [selectedCategory, setSelectedCategory] = useState<string>(urlCategory);
+
+  // When API loads, keep URL param selection in sync
+  useEffect(() => {
+    const param = searchParams.get("category") ?? "all";
+    setSelectedCategory(param);
+  }, [searchParams]);
+
   const [sortBy, setSortBy] = useState("featured");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [priceRange, setPriceRange] = useState([0, 200000]);
@@ -682,8 +697,15 @@ const ShopPage = () => {
 
   const filtered = useMemo(() => {
     let list = [...PRODUCTS];
-    if (selectedCategory !== "All")
-      list = list.filter((p) => p.category === selectedCategory);
+    // Match by category slug or name (case-insensitive), "all" shows everything
+    if (selectedCategory && selectedCategory !== "all") {
+      list = list.filter(
+        (p) =>
+          p.category.toLowerCase() === selectedCategory.toLowerCase() ||
+          p.category.toLowerCase().replace(/\s+/g, "-") ===
+            selectedCategory.toLowerCase(),
+      );
+    }
     list = list.filter(
       (p) => p.price >= priceRange[0] && p.price <= priceRange[1],
     );
@@ -741,7 +763,7 @@ const ShopPage = () => {
                   </h3>
                   <button
                     onClick={() => {
-                      setSelectedCategory("All");
+                      setSelectedCategory("all");
                       setPriceRange([0, 200000]);
                     }}
                     style={{
@@ -761,49 +783,60 @@ const ShopPage = () => {
                   <div
                     style={{ display: "flex", flexDirection: "column", gap: 8 }}
                   >
-                    {CATEGORIES.map((cat) => (
-                      <label
-                        key={cat}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                          cursor: "pointer",
-                        }}
-                      >
-                        <input
-                          type="radio"
-                          name="category"
-                          checked={selectedCategory === cat}
-                          onChange={() => setSelectedCategory(cat)}
+                    {/* All */}
+                    {[
+                      {
+                        slug: "all",
+                        name: "All",
+                        product_count: PRODUCTS.length,
+                      },
+                      ...apiCategories,
+                    ].map((cat) => {
+                      const isAll = cat.slug === "all";
+                      const isSelected = selectedCategory === cat.slug;
+                      // For "All" show total; for API cats, show their backend product_count
+                      return (
+                        <label
+                          key={cat.slug}
                           style={{
-                            accentColor: "var(--primary)",
-                            width: 15,
-                            height: 15,
-                          }}
-                        />
-                        <span
-                          style={{
-                            fontSize: 13,
-                            color: "var(--text-secondary)",
-                            fontWeight: selectedCategory === cat ? 600 : 400,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            cursor: "pointer",
                           }}
                         >
-                          {cat}
-                        </span>
-                        <span
-                          style={{
-                            marginLeft: "auto",
-                            fontSize: 11,
-                            color: "var(--text-muted)",
-                          }}
-                        >
-                          {cat === "All"
-                            ? PRODUCTS.length
-                            : PRODUCTS.filter((p) => p.category === cat).length}
-                        </span>
-                      </label>
-                    ))}
+                          <input
+                            type="radio"
+                            name="category"
+                            checked={isSelected}
+                            onChange={() => setSelectedCategory(cat.slug)}
+                            style={{
+                              accentColor: "var(--primary)",
+                              width: 15,
+                              height: 15,
+                            }}
+                          />
+                          <span
+                            style={{
+                              fontSize: 13,
+                              color: "var(--text-secondary)",
+                              fontWeight: isSelected ? 600 : 400,
+                            }}
+                          >
+                            {cat.name}
+                          </span>
+                          <span
+                            style={{
+                              marginLeft: "auto",
+                              fontSize: 11,
+                              color: "var(--text-muted)",
+                            }}
+                          >
+                            {isAll ? PRODUCTS.length : cat.product_count}
+                          </span>
+                        </label>
+                      );
+                    })}
                   </div>
                 </FilterSection>
 
@@ -1035,18 +1068,20 @@ const ShopPage = () => {
                 marginBottom: 16,
               }}
             >
-              {CATEGORIES.map((cat) => (
+              {[{ slug: "all", name: "All" }, ...apiCategories].map((cat) => (
                 <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
+                  key={cat.slug}
+                  onClick={() => setSelectedCategory(cat.slug)}
                   style={{
                     padding: "6px 16px",
                     borderRadius: "var(--radius-full)",
-                    border: `1.5px solid ${selectedCategory === cat ? "var(--primary)" : "var(--border)"}`,
+                    border: `1.5px solid ${selectedCategory === cat.slug ? "var(--primary)" : "var(--border)"}`,
                     background:
-                      selectedCategory === cat ? "var(--primary)" : "white",
+                      selectedCategory === cat.slug
+                        ? "var(--primary)"
+                        : "white",
                     color:
-                      selectedCategory === cat
+                      selectedCategory === cat.slug
                         ? "white"
                         : "var(--text-secondary)",
                     fontSize: 12,
@@ -1055,7 +1090,7 @@ const ShopPage = () => {
                     transition: "var(--transition)",
                   }}
                 >
-                  {cat}
+                  {cat.name}
                 </button>
               ))}
             </div>

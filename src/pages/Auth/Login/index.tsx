@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { MdOutlineEmail, MdLockOutline } from "react-icons/md";
-import { FcGoogle } from "react-icons/fc";
-import { FaFacebook } from "react-icons/fa";
 import { useLoginMutation } from "@/services/authSlice";
+import { setCredentials } from "@/features/authSlice";
+import type { AppDispatch } from "@/app/store";
 
 const Login = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
   const [login, { isLoading }] = useLoginMutation();
 
   const [email, setEmail] = useState("");
@@ -26,7 +28,11 @@ const Login = () => {
     }
 
     try {
-      await login({ email, password }).unwrap();
+      const response = (await login({ email, password }).unwrap()) as {
+        token: string;
+        user: Parameters<typeof setCredentials>[0]["user"];
+      };
+      dispatch(setCredentials({ token: response.token, user: response.user }));
       navigate("/");
     } catch (err: unknown) {
       const apiError = err as { data?: { message?: string }; message?: string };
@@ -76,77 +82,6 @@ const Login = () => {
           ⚠️ {error}
         </div>
       )}
-
-      {/* Social Login */}
-      <div style={{ display: "flex", gap: 12, marginBottom: 28 }}>
-        <button
-          style={{
-            flex: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 8,
-            padding: "11px 16px",
-            border: "1.5px solid var(--border)",
-            borderRadius: "var(--radius-sm)",
-            background: "white",
-            fontSize: 13,
-            fontWeight: 500,
-            color: "var(--text-primary)",
-            cursor: "pointer",
-            transition: "var(--transition)",
-          }}
-          onMouseEnter={(e) =>
-            ((e.currentTarget as HTMLElement).style.borderColor = "#E2E8F0")
-          }
-          onMouseLeave={(e) =>
-            ((e.currentTarget as HTMLElement).style.borderColor =
-              "var(--border)")
-          }
-        >
-          <FcGoogle size={18} />
-          Google
-        </button>
-        <button
-          style={{
-            flex: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 8,
-            padding: "11px 16px",
-            border: "1.5px solid var(--border)",
-            borderRadius: "var(--radius-sm)",
-            background: "white",
-            fontSize: 13,
-            fontWeight: 500,
-            color: "var(--text-primary)",
-            cursor: "pointer",
-            transition: "var(--transition)",
-          }}
-        >
-          <FaFacebook size={18} color="#1877F2" />
-          Facebook
-        </button>
-      </div>
-
-      {/* Divider */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          marginBottom: 28,
-        }}
-      >
-        <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-        <span
-          style={{ color: "var(--text-muted)", fontSize: 12, fontWeight: 500 }}
-        >
-          or continue with email
-        </span>
-        <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-      </div>
 
       {/* Form */}
       <form

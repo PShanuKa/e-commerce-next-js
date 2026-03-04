@@ -41,6 +41,7 @@ model Category {
   slug      String     @unique @db.VarChar(120)
   imageUrl  String?    @map("image_url")
   parentId  Int?       @map("parent_id")
+  isDeleted Boolean    @default(false) @map("is_deleted")
   createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz
 
   // Self-relation for subcategories

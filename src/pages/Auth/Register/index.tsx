@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { MdOutlineEmail, MdLockOutline, MdPersonOutline } from "react-icons/md";
 import { FiPhone } from "react-icons/fi";
-import { FcGoogle } from "react-icons/fc";
-import { FaFacebook, FaCheck } from "react-icons/fa";
+import { FaCheck } from "react-icons/fa";
 import { useRegisterMutation } from "@/services/authSlice";
+import { setCredentials } from "@/features/authSlice";
+import type { AppDispatch } from "@/app/store";
 
 const PASSWORD_RULES = [
   { label: "At least 8 characters", test: (p: string) => p.length >= 8 },
@@ -19,6 +21,7 @@ const PASSWORD_RULES = [
 
 const Register = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
   const [register, { isLoading }] = useRegisterMutation();
 
   const [form, setForm] = useState({
@@ -52,14 +55,17 @@ const Register = () => {
     }
 
     try {
-      await register({
+      const response = (await register({
         name: `${form.firstName} ${form.lastName}`.trim(),
         email: form.email,
         phone: form.phone || undefined,
         password: form.password,
-      }).unwrap();
-
-      navigate("/login");
+      }).unwrap()) as {
+        token: string;
+        user: Parameters<typeof setCredentials>[0]["user"];
+      };
+      dispatch(setCredentials({ token: response.token, user: response.user }));
+      navigate("/");
     } catch (err: unknown) {
       const apiError = err as { data?: { message?: string }; message?: string };
       setError(
@@ -116,68 +122,6 @@ const Register = () => {
           ⚠️ {error}
         </div>
       )}
-
-      {/* Social Login */}
-      <div style={{ display: "flex", gap: 12, marginBottom: 22 }}>
-        <button
-          style={{
-            flex: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 8,
-            padding: "10px 16px",
-            border: "1.5px solid var(--border)",
-            borderRadius: "var(--radius-sm)",
-            background: "white",
-            fontSize: 13,
-            fontWeight: 500,
-            color: "var(--text-primary)",
-            cursor: "pointer",
-            transition: "var(--transition)",
-          }}
-        >
-          <FcGoogle size={17} /> Google
-        </button>
-        <button
-          style={{
-            flex: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 8,
-            padding: "10px 16px",
-            border: "1.5px solid var(--border)",
-            borderRadius: "var(--radius-sm)",
-            background: "white",
-            fontSize: 13,
-            fontWeight: 500,
-            color: "var(--text-primary)",
-            cursor: "pointer",
-            transition: "var(--transition)",
-          }}
-        >
-          <FaFacebook size={17} color="#1877F2" /> Facebook
-        </button>
-      </div>
-
-      {/* Divider */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          marginBottom: 22,
-        }}
-      >
-        <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-        <span
-          style={{ color: "var(--text-muted)", fontSize: 12, fontWeight: 500 }}
-        >
-          or register with email
-        </span>
-        <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-      </div>
 
       {/* Form */}
       <form

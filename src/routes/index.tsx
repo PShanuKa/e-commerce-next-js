@@ -12,10 +12,12 @@ import WishlistPage from "../pages/Wishlist";
 import AboutPage from "../pages/About";
 import ContactPage from "../pages/Contact";
 import NotFound from "../pages/NotFound";
+import CategoriesPage from "../pages/Categories";
 
 export const PublicRoutes = [
   { path: "/", element: <HomePage /> },
   { path: "/shop", element: <ShopPage /> },
+  { path: "/categories", element: <CategoriesPage /> },
   { path: "/product/:id", element: <ProductDetail /> },
   { path: "/cart", element: <CartPage /> },
   { path: "/checkout", element: <CheckoutPage /> },

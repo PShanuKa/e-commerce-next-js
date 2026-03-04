@@ -2,6 +2,7 @@ import { useLocation } from "react-router-dom";
 import Default from "./Layouts/Default";
 import AuthDefault from "./Layouts/AuthDefault";
 import AllRoutes from "./routes/Routes";
+import AuthInitializer from "./components/AuthInitializer";
 
 const AUTH_PATHS = [
   "/login",
@@ -15,13 +16,19 @@ function App() {
   const isAuthPage = AUTH_PATHS.includes(location.pathname);
 
   return isAuthPage ? (
-    <AuthDefault>
-      <AllRoutes />
-    </AuthDefault>
+    <>
+      <AuthInitializer />
+      <AuthDefault>
+        <AllRoutes />
+      </AuthDefault>
+    </>
   ) : (
-    <Default>
-      <AllRoutes />
-    </Default>
+    <>
+      <AuthInitializer />
+      <Default>
+        <AllRoutes />
+      </Default>
+    </>
   );
 }
 
