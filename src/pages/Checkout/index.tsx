@@ -1,53 +1,30 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { IoCheckmarkCircle, IoLockClosed } from "react-icons/io5";
+import { IoCheckmarkCircle, IoLockClosed, IoAdd } from "react-icons/io5";
 import { FaCreditCard, FaMobileAlt, FaUniversity } from "react-icons/fa";
 import { TbTruckDelivery } from "react-icons/tb";
+import { MdLocationOn } from "react-icons/md";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/app/store";
+import {
+  useGetAddressesQuery,
+  useAddAddressMutation,
+  type Address,
+  type AddressBody,
+} from "@/services/addressSlice";
 
 const STEPS = ["Shipping", "Payment", "Review"];
 
-const SAVED_ADDRESSES = [
-  {
-    id: 1,
-    name: "Kasun Perera",
-    address: "123 Galle Rd, Colombo 03",
-    phone: "+94 77 123 4567",
-    isDefault: true,
-  },
-  {
-    id: 2,
-    name: "Kasun Perera",
-    address: "45 Kandy Rd, Kadawatha",
-    phone: "+94 77 987 6543",
-    isDefault: false,
-  },
-];
-
-const ORDER_ITEMS = [
-  {
-    id: 1,
-    name: "Sony WH-1000XM5 Headphones",
-    price: 34500,
-    qty: 1,
-    image:
-      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=80&h=80&fit=crop",
-  },
-  {
-    id: 3,
-    name: "Apple AirPods Pro (2nd Gen)",
-    price: 58000,
-    qty: 2,
-    image:
-      "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=80&h=80&fit=crop",
-  },
-  {
-    id: 11,
-    name: "Yoga Mat Premium",
-    price: 3500,
-    qty: 1,
-    image:
-      "https://images.unsplash.com/photo-1601925228008-0f0f48e1c15c?w=80&h=80&fit=crop",
-  },
+const PROVINCES = [
+  "Western Province",
+  "Central Province",
+  "Southern Province",
+  "Northern Province",
+  "Eastern Province",
+  "North Western Province",
+  "North Central Province",
+  "Uva Province",
+  "Sabaragamuwa Province",
 ];
 
 const Input = ({
@@ -96,10 +73,68 @@ const Input = ({
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useSelector((s: RootState) => s.auth);
+
+  const { data: addrData, isLoading: loadingAddresses } = useGetAddressesQuery(
+    undefined,
+    { skip: !isAuthenticated },
+  );
+  const [addAddress, { isLoading: addingAddr }] = useAddAddressMutation();
+  const addresses = addrData?.addresses ?? [];
+
   const [step, setStep] = useState(0);
-  const [selectedAddress, setSelectedAddress] = useState(1);
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(
+    null,
+  );
   const [payMethod, setPayMethod] = useState<"card" | "cod" | "bank">("card");
   const [newAddress, setNewAddress] = useState(false);
+  const [newAddrError, setNewAddrError] = useState("");
+  const [newForm, setNewForm] = useState<AddressBody>({
+    name: "",
+    phone: "",
+    address_line1: "",
+    address_line2: "",
+    city: "",
+    postal_code: "",
+    province: "",
+    is_default: false,
+  });
+  const setF = (k: keyof AddressBody, v: string | boolean) =>
+    setNewForm((f) => ({ ...f, [k]: v }));
+
+  // Auto-select default address on load
+  const defaultAddr = addresses.find((a) => a.isDefault) ?? addresses[0];
+  const effectiveSelected = selectedAddressId ?? defaultAddr?.id ?? null;
+
+  const handleAddNewAddress = async () => {
+    setNewAddrError("");
+    if (
+      !newForm.name ||
+      !newForm.phone ||
+      !newForm.address_line1 ||
+      !newForm.city
+    ) {
+      setNewAddrError("Please fill in required fields.");
+      return;
+    }
+    try {
+      const res = await addAddress(newForm).unwrap();
+      setSelectedAddressId(res.address.id);
+      setNewAddress(false);
+      setNewForm({
+        name: "",
+        phone: "",
+        address_line1: "",
+        address_line2: "",
+        city: "",
+        postal_code: "",
+        province: "",
+        is_default: false,
+      });
+    } catch {
+      setNewAddrError("Failed to save address.");
+    }
+  };
 
   const subtotal = ORDER_ITEMS.reduce((sum, i) => sum + i.price * i.qty, 0);
   const delivery = subtotal >= 5000 ? 0 : 350;
@@ -216,108 +251,172 @@ const CheckoutPage = () => {
             {/* STEP 0: Shipping */}
             {step === 0 && (
               <div>
+                {/* Delivery Address */}
                 <div className="card" style={{ padding: 24, marginBottom: 16 }}>
-                  <h3
-                    style={{
-                      fontSize: 15,
-                      fontWeight: 700,
-                      color: "var(--text-primary)",
-                      marginBottom: 20,
-                    }}
-                  >
-                    Delivery Address
-                  </h3>
                   <div
                     style={{
                       display: "flex",
-                      flexDirection: "column",
-                      gap: 12,
-                      marginBottom: 16,
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: 20,
                     }}
                   >
-                    {SAVED_ADDRESSES.map((addr) => (
-                      <label
-                        key={addr.id}
-                        onClick={() => setSelectedAddress(addr.id)}
-                        style={{
-                          display: "flex",
-                          gap: 12,
-                          padding: 16,
-                          border: `1.5px solid ${selectedAddress === addr.id ? "var(--primary)" : "var(--border)"}`,
-                          borderRadius: "var(--radius-md)",
-                          cursor: "pointer",
-                          background:
-                            selectedAddress === addr.id ? "#EFF6FF" : "white",
-                          transition: "var(--transition)",
-                        }}
-                      >
-                        <input
-                          type="radio"
-                          name="address"
-                          checked={selectedAddress === addr.id}
-                          onChange={() => setSelectedAddress(addr.id)}
+                    <h3
+                      style={{
+                        fontSize: 15,
+                        fontWeight: 700,
+                        color: "var(--text-primary)",
+                        margin: 0,
+                      }}
+                    >
+                      Delivery Address
+                    </h3>
+                    <Link
+                      to="/account/addresses"
+                      style={{
+                        fontSize: 12,
+                        color: "var(--primary)",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Manage Addresses →
+                    </Link>
+                  </div>
+
+                  {/* Existing addresses */}
+                  {loadingAddresses ? (
+                    <div
+                      style={{
+                        height: 80,
+                        background:
+                          "linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%)",
+                        borderRadius: "var(--radius-md)",
+                        backgroundSize: "200% 100%",
+                        animation: "shimmer 1.4s infinite",
+                        marginBottom: 12,
+                      }}
+                    />
+                  ) : addresses.length === 0 ? (
+                    <div
+                      style={{
+                        padding: "16px",
+                        background: "#FFF7ED",
+                        border: "1px solid #FED7AA",
+                        borderRadius: "var(--radius-md)",
+                        fontSize: 13,
+                        color: "#92400E",
+                        marginBottom: 12,
+                      }}
+                    >
+                      You don't have any saved addresses. Add one below.
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 12,
+                        marginBottom: 16,
+                      }}
+                    >
+                      {addresses.map((addr) => (
+                        <label
+                          key={addr.id}
+                          onClick={() => setSelectedAddressId(addr.id)}
                           style={{
-                            accentColor: "var(--primary)",
-                            width: 15,
-                            height: 15,
-                            marginTop: 2,
-                            flexShrink: 0,
+                            display: "flex",
+                            gap: 12,
+                            padding: 16,
+                            border: `1.5px solid ${effectiveSelected === addr.id ? "var(--primary)" : "var(--border)"}`,
+                            borderRadius: "var(--radius-md)",
+                            cursor: "pointer",
+                            background:
+                              effectiveSelected === addr.id
+                                ? "#EFF6FF"
+                                : "white",
+                            transition: "var(--transition)",
                           }}
-                        />
-                        <div>
-                          <div
+                        >
+                          <input
+                            type="radio"
+                            name="address"
+                            checked={effectiveSelected === addr.id}
+                            onChange={() => setSelectedAddressId(addr.id)}
                             style={{
-                              display: "flex",
-                              gap: 8,
-                              alignItems: "center",
-                              marginBottom: 4,
+                              accentColor: "var(--primary)",
+                              width: 15,
+                              height: 15,
+                              marginTop: 2,
+                              flexShrink: 0,
                             }}
-                          >
-                            <span
+                          />
+                          <div style={{ flex: 1 }}>
+                            <div
                               style={{
-                                fontSize: 14,
-                                fontWeight: 700,
-                                color: "var(--text-primary)",
+                                display: "flex",
+                                gap: 8,
+                                alignItems: "center",
+                                marginBottom: 4,
                               }}
                             >
-                              {addr.name}
-                            </span>
-                            {addr.isDefault && (
                               <span
                                 style={{
-                                  fontSize: 10,
+                                  fontSize: 14,
                                   fontWeight: 700,
-                                  background: "var(--primary)",
-                                  color: "white",
-                                  padding: "2px 7px",
-                                  borderRadius: "var(--radius-full)",
+                                  color: "var(--text-primary)",
                                 }}
                               >
-                                Default
+                                {addr.name}
                               </span>
-                            )}
+                              {addr.isDefault && (
+                                <span
+                                  style={{
+                                    fontSize: 10,
+                                    fontWeight: 700,
+                                    background: "var(--primary)",
+                                    color: "white",
+                                    padding: "2px 7px",
+                                    borderRadius: "var(--radius-full)",
+                                  }}
+                                >
+                                  Default
+                                </span>
+                              )}
+                            </div>
+                            <p
+                              style={{
+                                fontSize: 13,
+                                color: "var(--text-secondary)",
+                                marginBottom: 2,
+                              }}
+                            >
+                              {addr.addressLine1}
+                              {addr.addressLine2 &&
+                                `, ${addr.addressLine2}`}, {addr.city}
+                              {addr.postalCode && ` - ${addr.postalCode}`}
+                            </p>
+                            <p
+                              style={{
+                                fontSize: 12,
+                                color: "var(--text-muted)",
+                              }}
+                            >
+                              {addr.phone}
+                            </p>
                           </div>
-                          <p
-                            style={{
-                              fontSize: 13,
-                              color: "var(--text-secondary)",
-                              marginBottom: 2,
-                            }}
-                          >
-                            {addr.address}
-                          </p>
-                          <p
-                            style={{ fontSize: 12, color: "var(--text-muted)" }}
-                          >
-                            {addr.phone}
-                          </p>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add new address toggle */}
                   <button
                     onClick={() => setNewAddress(!newAddress)}
                     style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6,
                       fontSize: 13,
                       color: "var(--primary)",
                       background: "none",
@@ -327,55 +426,205 @@ const CheckoutPage = () => {
                       cursor: "pointer",
                       fontWeight: 600,
                       width: "100%",
-                      textAlign: "center",
                     }}
                   >
-                    + Add New Address
+                    <IoAdd size={15} />{" "}
+                    {newAddress ? "Cancel" : "Add New Address"}
                   </button>
+
+                  {/* Inline new address form */}
                   {newAddress && (
                     <div
                       style={{
-                        marginTop: 20,
-                        display: "grid",
-                        gridTemplateColumns: "1fr 1fr",
-                        gap: 12,
+                        marginTop: 16,
+                        padding: 16,
+                        background: "var(--bg-base)",
+                        borderRadius: "var(--radius-md)",
+                        border: "1px solid var(--border)",
                       }}
                     >
-                      <Input
-                        label="Full Name"
-                        placeholder="Kasun Perera"
-                        required
-                        half
-                      />
-                      <Input
-                        label="Phone"
-                        placeholder="+94 77 123 4567"
-                        type="tel"
-                        required
-                        half
-                      />
-                      <Input
-                        label="Address Line 1"
-                        placeholder="No. 123, Galle Road"
-                        required
-                      />
-                      <Input
-                        label="Address Line 2"
-                        placeholder="Apartment, suite (optional)"
-                      />
-                      <Input label="City" placeholder="Colombo" required half />
-                      <Input
-                        label="Postal Code"
-                        placeholder="00300"
-                        required
-                        half
-                      />
-                      <Input
-                        label="Province"
-                        placeholder="Western Province"
-                        required
-                        half
-                      />
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 1fr",
+                          gap: 12,
+                        }}
+                      >
+                        {(
+                          [
+                            {
+                              key: "name",
+                              label: "Full Name *",
+                              placeholder: "Kasun Perera",
+                              span: 1,
+                            },
+                            {
+                              key: "phone",
+                              label: "Phone *",
+                              placeholder: "+94 77 123 4567",
+                              span: 1,
+                              type: "tel",
+                            },
+                            {
+                              key: "address_line1",
+                              label: "Address Line 1 *",
+                              placeholder: "No. 123, Galle Road",
+                              span: 2,
+                            },
+                            {
+                              key: "address_line2",
+                              label: "Address Line 2",
+                              placeholder: "Apartment, floor…",
+                              span: 2,
+                            },
+                            {
+                              key: "city",
+                              label: "City *",
+                              placeholder: "Colombo",
+                              span: 1,
+                            },
+                            {
+                              key: "postal_code",
+                              label: "Postal Code",
+                              placeholder: "00300",
+                              span: 1,
+                            },
+                          ] as {
+                            key: keyof AddressBody;
+                            label: string;
+                            placeholder: string;
+                            span: number;
+                            type?: string;
+                          }[]
+                        ).map(
+                          ({
+                            key,
+                            label,
+                            placeholder,
+                            span,
+                            type = "text",
+                          }) => (
+                            <div
+                              key={key}
+                              style={{ gridColumn: `span ${span}` }}
+                            >
+                              <label
+                                style={{
+                                  display: "block",
+                                  fontSize: 11,
+                                  fontWeight: 600,
+                                  color: "var(--text-muted)",
+                                  marginBottom: 4,
+                                  textTransform: "uppercase",
+                                }}
+                              >
+                                {label}
+                              </label>
+                              <input
+                                type={type}
+                                value={newForm[key] as string}
+                                onChange={(e) => setF(key, e.target.value)}
+                                placeholder={placeholder}
+                                style={{
+                                  width: "100%",
+                                  padding: "9px 12px",
+                                  border: "1.5px solid var(--border)",
+                                  borderRadius: "var(--radius-sm)",
+                                  fontSize: 13,
+                                  boxSizing: "border-box",
+                                  background: "white",
+                                }}
+                              />
+                            </div>
+                          ),
+                        )}
+                        <div style={{ gridColumn: "span 2" }}>
+                          <label
+                            style={{
+                              display: "block",
+                              fontSize: 11,
+                              fontWeight: 600,
+                              color: "var(--text-muted)",
+                              marginBottom: 4,
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            Province
+                          </label>
+                          <select
+                            value={newForm.province}
+                            onChange={(e) => setF("province", e.target.value)}
+                            style={{
+                              width: "100%",
+                              padding: "9px 12px",
+                              border: "1.5px solid var(--border)",
+                              borderRadius: "var(--radius-sm)",
+                              fontSize: 13,
+                              boxSizing: "border-box",
+                              background: "white",
+                            }}
+                          >
+                            <option value="">Select province…</option>
+                            {PROVINCES.map((p) => (
+                              <option key={p} value={p}>
+                                {p}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div style={{ gridColumn: "span 2" }}>
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 8,
+                              cursor: "pointer",
+                              fontSize: 13,
+                              color: "var(--text-secondary)",
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={newForm.is_default}
+                              onChange={(e) =>
+                                setF("is_default", e.target.checked)
+                              }
+                              style={{ accentColor: "var(--primary)" }}
+                            />
+                            Set as default address
+                          </label>
+                        </div>
+                      </div>
+                      {newAddrError && (
+                        <p
+                          style={{
+                            color: "var(--error)",
+                            fontSize: 12,
+                            marginTop: 8,
+                          }}
+                        >
+                          {newAddrError}
+                        </p>
+                      )}
+                      <button
+                        onClick={handleAddNewAddress}
+                        disabled={addingAddr}
+                        style={{
+                          marginTop: 12,
+                          width: "100%",
+                          padding: "10px",
+                          background: "var(--primary)",
+                          color: "white",
+                          borderRadius: "var(--radius-sm)",
+                          fontSize: 13,
+                          fontWeight: 700,
+                          border: "none",
+                          cursor: addingAddr ? "not-allowed" : "pointer",
+                          opacity: addingAddr ? 0.75 : 1,
+                        }}
+                      >
+                        {addingAddr ? "Saving…" : "Save Address"}
+                      </button>
                     </div>
                   )}
                 </div>

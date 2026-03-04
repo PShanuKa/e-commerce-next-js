@@ -8,6 +8,7 @@ import CheckoutPage from "../pages/Checkout";
 import OrderSuccess from "../pages/OrderSuccess";
 import ProfilePage from "../pages/Account";
 import OrdersPage from "../pages/Account/Orders";
+import AddressesPage from "../pages/Account/Addresses";
 import WishlistPage from "../pages/Wishlist";
 import AboutPage from "../pages/About";
 import ContactPage from "../pages/Contact";
@@ -25,6 +26,7 @@ export const PublicRoutes = [
   { path: "/wishlist", element: <WishlistPage /> },
   { path: "/account", element: <ProfilePage /> },
   { path: "/account/orders", element: <OrdersPage /> },
+  { path: "/account/addresses", element: <AddressesPage /> },
   { path: "/about", element: <AboutPage /> },
   { path: "/contact", element: <ContactPage /> },
   { path: "*", element: <NotFound /> },
