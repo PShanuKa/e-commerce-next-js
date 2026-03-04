@@ -3,6 +3,7 @@ import AuthGuard from "@/components/auth/AuthGuard";
 import LoginPage from "@/pages/auth/LoginPage";
 import DashboardPage from "@/pages/dashboard/DashboardPage";
 import CategoriesPage from "@/pages/categories/CategoriesPage";
+import ProductsPage from "@/pages/products/ProductsPage";
 
 const AppRoutes = () => (
   <Routes>
@@ -12,11 +13,10 @@ const AppRoutes = () => (
     {/* Protected admin routes */}
     <Route element={<AuthGuard />}>
       <Route path="/dashboard" element={<DashboardPage />} />
-      {/* Future pages go here */}
-      {/* <Route path="/products"   element={<ProductsPage />} /> */}
+      <Route path="/categories" element={<CategoriesPage />} />
+      <Route path="/products" element={<ProductsPage />} />
       {/* <Route path="/orders"     element={<OrdersPage />} /> */}
       {/* <Route path="/customers"  element={<CustomersPage />} /> */}
-      <Route path="/categories" element={<CategoriesPage />} />
     </Route>
 
     {/* Fallback */}

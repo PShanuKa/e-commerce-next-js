@@ -64,6 +64,8 @@ model Product {
   categoryId    Int?     @map("category_id")
   brand         String?  @db.VarChar(100)
   badge         String?  @db.VarChar(50)
+  availability  String   @default("in_stock") @db.VarChar(30)
+  // 'in_stock' | 'ships_2_3_days' | 'pre_order'
   isActive      Boolean  @default(true) @map("is_active")
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz

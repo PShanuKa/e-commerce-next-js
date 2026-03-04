@@ -1,219 +1,35 @@
-import { useState, useMemo, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import {
-  IoStarSharp,
-  IoHeartOutline,
-  IoHeart,
   IoGridOutline,
   IoListOutline,
   IoFilterOutline,
+  IoHeartOutline,
+  IoHeart,
 } from "react-icons/io5";
 import { HiOutlineShoppingCart } from "react-icons/hi";
-import { FaAngleDown, FaAngleUp } from "react-icons/fa";
+import {
+  FaAngleDown,
+  FaAngleUp,
+  FaChevronLeft,
+  FaChevronRight,
+} from "react-icons/fa";
+import { MdSearch } from "react-icons/md";
+import { useGetProductsQuery, type Product } from "@/services/productSlice";
 import { useGetCategoriesQuery } from "@/services/categorySlice";
 
-/* ─── Mock Data ─────────────────────────────────── */
-const PRODUCTS = [
-  {
-    id: 1,
-    name: "Sony WH-1000XM5 Wireless Headphones",
-    price: 34500,
-    originalPrice: 48000,
-    rating: 4.8,
-    reviews: 2341,
-    category: "Electronics",
-    badge: "Best Seller",
-    image:
-      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
-  },
-  {
-    id: 2,
-    name: 'Samsung Galaxy Tab S9 Ultra 14.6"',
-    price: 189000,
-    originalPrice: 215000,
-    rating: 4.7,
-    reviews: 892,
-    category: "Electronics",
-    badge: "New",
-    image:
-      "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400&h=400&fit=crop",
-  },
-  {
-    id: 3,
-    name: "Apple AirPods Pro (2nd Gen)",
-    price: 58000,
-    originalPrice: 65000,
-    rating: 4.9,
-    reviews: 5432,
-    category: "Electronics",
-    badge: "Top Rated",
-    image:
-      "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=400&h=400&fit=crop",
-  },
-  {
-    id: 4,
-    name: "Nike Air Max 270 React",
-    price: 18500,
-    originalPrice: 24000,
-    rating: 4.6,
-    reviews: 1123,
-    category: "Fashion",
-    badge: "Sale",
-    image:
-      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop",
-  },
-  {
-    id: 5,
-    name: "Canon EOS R50 Mirrorless Camera",
-    price: 135000,
-    originalPrice: 149000,
-    rating: 4.8,
-    reviews: 543,
-    category: "Electronics",
-    badge: "Hot",
-    image:
-      "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&h=400&fit=crop",
-  },
-  {
-    id: 6,
-    name: "Logitech MX Master 3S Mouse",
-    price: 22000,
-    originalPrice: 27500,
-    rating: 4.9,
-    reviews: 3210,
-    category: "Electronics",
-    badge: "Best Seller",
-    image:
-      "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&h=400&fit=crop",
-  },
-  {
-    id: 7,
-    name: "IKEA MALM Bed Frame Queen",
-    price: 56000,
-    originalPrice: 68000,
-    rating: 4.5,
-    reviews: 776,
-    category: "Home",
-    badge: "Sale",
-    image:
-      "https://images.unsplash.com/photo-1505693316919-1021ec6a9a07?w=400&h=400&fit=crop",
-  },
-  {
-    id: 8,
-    name: "Adidas Ultraboost 23 Running Shoes",
-    price: 23000,
-    originalPrice: 31000,
-    rating: 4.7,
-    reviews: 1890,
-    category: "Fashion",
-    badge: "New",
-    image:
-      "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=400&h=400&fit=crop",
-  },
-  {
-    id: 9,
-    name: "Philips Air Fryer XXL 7.3L",
-    price: 28500,
-    originalPrice: 35000,
-    rating: 4.6,
-    reviews: 987,
-    category: "Home",
-    badge: "Hot",
-    image:
-      "https://images.unsplash.com/photo-1585515320310-259814833e62?w=400&h=400&fit=crop",
-  },
-  {
-    id: 10,
-    name: "Kindle Paperwhite (16GB)",
-    price: 19500,
-    originalPrice: 22000,
-    rating: 4.8,
-    reviews: 4102,
-    category: "Electronics",
-    badge: "Best Seller",
-    image:
-      "https://images.unsplash.com/photo-1592434134753-a70baf7979d5?w=400&h=400&fit=crop",
-  },
-  {
-    id: 11,
-    name: "Yoga Mat Premium Non-Slip 6mm",
-    price: 3500,
-    originalPrice: 5000,
-    rating: 4.5,
-    reviews: 2231,
-    category: "Sports",
-    badge: "Sale",
-    image:
-      "https://images.unsplash.com/photo-1601925228008-0f0f48e1c15c?w=400&h=400&fit=crop",
-  },
-  {
-    id: 12,
-    name: "LEVI'S 512 Slim Taper Jeans",
-    price: 8500,
-    originalPrice: 12000,
-    rating: 4.4,
-    reviews: 654,
-    category: "Fashion",
-    badge: "Sale",
-    image:
-      "https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&h=400&fit=crop",
-  },
-  {
-    id: 13,
-    name: "JBL Charge 5 Bluetooth Speaker",
-    price: 26000,
-    originalPrice: 31500,
-    rating: 4.7,
-    reviews: 1456,
-    category: "Electronics",
-    badge: "Hot",
-    image:
-      "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400&h=400&fit=crop",
-  },
-  {
-    id: 14,
-    name: "Instant Pot Duo 7-in-1 6QT",
-    price: 18900,
-    originalPrice: 24000,
-    rating: 4.8,
-    reviews: 3876,
-    category: "Home",
-    badge: "Best Seller",
-    image:
-      "https://images.unsplash.com/photo-1585515320310-259814833e62?w=400&h=400&fit=crop",
-  },
-  {
-    id: 15,
-    name: "Under Armour HOVR Phantom Running",
-    price: 16500,
-    originalPrice: 21000,
-    rating: 4.5,
-    reviews: 891,
-    category: "Sports",
-    badge: "New",
-    image:
-      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop",
-  },
-  {
-    id: 16,
-    name: "Dyson V15 Detect Cordless Vacuum",
-    price: 115000,
-    originalPrice: 132000,
-    rating: 4.9,
-    reviews: 1023,
-    category: "Home",
-    badge: "Top Rated",
-    image:
-      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop",
-  },
+/* ─── Constants ─────────────────────────────────────────────── */
+const SORT_OPTIONS = [
+  { label: "Newest", value: "created_at" },
+  { label: "Price: Low → High", value: "price_asc" },
+  { label: "Price: High → Low", value: "price_desc" },
 ];
 
-const SORT_OPTIONS = [
-  { label: "Featured", value: "featured" },
-  { label: "Price: Low to High", value: "price-asc" },
-  { label: "Price: High to Low", value: "price-desc" },
-  { label: "Top Rated", value: "rating" },
-  { label: "Most Reviews", value: "reviews" },
+const AVAILABILITY_OPTIONS = [
+  { label: "All", value: "" },
+  { label: "In Stock", value: "in_stock" },
+  { label: "Ships in 2-3 Days", value: "ships_2_3_days" },
+  { label: "Pre Order", value: "pre_order" },
 ];
 
 const BADGE_COLORS: Record<string, { bg: string; color: string }> = {
@@ -224,404 +40,13 @@ const BADGE_COLORS: Record<string, { bg: string; color: string }> = {
   Hot: { bg: "#FFF7ED", color: "#C2410C" },
 };
 
-/* ─── Sub Components ─────────────────────────────── */
-const StarRating = ({ rating }: { rating: number }) => (
-  <div style={{ display: "flex", gap: 2, alignItems: "center" }}>
-    {[1, 2, 3, 4, 5].map((s) => (
-      <IoStarSharp
-        key={s}
-        size={12}
-        color={s <= Math.floor(rating) ? "#F59E0B" : "#E2E8F0"}
-      />
-    ))}
-  </div>
-);
-
-const ProductCard = ({
-  product,
-  view,
-}: {
-  product: (typeof PRODUCTS)[0];
-  view: "grid" | "list";
-}) => {
-  const [wishlisted, setWishlisted] = useState(false);
-  const [added, setAdded] = useState(false);
-  const discount = Math.round(
-    ((product.originalPrice - product.price) / product.originalPrice) * 100,
-  );
-  const badge = BADGE_COLORS[product.badge] ?? {
-    bg: "#F1F5F9",
-    color: "#475569",
-  };
-
-  const handleCart = () => {
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
-  };
-
-  if (view === "list") {
-    return (
-      <div
-        className="card"
-        style={{ display: "flex", gap: 0, overflow: "hidden" }}
-      >
-        <Link
-          to={`/product/${product.id}`}
-          style={{
-            flexShrink: 0,
-            width: 200,
-            overflow: "hidden",
-            background: "#F8FAFC",
-          }}
-        >
-          <img
-            src={product.image}
-            alt={product.name}
-            style={{
-              width: "100%",
-              height: 160,
-              objectFit: "cover",
-              transition: "transform 0.3s",
-              display: "block",
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.transform = "scale(1.05)")
-            }
-            onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-          />
-        </Link>
-        <div
-          style={{
-            flex: 1,
-            padding: "16px 20px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-          }}
-        >
-          <div>
-            <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
-              <span
-                style={{
-                  ...badge,
-                  fontSize: 10,
-                  fontWeight: 700,
-                  padding: "2px 8px",
-                  borderRadius: "var(--radius-full)",
-                  textTransform: "uppercase",
-                }}
-              >
-                {product.badge}
-              </span>
-              <span
-                style={{
-                  fontSize: 10,
-                  color: "var(--text-muted)",
-                  fontWeight: 500,
-                }}
-              >
-                {product.category}
-              </span>
-            </div>
-            <Link to={`/product/${product.id}`}>
-              <h3
-                style={{
-                  fontSize: 15,
-                  fontWeight: 600,
-                  color: "var(--text-primary)",
-                  marginBottom: 6,
-                  lineHeight: 1.4,
-                }}
-              >
-                {product.name}
-              </h3>
-            </Link>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                marginBottom: 10,
-              }}
-            >
-              <StarRating rating={product.rating} />
-              <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
-                {product.rating} ({product.reviews.toLocaleString()} reviews)
-              </span>
-            </div>
-          </div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-              <span
-                style={{
-                  fontSize: 20,
-                  fontWeight: 800,
-                  color: "var(--primary)",
-                }}
-              >
-                Rs. {product.price.toLocaleString()}
-              </span>
-              <span
-                style={{
-                  fontSize: 13,
-                  color: "var(--text-muted)",
-                  textDecoration: "line-through",
-                }}
-              >
-                Rs. {product.originalPrice.toLocaleString()}
-              </span>
-              <span
-                style={{
-                  background: "var(--error)",
-                  color: "white",
-                  fontSize: 11,
-                  fontWeight: 700,
-                  padding: "2px 7px",
-                  borderRadius: "var(--radius-sm)",
-                }}
-              >
-                -{discount}%
-              </span>
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button
-                onClick={() => setWishlisted(!wishlisted)}
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: "var(--radius-sm)",
-                  border: "1.5px solid var(--border)",
-                  background: "white",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {wishlisted ? (
-                  <IoHeart color="#EF4444" size={16} />
-                ) : (
-                  <IoHeartOutline size={16} color="var(--text-muted)" />
-                )}
-              </button>
-              <button
-                onClick={handleCart}
-                style={{
-                  padding: "0 20px",
-                  height: 36,
-                  background: added ? "var(--accent)" : "var(--primary)",
-                  color: "white",
-                  borderRadius: "var(--radius-sm)",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  border: "none",
-                  cursor: "pointer",
-                  transition: "var(--transition)",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                <HiOutlineShoppingCart size={15} />{" "}
-                {added ? "Added ✓" : "Add to Cart"}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className="card"
-      style={{ overflow: "hidden", display: "flex", flexDirection: "column" }}
-    >
-      <div
-        style={{
-          position: "relative",
-          overflow: "hidden",
-          background: "#F8FAFC",
-        }}
-      >
-        <Link to={`/product/${product.id}`}>
-          <img
-            src={product.image}
-            alt={product.name}
-            style={{
-              width: "100%",
-              height: 200,
-              objectFit: "cover",
-              transition: "transform 0.4s ease",
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.transform = "scale(1.08)")
-            }
-            onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-          />
-        </Link>
-        <div
-          style={{
-            position: "absolute",
-            top: 10,
-            left: 10,
-            background: "var(--error)",
-            color: "white",
-            fontSize: 11,
-            fontWeight: 700,
-            padding: "3px 7px",
-            borderRadius: "var(--radius-sm)",
-          }}
-        >
-          -{discount}%
-        </div>
-        <div
-          style={{
-            position: "absolute",
-            top: 10,
-            right: 10,
-            ...badge,
-            fontSize: 10,
-            fontWeight: 700,
-            padding: "3px 7px",
-            borderRadius: "var(--radius-sm)",
-            textTransform: "uppercase",
-          }}
-        >
-          {product.badge}
-        </div>
-        <button
-          onClick={() => setWishlisted(!wishlisted)}
-          style={{
-            position: "absolute",
-            bottom: 10,
-            right: 10,
-            width: 32,
-            height: 32,
-            borderRadius: "50%",
-            background: "white",
-            boxShadow: "var(--shadow-sm)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          {wishlisted ? (
-            <IoHeart color="#EF4444" size={14} />
-          ) : (
-            <IoHeartOutline size={14} color="var(--text-muted)" />
-          )}
-        </button>
-      </div>
-      <div
-        style={{
-          padding: 14,
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        <span
-          style={{
-            fontSize: 10,
-            color: "var(--text-muted)",
-            marginBottom: 4,
-            fontWeight: 500,
-            textTransform: "uppercase",
-          }}
-        >
-          {product.category}
-        </span>
-        <Link to={`/product/${product.id}`} style={{ flex: 1 }}>
-          <p
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: "var(--text-primary)",
-              lineHeight: 1.45,
-              marginBottom: 8,
-              overflow: "hidden",
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-            }}
-          >
-            {product.name}
-          </p>
-        </Link>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            marginBottom: 10,
-          }}
-        >
-          <StarRating rating={product.rating} />
-          <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
-            ({product.reviews.toLocaleString()})
-          </span>
-        </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "baseline",
-            gap: 6,
-            marginBottom: 12,
-          }}
-        >
-          <span
-            style={{ fontSize: 17, fontWeight: 800, color: "var(--primary)" }}
-          >
-            Rs. {product.price.toLocaleString()}
-          </span>
-          <span
-            style={{
-              fontSize: 12,
-              color: "var(--text-muted)",
-              textDecoration: "line-through",
-            }}
-          >
-            Rs. {product.originalPrice.toLocaleString()}
-          </span>
-        </div>
-        <button
-          onClick={handleCart}
-          style={{
-            width: "100%",
-            padding: "9px",
-            background: added ? "var(--accent)" : "var(--primary)",
-            color: "white",
-            borderRadius: "var(--radius-sm)",
-            fontSize: 13,
-            fontWeight: 600,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 6,
-            transition: "var(--transition)",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          <HiOutlineShoppingCart size={15} />{" "}
-          {added ? "Added to Cart ✓" : "Add to Cart"}
-        </button>
-      </div>
-    </div>
-  );
+const AVAILABILITY_LABELS: Record<string, { label: string; color: string }> = {
+  in_stock: { label: "In Stock", color: "#059669" },
+  ships_2_3_days: { label: "Ships in 2-3 Days", color: "#D97706" },
+  pre_order: { label: "Pre Order", color: "#7C3AED" },
 };
 
-/* ─── Filter Accordion ───────────────────────────── */
+/* ─── Filter Accordion ───────────────────────────────────────── */
 const FilterSection = ({
   title,
   children,
@@ -672,49 +97,500 @@ const FilterSection = ({
   );
 };
 
-/* ─── Main Page ──────────────────────────────────── */
+/* ─── Product Card ───────────────────────────────────────────── */
+const ProductCard = ({
+  product,
+  view,
+}: {
+  product: Product;
+  view: "grid" | "list";
+}) => {
+  const [wishlisted, setWishlisted] = useState(false);
+  const [added, setAdded] = useState(false);
+
+  const discount =
+    product.originalPrice && product.originalPrice > product.price
+      ? Math.round(
+          ((product.originalPrice - product.price) / product.originalPrice) *
+            100,
+        )
+      : null;
+
+  const badge = product.badge
+    ? (BADGE_COLORS[product.badge] ?? { bg: "#F1F5F9", color: "#475569" })
+    : null;
+  const avail = AVAILABILITY_LABELS[product.availability];
+
+  const handleCart = () => {
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
+  };
+
+  const img = (
+    <img
+      src={product.image || "https://via.placeholder.com/400x400?text=No+Image"}
+      alt={product.name}
+      style={{
+        width: "100%",
+        height: view === "list" ? 160 : 200,
+        objectFit: "cover",
+        transition: "transform 0.4s ease",
+        display: "block",
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.07)")}
+      onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+    />
+  );
+
+  if (view === "list") {
+    return (
+      <div
+        className="card"
+        style={{ display: "flex", gap: 0, overflow: "hidden" }}
+      >
+        <Link
+          to={`/product/${product.id}`}
+          style={{
+            flexShrink: 0,
+            width: 200,
+            overflow: "hidden",
+            background: "#F8FAFC",
+          }}
+        >
+          {img}
+        </Link>
+        <div
+          style={{
+            flex: 1,
+            padding: "16px 20px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+          }}
+        >
+          <div>
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                marginBottom: 6,
+                flexWrap: "wrap",
+              }}
+            >
+              {badge && (
+                <span
+                  style={{
+                    ...badge,
+                    fontSize: 10,
+                    fontWeight: 700,
+                    padding: "2px 8px",
+                    borderRadius: "var(--radius-full)",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {product.badge}
+                </span>
+              )}
+              {avail && (
+                <span
+                  style={{ fontSize: 10, color: avail.color, fontWeight: 600 }}
+                >
+                  ● {avail.label}
+                </span>
+              )}
+            </div>
+            <Link to={`/product/${product.id}`}>
+              <h3
+                style={{
+                  fontSize: 15,
+                  fontWeight: 600,
+                  color: "var(--text-primary)",
+                  marginBottom: 6,
+                  lineHeight: 1.4,
+                }}
+              >
+                {product.name}
+              </h3>
+            </Link>
+            {product.category_name && (
+              <span
+                style={{
+                  fontSize: 11,
+                  color: "var(--text-muted)",
+                  fontWeight: 500,
+                  textTransform: "uppercase",
+                }}
+              >
+                {product.category_name}
+              </span>
+            )}
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginTop: 12,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+              <span
+                style={{
+                  fontSize: 20,
+                  fontWeight: 800,
+                  color: "var(--primary)",
+                }}
+              >
+                Rs. {product.price.toLocaleString()}
+              </span>
+              {product.originalPrice && (
+                <span
+                  style={{
+                    fontSize: 13,
+                    color: "var(--text-muted)",
+                    textDecoration: "line-through",
+                  }}
+                >
+                  Rs. {product.originalPrice.toLocaleString()}
+                </span>
+              )}
+              {discount && (
+                <span
+                  style={{
+                    background: "var(--error)",
+                    color: "white",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    padding: "2px 7px",
+                    borderRadius: "var(--radius-sm)",
+                  }}
+                >
+                  -{discount}%
+                </span>
+              )}
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                onClick={() => setWishlisted(!wishlisted)}
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: "var(--radius-sm)",
+                  border: "1.5px solid var(--border)",
+                  background: "white",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {wishlisted ? (
+                  <IoHeart color="#EF4444" size={16} />
+                ) : (
+                  <IoHeartOutline size={16} color="var(--text-muted)" />
+                )}
+              </button>
+              <button
+                onClick={handleCart}
+                style={{
+                  padding: "0 20px",
+                  height: 36,
+                  background: added ? "var(--accent)" : "var(--primary)",
+                  color: "white",
+                  borderRadius: "var(--radius-sm)",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  border: "none",
+                  cursor: "pointer",
+                  transition: "var(--transition)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                <HiOutlineShoppingCart size={15} />
+                {added ? "Added ✓" : "Add to Cart"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="card"
+      style={{ overflow: "hidden", display: "flex", flexDirection: "column" }}
+    >
+      <div
+        style={{
+          position: "relative",
+          overflow: "hidden",
+          background: "#F8FAFC",
+        }}
+      >
+        <Link to={`/product/${product.id}`}>{img}</Link>
+        {discount && (
+          <div
+            style={{
+              position: "absolute",
+              top: 10,
+              left: 10,
+              background: "var(--error)",
+              color: "white",
+              fontSize: 11,
+              fontWeight: 700,
+              padding: "3px 7px",
+              borderRadius: "var(--radius-sm)",
+            }}
+          >
+            -{discount}%
+          </div>
+        )}
+        {badge && (
+          <div
+            style={{
+              position: "absolute",
+              top: 10,
+              right: 10,
+              ...badge,
+              fontSize: 10,
+              fontWeight: 700,
+              padding: "3px 7px",
+              borderRadius: "var(--radius-sm)",
+              textTransform: "uppercase",
+            }}
+          >
+            {product.badge}
+          </div>
+        )}
+        <button
+          onClick={() => setWishlisted(!wishlisted)}
+          style={{
+            position: "absolute",
+            bottom: 10,
+            right: 10,
+            width: 32,
+            height: 32,
+            borderRadius: "50%",
+            background: "white",
+            boxShadow: "var(--shadow-sm)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            border: "none",
+            cursor: "pointer",
+          }}
+        >
+          {wishlisted ? (
+            <IoHeart color="#EF4444" size={14} />
+          ) : (
+            <IoHeartOutline size={14} color="var(--text-muted)" />
+          )}
+        </button>
+      </div>
+      <div
+        style={{
+          padding: 14,
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 4,
+          }}
+        >
+          <span
+            style={{
+              fontSize: 10,
+              color: "var(--text-muted)",
+              fontWeight: 500,
+              textTransform: "uppercase",
+            }}
+          >
+            {product.category_name ?? ""}
+          </span>
+          {avail && (
+            <span style={{ fontSize: 9, color: avail.color, fontWeight: 600 }}>
+              ● {avail.label}
+            </span>
+          )}
+        </div>
+        <Link to={`/product/${product.id}`} style={{ flex: 1 }}>
+          <p
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: "var(--text-primary)",
+              lineHeight: 1.45,
+              marginBottom: 8,
+              overflow: "hidden",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+            }}
+          >
+            {product.name}
+          </p>
+        </Link>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "baseline",
+            gap: 6,
+            marginBottom: 12,
+          }}
+        >
+          <span
+            style={{ fontSize: 17, fontWeight: 800, color: "var(--primary)" }}
+          >
+            Rs. {product.price.toLocaleString()}
+          </span>
+          {product.originalPrice && (
+            <span
+              style={{
+                fontSize: 12,
+                color: "var(--text-muted)",
+                textDecoration: "line-through",
+              }}
+            >
+              Rs. {product.originalPrice.toLocaleString()}
+            </span>
+          )}
+        </div>
+        <button
+          onClick={handleCart}
+          style={{
+            width: "100%",
+            padding: "9px",
+            background: added ? "var(--accent)" : "var(--primary)",
+            color: "white",
+            borderRadius: "var(--radius-sm)",
+            fontSize: 13,
+            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 6,
+            transition: "var(--transition)",
+            border: "none",
+            cursor: "pointer",
+          }}
+        >
+          <HiOutlineShoppingCart size={15} />
+          {added ? "Added to Cart ✓" : "Add to Cart"}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+/* ─── Skeleton Card ──────────────────────────────────────────── */
+const SkeletonCard = () => (
+  <div className="card" style={{ overflow: "hidden" }}>
+    <div
+      style={{
+        height: 200,
+        background:
+          "linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%)",
+        backgroundSize: "200% 100%",
+        animation: "shimmer 1.4s infinite",
+      }}
+    />
+    <div style={{ padding: 14 }}>
+      {[80, 100, 60].map((w, i) => (
+        <div
+          key={i}
+          style={{
+            height: 12,
+            background: "#f0f0f0",
+            borderRadius: 6,
+            marginBottom: 10,
+            width: `${w}%`,
+            animation: "shimmer 1.4s infinite",
+          }}
+        />
+      ))}
+    </div>
+  </div>
+);
+
+/* ─── Main Page ──────────────────────────────────────────────── */
 const ShopPage = () => {
   const [searchParams] = useSearchParams();
-  const { data: catData } = useGetCategoriesQuery();
+  const navigate = useNavigate();
 
-  // Build category list from API: "All" + API slugs
+  const { data: catData } = useGetCategoriesQuery();
   const apiCategories = catData?.categories ?? [];
 
-  // Initialize selected category from URL param ?category=slug
-  const urlCategory = searchParams.get("category") ?? "all";
-  const [selectedCategory, setSelectedCategory] = useState<string>(urlCategory);
-
-  // When API loads, keep URL param selection in sync
-  useEffect(() => {
-    const param = searchParams.get("category") ?? "all";
-    setSelectedCategory(param);
-  }, [searchParams]);
-
-  const [sortBy, setSortBy] = useState("featured");
+  // Filters synced to URL params
+  const [selectedCategory, setSelectedCategory] = useState(
+    searchParams.get("category") ?? "",
+  );
+  const [selectedAvailability, setSelectedAvailability] = useState(
+    searchParams.get("availability") ?? "",
+  );
+  const [sortBy, setSortBy] = useState(
+    searchParams.get("sort") ?? "created_at",
+  );
+  const [search, setSearch] = useState(searchParams.get("search") ?? "");
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 500000]);
+  const [page, setPage] = useState(Number(searchParams.get("page") ?? 1));
   const [view, setView] = useState<"grid" | "list">("grid");
-  const [priceRange, setPriceRange] = useState([0, 200000]);
   const [showFilter, setShowFilter] = useState(true);
 
-  const filtered = useMemo(() => {
-    let list = [...PRODUCTS];
-    // Match by category slug or name (case-insensitive), "all" shows everything
-    if (selectedCategory && selectedCategory !== "all") {
-      list = list.filter(
-        (p) =>
-          p.category.toLowerCase() === selectedCategory.toLowerCase() ||
-          p.category.toLowerCase().replace(/\s+/g, "-") ===
-            selectedCategory.toLowerCase(),
-      );
-    }
-    list = list.filter(
-      (p) => p.price >= priceRange[0] && p.price <= priceRange[1],
-    );
-    if (sortBy === "price-asc") list.sort((a, b) => a.price - b.price);
-    if (sortBy === "price-desc") list.sort((a, b) => b.price - a.price);
-    if (sortBy === "rating") list.sort((a, b) => b.rating - a.rating);
-    if (sortBy === "reviews") list.sort((a, b) => b.reviews - a.reviews);
-    return list;
-  }, [selectedCategory, sortBy, priceRange]);
+  // Debounce search
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // Sync URL param category on mount/change
+  useEffect(() => {
+    const cat = searchParams.get("category") ?? "";
+    setSelectedCategory(cat);
+    setPage(1);
+  }, [searchParams]);
+
+  const filters = {
+    page,
+    limit: 16,
+    ...(selectedCategory && { category: selectedCategory }),
+    ...(selectedAvailability && { availability: selectedAvailability }),
+    ...(debouncedSearch && { search: debouncedSearch }),
+    ...(sortBy && {
+      sort: sortBy as "price_asc" | "price_desc" | "created_at",
+    }),
+    ...(priceRange[1] < 500000 && { maxPrice: priceRange[1] }),
+    ...(priceRange[0] > 0 && { minPrice: priceRange[0] }),
+  };
+
+  const { data, isLoading, isFetching } = useGetProductsQuery(filters);
+  const products = data?.products ?? [];
+  const meta = data?.meta;
+
+  const handleCategoryChange = useCallback(
+    (slug: string) => {
+      setSelectedCategory(slug);
+      setPage(1);
+      const params = new URLSearchParams(searchParams);
+      if (slug) params.set("category", slug);
+      else params.delete("category");
+      navigate(`/shop?${params.toString()}`, { replace: true });
+    },
+    [searchParams, navigate],
+  );
 
   return (
     <div style={{ padding: "28px 0 60px", background: "var(--bg-base)" }}>
@@ -737,6 +613,21 @@ const ShopPage = () => {
           <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>
             Shop
           </span>
+          {selectedCategory && (
+            <>
+              <span>/</span>
+              <span
+                style={{
+                  color: "var(--text-primary)",
+                  fontWeight: 500,
+                  textTransform: "capitalize",
+                }}
+              >
+                {apiCategories.find((c) => c.slug === selectedCategory)?.name ??
+                  selectedCategory}
+              </span>
+            </>
+          )}
         </div>
 
         <div style={{ display: "flex", gap: 24 }}>
@@ -763,8 +654,12 @@ const ShopPage = () => {
                   </h3>
                   <button
                     onClick={() => {
-                      setSelectedCategory("all");
-                      setPriceRange([0, 200000]);
+                      setSelectedCategory("");
+                      setSelectedAvailability("");
+                      setPriceRange([0, 500000]);
+                      setSearch("");
+                      setPage(1);
+                      navigate("/shop");
                     }}
                     style={{
                       fontSize: 12,
@@ -779,22 +674,20 @@ const ShopPage = () => {
                   </button>
                 </div>
 
+                {/* Category */}
                 <FilterSection title="Category">
                   <div
                     style={{ display: "flex", flexDirection: "column", gap: 8 }}
                   >
-                    {/* All */}
                     {[
                       {
-                        slug: "all",
+                        slug: "",
                         name: "All",
-                        product_count: PRODUCTS.length,
+                        product_count: meta?.total ?? 0,
                       },
                       ...apiCategories,
                     ].map((cat) => {
-                      const isAll = cat.slug === "all";
                       const isSelected = selectedCategory === cat.slug;
-                      // For "All" show total; for API cats, show their backend product_count
                       return (
                         <label
                           key={cat.slug}
@@ -809,7 +702,7 @@ const ShopPage = () => {
                             type="radio"
                             name="category"
                             checked={isSelected}
-                            onChange={() => setSelectedCategory(cat.slug)}
+                            onChange={() => handleCategoryChange(cat.slug)}
                             style={{
                               accentColor: "var(--primary)",
                               width: 15,
@@ -832,7 +725,7 @@ const ShopPage = () => {
                               color: "var(--text-muted)",
                             }}
                           >
-                            {isAll ? PRODUCTS.length : cat.product_count}
+                            {cat.product_count}
                           </span>
                         </label>
                       );
@@ -840,226 +733,223 @@ const ShopPage = () => {
                   </div>
                 </FilterSection>
 
-                <FilterSection title="Price Range">
-                  <div style={{ padding: "0 4px" }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        marginBottom: 10,
-                      }}
-                    >
-                      <span
-                        style={{ fontSize: 12, color: "var(--text-muted)" }}
-                      >
-                        Rs. {priceRange[0].toLocaleString()}
-                      </span>
-                      <span
-                        style={{ fontSize: 12, color: "var(--text-muted)" }}
-                      >
-                        Rs. {priceRange[1].toLocaleString()}
-                      </span>
-                    </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={200000}
-                      step={1000}
-                      value={priceRange[1]}
-                      onChange={(e) =>
-                        setPriceRange([priceRange[0], +e.target.value])
-                      }
-                      style={{ width: "100%", accentColor: "var(--primary)" }}
-                    />
-                  </div>
-                </FilterSection>
-
-                <FilterSection title="Rating">
+                {/* Availability */}
+                <FilterSection title="Availability">
                   <div
                     style={{ display: "flex", flexDirection: "column", gap: 8 }}
                   >
-                    {[5, 4, 3].map((r) => (
-                      <label
-                        key={r}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                          cursor: "pointer",
-                        }}
-                      >
-                        <input
-                          type="checkbox"
+                    {AVAILABILITY_OPTIONS.map((opt) => {
+                      const isSelected = selectedAvailability === opt.value;
+                      return (
+                        <label
+                          key={opt.value}
                           style={{
-                            accentColor: "var(--primary)",
-                            width: 14,
-                            height: 14,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            cursor: "pointer",
                           }}
-                        />
-                        <div style={{ display: "flex", gap: 2 }}>
-                          {Array.from({ length: 5 }, (_, i) => (
-                            <IoStarSharp
-                              key={i}
-                              size={12}
-                              color={i < r ? "#F59E0B" : "#E2E8F0"}
-                            />
-                          ))}
-                        </div>
-                        <span
-                          style={{ fontSize: 12, color: "var(--text-muted)" }}
                         >
-                          & up
-                        </span>
-                      </label>
-                    ))}
+                          <input
+                            type="radio"
+                            name="availability"
+                            checked={isSelected}
+                            onChange={() => {
+                              setSelectedAvailability(opt.value);
+                              setPage(1);
+                            }}
+                            style={{
+                              accentColor: "var(--primary)",
+                              width: 15,
+                              height: 15,
+                            }}
+                          />
+                          <span
+                            style={{
+                              fontSize: 13,
+                              color: "var(--text-secondary)",
+                              fontWeight: isSelected ? 600 : 400,
+                            }}
+                          >
+                            {opt.label}
+                          </span>
+                        </label>
+                      );
+                    })}
                   </div>
                 </FilterSection>
 
-                <FilterSection title="Availability">
-                  {["In Stock", "Ships in 2-3 Days", "Pre-Order"].map((opt) => (
-                    <label
-                      key={opt}
+                {/* Price Range */}
+                <FilterSection title="Price Range (Rs.)">
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <input
+                      type="number"
+                      placeholder="Min"
+                      value={priceRange[0] || ""}
+                      onChange={(e) =>
+                        setPriceRange([Number(e.target.value), priceRange[1]])
+                      }
                       style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        cursor: "pointer",
-                        marginBottom: 8,
+                        width: "50%",
+                        padding: "6px 8px",
+                        border: "1px solid var(--border)",
+                        borderRadius: "var(--radius-sm)",
+                        fontSize: 12,
                       }}
-                    >
-                      <input
-                        type="checkbox"
-                        defaultChecked={opt === "In Stock"}
-                        style={{
-                          accentColor: "var(--primary)",
-                          width: 14,
-                          height: 14,
-                        }}
-                      />
-                      <span
-                        style={{ fontSize: 13, color: "var(--text-secondary)" }}
-                      >
-                        {opt}
-                      </span>
-                    </label>
-                  ))}
+                    />
+                    <input
+                      type="number"
+                      placeholder="Max"
+                      value={priceRange[1] === 500000 ? "" : priceRange[1]}
+                      onChange={(e) =>
+                        setPriceRange([
+                          priceRange[0],
+                          Number(e.target.value) || 500000,
+                        ])
+                      }
+                      style={{
+                        width: "50%",
+                        padding: "6px 8px",
+                        border: "1px solid var(--border)",
+                        borderRadius: "var(--radius-sm)",
+                        fontSize: 12,
+                      }}
+                    />
+                  </div>
                 </FilterSection>
               </div>
             </div>
           )}
 
-          {/* ── Product Grid ── */}
-          <div style={{ flex: 1 }}>
+          {/* ── Main Content ── */}
+          <div style={{ flex: 1, minWidth: 0 }}>
             {/* Toolbar */}
             <div
-              className="card"
               style={{
-                padding: "12px 16px",
                 display: "flex",
-                justifyContent: "space-between",
                 alignItems: "center",
-                marginBottom: 16,
+                justifyContent: "space-between",
+                gap: 12,
+                marginBottom: 20,
+                flexWrap: "wrap",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <button
                   onClick={() => setShowFilter(!showFilter)}
                   style={{
                     display: "flex",
                     alignItems: "center",
                     gap: 6,
-                    background: "var(--bg-muted)",
-                    border: "1px solid var(--border)",
+                    padding: "8px 14px",
+                    border: "1.5px solid var(--border)",
                     borderRadius: "var(--radius-sm)",
-                    padding: "6px 12px",
+                    background: "white",
                     cursor: "pointer",
                     fontSize: 13,
+                    fontWeight: 600,
                     color: "var(--text-secondary)",
-                    fontWeight: 500,
                   }}
                 >
-                  <IoFilterOutline size={15} /> {showFilter ? "Hide" : "Show"}{" "}
-                  Filters
+                  <IoFilterOutline size={16} /> Filters
                 </button>
+                {/* Search */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    border: "1.5px solid var(--border)",
+                    borderRadius: "var(--radius-sm)",
+                    padding: "7px 12px",
+                    background: "white",
+                    width: 220,
+                  }}
+                >
+                  <MdSearch size={17} color="var(--text-muted)" />
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search products..."
+                    style={{
+                      border: "none",
+                      outline: "none",
+                      fontSize: 13,
+                      color: "var(--text-secondary)",
+                      background: "transparent",
+                      width: "100%",
+                    }}
+                  />
+                </div>
                 <span style={{ fontSize: 13, color: "var(--text-muted)" }}>
-                  <strong style={{ color: "var(--text-primary)" }}>
-                    {filtered.length}
-                  </strong>{" "}
-                  products found
+                  {isFetching
+                    ? "Loading..."
+                    : meta
+                      ? `${meta.total} products`
+                      : ""}
                 </span>
               </div>
-
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span
-                    style={{
-                      fontSize: 12,
-                      color: "var(--text-muted)",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    Sort by:
-                  </span>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    style={{
-                      padding: "6px 10px",
-                      border: "1px solid var(--border)",
-                      borderRadius: "var(--radius-sm)",
-                      fontSize: 13,
-                      color: "var(--text-primary)",
-                      background: "white",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {SORT_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div style={{ display: "flex", gap: 4 }}>
-                  <button
-                    onClick={() => setView("grid")}
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: "var(--radius-sm)",
-                      border: "1px solid var(--border)",
-                      background: view === "grid" ? "var(--primary)" : "white",
-                      color: view === "grid" ? "white" : "var(--text-muted)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <IoGridOutline size={15} />
-                  </button>
-                  <button
-                    onClick={() => setView("list")}
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: "var(--radius-sm)",
-                      border: "1px solid var(--border)",
-                      background: view === "list" ? "var(--primary)" : "white",
-                      color: view === "list" ? "white" : "var(--text-muted)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <IoListOutline size={15} />
-                  </button>
-                </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <select
+                  value={sortBy}
+                  onChange={(e) => {
+                    setSortBy(e.target.value);
+                    setPage(1);
+                  }}
+                  style={{
+                    padding: "8px 12px",
+                    border: "1.5px solid var(--border)",
+                    borderRadius: "var(--radius-sm)",
+                    fontSize: 13,
+                    background: "white",
+                    color: "var(--text-secondary)",
+                    cursor: "pointer",
+                  }}
+                >
+                  {SORT_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => setView("grid")}
+                  style={{
+                    padding: 8,
+                    border: `1.5px solid ${view === "grid" ? "var(--primary)" : "var(--border)"}`,
+                    borderRadius: "var(--radius-sm)",
+                    background:
+                      view === "grid"
+                        ? "var(--primary-light, #EEF2FF)"
+                        : "white",
+                    color:
+                      view === "grid" ? "var(--primary)" : "var(--text-muted)",
+                    cursor: "pointer",
+                  }}
+                >
+                  <IoGridOutline size={18} />
+                </button>
+                <button
+                  onClick={() => setView("list")}
+                  style={{
+                    padding: 8,
+                    border: `1.5px solid ${view === "list" ? "var(--primary)" : "var(--border)"}`,
+                    borderRadius: "var(--radius-sm)",
+                    background:
+                      view === "list"
+                        ? "var(--primary-light, #EEF2FF)"
+                        : "white",
+                    color:
+                      view === "list" ? "var(--primary)" : "var(--text-muted)",
+                    cursor: "pointer",
+                  }}
+                >
+                  <IoListOutline size={18} />
+                </button>
               </div>
             </div>
 
-            {/* Category Pills */}
+            {/* Category pills */}
             <div
               style={{
                 display: "flex",
@@ -1068,10 +958,10 @@ const ShopPage = () => {
                 marginBottom: 16,
               }}
             >
-              {[{ slug: "all", name: "All" }, ...apiCategories].map((cat) => (
+              {[{ slug: "", name: "All" }, ...apiCategories].map((cat) => (
                 <button
                   key={cat.slug}
-                  onClick={() => setSelectedCategory(cat.slug)}
+                  onClick={() => handleCategoryChange(cat.slug)}
                   style={{
                     padding: "6px 16px",
                     borderRadius: "var(--radius-full)",
@@ -1095,40 +985,131 @@ const ShopPage = () => {
               ))}
             </div>
 
-            {filtered.length === 0 ? (
+            {/* Product Grid / List */}
+            {isLoading ? (
               <div
                 style={{
-                  textAlign: "center",
-                  padding: "80px 20px",
-                  color: "var(--text-muted)",
+                  display: "grid",
+                  gridTemplateColumns:
+                    view === "grid"
+                      ? "repeat(auto-fill, minmax(220px, 1fr))"
+                      : "1fr",
+                  gap: 16,
                 }}
               >
+                {[...Array(8)].map((_, i) => (
+                  <SkeletonCard key={i} />
+                ))}
+              </div>
+            ) : products.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "80px 20px" }}>
                 <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
-                <h3 style={{ fontSize: 18, marginBottom: 8 }}>
+                <h3
+                  style={{
+                    fontSize: 18,
+                    fontWeight: 700,
+                    color: "var(--text-primary)",
+                    marginBottom: 8,
+                  }}
+                >
                   No products found
                 </h3>
-                <p style={{ fontSize: 14 }}>Try adjusting your filters</p>
+                <p style={{ color: "var(--text-muted)", fontSize: 14 }}>
+                  Try adjusting your filters or search term.
+                </p>
               </div>
             ) : (
               <div
-                style={
-                  view === "grid"
-                    ? {
-                        display: "grid",
-                        gridTemplateColumns: "repeat(3, 1fr)",
-                        gap: 16,
-                      }
-                    : { display: "flex", flexDirection: "column", gap: 12 }
-                }
+                style={{
+                  display: "grid",
+                  gridTemplateColumns:
+                    view === "grid"
+                      ? "repeat(auto-fill, minmax(220px, 1fr))"
+                      : "1fr",
+                  gap: 16,
+                }}
               >
-                {filtered.map((p) => (
+                {products.map((p) => (
                   <ProductCard key={p.id} product={p} view={view} />
                 ))}
+              </div>
+            )}
+
+            {/* Pagination */}
+            {meta && meta.pages > 1 && (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  gap: 8,
+                  marginTop: 40,
+                }}
+              >
+                <button
+                  disabled={page <= 1}
+                  onClick={() => setPage(page - 1)}
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "var(--radius-sm)",
+                    border: "1.5px solid var(--border)",
+                    background: "white",
+                    cursor: page <= 1 ? "not-allowed" : "pointer",
+                    opacity: page <= 1 ? 0.4 : 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <FaChevronLeft size={12} />
+                </button>
+                {[...Array(Math.min(meta.pages, 7))].map((_, i) => {
+                  const p = i + 1;
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => setPage(p)}
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: "var(--radius-sm)",
+                        border: `1.5px solid ${page === p ? "var(--primary)" : "var(--border)"}`,
+                        background: page === p ? "var(--primary)" : "white",
+                        color: page === p ? "white" : "var(--text-secondary)",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {p}
+                    </button>
+                  );
+                })}
+                <button
+                  disabled={page >= meta.pages}
+                  onClick={() => setPage(page + 1)}
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "var(--radius-sm)",
+                    border: "1.5px solid var(--border)",
+                    background: "white",
+                    cursor: page >= meta.pages ? "not-allowed" : "pointer",
+                    opacity: page >= meta.pages ? 0.4 : 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <FaChevronRight size={12} />
+                </button>
               </div>
             )}
           </div>
         </div>
       </div>
+      <style>{`@keyframes shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }`}</style>
     </div>
   );
 };

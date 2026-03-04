@@ -3,7 +3,9 @@
 import prisma from "../../config/prisma.js";
 import { NotFound } from "../../utils/errors.js";
 
-// ── List products (filter + search + paginate) ─────
+const VALID_AVAILABILITY = ["in_stock", "ships_2_3_days", "pre_order"];
+
+// ── List products (filter + search + paginate + availability) ────────────────
 const listProducts = async (request, reply) => {
   const {
     page = 1,
@@ -13,12 +15,15 @@ const listProducts = async (request, reply) => {
     sort = "created_at",
     minPrice,
     maxPrice,
+    availability,
   } = request.query;
   const skip = (Number(page) - 1) * Number(limit);
 
   const where = {
     isActive: true,
     ...(category && { category: { slug: category } }),
+    ...(availability &&
+      VALID_AVAILABILITY.includes(availability) && { availability }),
     ...(search && {
       OR: [
         { name: { contains: search, mode: "insensitive" } },
@@ -54,7 +59,6 @@ const listProducts = async (request, reply) => {
           take: 1,
           select: { url: true },
         },
-        reviews: { select: { rating: true } },
       },
     }),
     prisma.product.count({ where }),
@@ -62,28 +66,84 @@ const listProducts = async (request, reply) => {
 
   const formatted = products.map((p) => ({
     ...p,
+    price: Number(p.price),
+    originalPrice: p.originalPrice ? Number(p.originalPrice) : null,
     category_name: p.category?.name ?? null,
     category_slug: p.category?.slug ?? null,
     image: p.images[0]?.url ?? null,
-    rating: p.reviews.length
-      ? +(
-          p.reviews.reduce((s, r) => s + r.rating, 0) / p.reviews.length
-        ).toFixed(1)
-      : 0,
-    review_count: p.reviews.length,
     category: undefined,
     images: undefined,
-    reviews: undefined,
   }));
 
   return {
     success: true,
     products: formatted,
-    meta: { total, page: Number(page), limit: Number(limit) },
+    meta: {
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      pages: Math.ceil(total / Number(limit)),
+    },
   };
 };
 
-// ── Get single product ────────────────────────────
+// ── List ALL products for admin (incl inactive) ──────────────────────────────
+const listAdminProducts = async (request, reply) => {
+  const { page = 1, limit = 20, search, category } = request.query;
+  const skip = (Number(page) - 1) * Number(limit);
+
+  const where = {
+    ...(category && { category: { slug: category } }),
+    ...(search && {
+      OR: [
+        { name: { contains: search, mode: "insensitive" } },
+        { brand: { contains: search, mode: "insensitive" } },
+      ],
+    }),
+  };
+
+  const [products, total] = await Promise.all([
+    prisma.product.findMany({
+      where,
+      skip,
+      take: Number(limit),
+      orderBy: { createdAt: "desc" },
+      include: {
+        category: { select: { name: true, slug: true } },
+        images: {
+          orderBy: { sortOrder: "asc" },
+          take: 1,
+          select: { url: true },
+        },
+      },
+    }),
+    prisma.product.count({ where }),
+  ]);
+
+  const formatted = products.map((p) => ({
+    ...p,
+    price: Number(p.price),
+    originalPrice: p.originalPrice ? Number(p.originalPrice) : null,
+    category_name: p.category?.name ?? null,
+    category_slug: p.category?.slug ?? null,
+    image: p.images[0]?.url ?? null,
+    category: undefined,
+    images: undefined,
+  }));
+
+  return {
+    success: true,
+    products: formatted,
+    meta: {
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      pages: Math.ceil(total / Number(limit)),
+    },
+  };
+};
+
+// ── Get single product ────────────────────────────────────────────────────────
 const getProduct = async (request, reply) => {
   const { id } = request.params;
 
@@ -92,7 +152,6 @@ const getProduct = async (request, reply) => {
     include: {
       category: { select: { name: true, slug: true } },
       images: { orderBy: { sortOrder: "asc" }, select: { url: true } },
-      reviews: { select: { rating: true } },
     },
   });
 
@@ -102,23 +161,19 @@ const getProduct = async (request, reply) => {
     success: true,
     product: {
       ...product,
+      price: Number(product.price),
+      originalPrice: product.originalPrice
+        ? Number(product.originalPrice)
+        : null,
       category_name: product.category?.name,
       category_slug: product.category?.slug,
       images: product.images.map((i) => i.url),
-      rating: product.reviews.length
-        ? +(
-            product.reviews.reduce((s, r) => s + r.rating, 0) /
-            product.reviews.length
-          ).toFixed(1)
-        : 0,
-      review_count: product.reviews.length,
       category: undefined,
-      reviews: undefined,
     },
   };
 };
 
-// ── Create product (admin) ────────────────────────
+// ── Create product (admin) ────────────────────────────────────────────────────
 const createProduct = async (request, reply) => {
   const {
     name,
@@ -130,7 +185,9 @@ const createProduct = async (request, reply) => {
     brand,
     badge,
     images = [],
+    availability = "in_stock",
   } = request.body;
+
   const slug =
     name
       .toLowerCase()
@@ -150,17 +207,18 @@ const createProduct = async (request, reply) => {
       categoryId: category_id || null,
       brand: brand || null,
       badge: badge || null,
-      images: {
-        create: images.map((url, i) => ({ url, sortOrder: i })),
-      },
+      availability: VALID_AVAILABILITY.includes(availability)
+        ? availability
+        : "in_stock",
+      images: { create: images.map((url, i) => ({ url, sortOrder: i })) },
     },
-    include: { images: true },
+    include: { images: true, category: { select: { name: true, slug: true } } },
   });
 
   return reply.status(201).send({ success: true, product });
 };
 
-// ── Update product (admin) ────────────────────────
+// ── Update product (admin) ────────────────────────────────────────────────────
 const updateProduct = async (request, reply) => {
   const { id } = request.params;
   const {
@@ -174,6 +232,7 @@ const updateProduct = async (request, reply) => {
     badge,
     is_active,
     images,
+    availability,
   } = request.body;
 
   const product = await prisma.product
@@ -191,6 +250,8 @@ const updateProduct = async (request, reply) => {
         ...(brand !== undefined && { brand }),
         ...(badge !== undefined && { badge }),
         ...(is_active !== undefined && { isActive: is_active }),
+        ...(availability &&
+          VALID_AVAILABILITY.includes(availability) && { availability }),
         ...(images && {
           images: {
             deleteMany: {},
@@ -198,7 +259,10 @@ const updateProduct = async (request, reply) => {
           },
         }),
       },
-      include: { images: true },
+      include: {
+        images: true,
+        category: { select: { name: true, slug: true } },
+      },
     })
     .catch(() => {
       throw NotFound("Product");
@@ -207,7 +271,7 @@ const updateProduct = async (request, reply) => {
   return { success: true, product };
 };
 
-// ── Delete product (admin) ────────────────────────
+// ── Soft-delete product (admin) ───────────────────────────────────────────────
 const deleteProduct = async (request, reply) => {
   const { id } = request.params;
   await prisma.product
@@ -218,8 +282,11 @@ const deleteProduct = async (request, reply) => {
   return { success: true, message: "Product deleted" };
 };
 
-export { listProducts,
+export {
+  listProducts,
+  listAdminProducts,
   getProduct,
   createProduct,
   updateProduct,
-  deleteProduct, };
+  deleteProduct,
+};
