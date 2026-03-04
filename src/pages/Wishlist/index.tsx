@@ -123,7 +123,7 @@ const WishlistPage = () => {
           Save items you love to your wishlist and shop them later.
         </p>
         <Link
-          to="/shop"
+          to="/products"
           style={{
             padding: "12px 32px",
             background: "var(--primary)",

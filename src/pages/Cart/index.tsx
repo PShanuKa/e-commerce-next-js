@@ -102,7 +102,7 @@ const CartPage = () => {
           Looks like you haven't added anything yet.
         </p>
         <Link
-          to="/shop"
+          to="/products"
           style={{
             padding: "12px 32px",
             background: "var(--primary)",
@@ -420,7 +420,7 @@ const CartPage = () => {
             })}
 
             <Link
-              to="/shop"
+              to="/products"
               style={{
                 display: "flex",
                 alignItems: "center",

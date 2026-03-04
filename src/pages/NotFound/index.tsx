@@ -87,7 +87,7 @@ const NotFound = () => (
         <IoHomeOutline size={17} /> Go Home
       </Link>
       <Link
-        to="/shop"
+        to="/products"
         style={{
           display: "flex",
           alignItems: "center",
@@ -126,7 +126,7 @@ const NotFound = () => (
       >
         {[
           { to: "/", label: "Home" },
-          { to: "/shop", label: "Shop" },
+          { to: "/products", label: "Shop" },
           { to: "/cart", label: "Cart" },
           { to: "/account", label: "My Account" },
           { to: "/contact", label: "Contact" },

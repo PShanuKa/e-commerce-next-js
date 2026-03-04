@@ -16,7 +16,7 @@ import CategoriesPage from "../pages/Categories";
 
 export const PublicRoutes = [
   { path: "/", element: <HomePage /> },
-  { path: "/shop", element: <ShopPage /> },
+  { path: "/products", element: <ShopPage /> },
   { path: "/categories", element: <CategoriesPage /> },
   { path: "/product/:id", element: <ProductDetail /> },
   { path: "/cart", element: <CartPage /> },

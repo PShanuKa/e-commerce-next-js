@@ -587,7 +587,7 @@ const ShopPage = () => {
       const params = new URLSearchParams(searchParams);
       if (slug) params.set("category", slug);
       else params.delete("category");
-      navigate(`/shop?${params.toString()}`, { replace: true });
+      navigate(`/products?${params.toString()}`, { replace: true });
     },
     [searchParams, navigate],
   );
@@ -659,7 +659,7 @@ const ShopPage = () => {
                       setPriceRange([0, 500000]);
                       setSearch("");
                       setPage(1);
-                      navigate("/shop");
+                      navigate("/products");
                     }}
                     style={{
                       fontSize: 12,

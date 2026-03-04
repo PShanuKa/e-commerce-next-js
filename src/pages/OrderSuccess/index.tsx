@@ -454,7 +454,7 @@ const OrderSuccess = () => {
               View My Orders
             </Link>
             <Link
-              to="/shop"
+              to="/products"
               style={{
                 flex: 1,
                 padding: "13px",

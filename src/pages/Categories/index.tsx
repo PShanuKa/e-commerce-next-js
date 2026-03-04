@@ -109,7 +109,7 @@ const CategoriesPage = () => {
                 return (
                   <Link
                     key={cat.id}
-                    to={`/shop?category=${cat.slug}`}
+                    to={`/products?category=${cat.slug}`}
                     style={{ textDecoration: "none", display: "block" }}
                   >
                     <div

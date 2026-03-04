@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import {
   IoChevronForwardOutline,
   IoChevronBackOutline,
-  IoStarSharp,
   IoHeartOutline,
   IoHeart,
 } from "react-icons/io5";
@@ -11,6 +10,7 @@ import { HiOutlineShoppingCart } from "react-icons/hi";
 import { MdLocalOffer, MdVerified } from "react-icons/md";
 import { TbTruckDelivery, TbShieldCheck } from "react-icons/tb";
 import { RiRefundLine } from "react-icons/ri";
+import { useGetProductsQuery, type Product } from "@/services/productSlice";
 
 /* ─── Data ─────────────────────────────────────────── */
 const CATEGORIES = [
@@ -80,105 +80,6 @@ const CATEGORIES = [
   },
 ];
 
-const FEATURED_PRODUCTS = [
-  {
-    id: 1,
-    name: "Sony WH-1000XM5 Wireless Headphones",
-    price: 34500,
-    originalPrice: 48000,
-    rating: 4.8,
-    reviews: 2341,
-    badge: "Best Seller",
-    image:
-      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop",
-    category: "Electronics",
-  },
-  {
-    id: 2,
-    name: "Samsung Galaxy Tab S9 Ultra",
-    price: 189000,
-    originalPrice: 215000,
-    rating: 4.7,
-    reviews: 892,
-    badge: "New",
-    image:
-      "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=300&h=300&fit=crop",
-    category: "Electronics",
-  },
-  {
-    id: 3,
-    name: "Apple AirPods Pro (2nd Gen)",
-    price: 58000,
-    originalPrice: 65000,
-    rating: 4.9,
-    reviews: 5432,
-    badge: "Top Rated",
-    image:
-      "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=300&h=300&fit=crop",
-    category: "Electronics",
-  },
-  {
-    id: 4,
-    name: "Nike Air Max 270 React",
-    price: 18500,
-    originalPrice: 24000,
-    rating: 4.6,
-    reviews: 1123,
-    badge: "Sale",
-    image:
-      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300&h=300&fit=crop",
-    category: "Fashion",
-  },
-  {
-    id: 5,
-    name: "Canon EOS R50 Mirrorless Camera",
-    price: 135000,
-    originalPrice: 149000,
-    rating: 4.8,
-    reviews: 543,
-    badge: "Hot",
-    image:
-      "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=300&h=300&fit=crop",
-    category: "Electronics",
-  },
-  {
-    id: 6,
-    name: "Logitech MX Master 3S Mouse",
-    price: 22000,
-    originalPrice: 27500,
-    rating: 4.9,
-    reviews: 3210,
-    badge: "Best Seller",
-    image:
-      "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=300&h=300&fit=crop",
-    category: "Electronics",
-  },
-  {
-    id: 7,
-    name: "IKEA MALM Bed Frame Queen",
-    price: 56000,
-    originalPrice: 68000,
-    rating: 4.5,
-    reviews: 776,
-    badge: "Sale",
-    image:
-      "https://images.unsplash.com/photo-1505693316919-1021ec6a9a07?w=300&h=300&fit=crop",
-    category: "Home",
-  },
-  {
-    id: 8,
-    name: "Adidas Ultraboost 23 Shoes",
-    price: 23000,
-    originalPrice: 31000,
-    rating: 4.7,
-    reviews: 1890,
-    badge: "New",
-    image:
-      "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=300&h=300&fit=crop",
-    category: "Fashion",
-  },
-];
-
 const HERO_SLIDES = [
   {
     subtitle: "🎧 Premium Audio",
@@ -234,18 +135,6 @@ const PROMO_BANNERS = [
 ];
 
 /* ─── Sub-components ────────────────────────────────── */
-const Star = ({ rating }: { rating: number }) => (
-  <div style={{ display: "flex", gap: 2 }}>
-    {[1, 2, 3, 4, 5].map((s) => (
-      <IoStarSharp
-        key={s}
-        size={12}
-        color={s <= Math.floor(rating) ? "#F59E0B" : "#E2E8F0"}
-      />
-    ))}
-  </div>
-);
-
 const BADGE_COLORS: Record<string, { bg: string; color: string }> = {
   "Best Seller": { bg: "#Fef3C7", color: "#B45309" },
   New: { bg: "#ECFDF5", color: "#065F46" },
@@ -254,20 +143,19 @@ const BADGE_COLORS: Record<string, { bg: string; color: string }> = {
   Hot: { bg: "#FFF7ED", color: "#C2410C" },
 };
 
-const ProductCard = ({
-  product,
-}: {
-  product: (typeof FEATURED_PRODUCTS)[0];
-}) => {
+const ProductCard = ({ product }: { product: Product }) => {
   const [wishlisted, setWishlisted] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
-  const discount = Math.round(
-    ((product.originalPrice - product.price) / product.originalPrice) * 100,
-  );
-  const badgeStyle = BADGE_COLORS[product.badge] ?? {
-    bg: "#F1F5F9",
-    color: "#475569",
-  };
+  const discount =
+    product.originalPrice && product.originalPrice > product.price
+      ? Math.round(
+          ((product.originalPrice - product.price) / product.originalPrice) *
+            100,
+        )
+      : null;
+  const badgeStyle = product.badge
+    ? (BADGE_COLORS[product.badge] ?? { bg: "#F1F5F9", color: "#475569" })
+    : null;
 
   const handleAddToCart = () => {
     setAddedToCart(true);
@@ -286,57 +174,63 @@ const ProductCard = ({
           background: "#F8FAFC",
         }}
       >
-        <img
-          src={product.image}
-          alt={product.name}
-          style={{
-            width: "100%",
-            height: 200,
-            objectFit: "cover",
-            transition: "transform 0.4s ease",
-          }}
-          onMouseEnter={(e) =>
-            ((e.currentTarget as HTMLElement).style.transform = "scale(1.08)")
-          }
-          onMouseLeave={(e) =>
-            ((e.currentTarget as HTMLElement).style.transform = "scale(1)")
-          }
-        />
-        {/* Discount Badge */}
-        <div
-          style={{
-            position: "absolute",
-            top: 10,
-            left: 10,
-            background: "var(--error)",
-            color: "white",
-            fontSize: 11,
-            fontWeight: 700,
-            padding: "3px 7px",
-            borderRadius: "var(--radius-sm)",
-          }}
-        >
-          -{discount}%
-        </div>
-        {/* Labels badge */}
-        <div
-          style={{
-            position: "absolute",
-            top: 10,
-            right: 10,
-            background: badgeStyle.bg,
-            color: badgeStyle.color,
-            fontSize: 10,
-            fontWeight: 700,
-            padding: "3px 7px",
-            borderRadius: "var(--radius-sm)",
-            textTransform: "uppercase",
-            letterSpacing: "0.4px",
-          }}
-        >
-          {product.badge}
-        </div>
-        {/* Wishlist */}
+        <Link to={`/product/${product.id}`}>
+          <img
+            src={
+              product.image ||
+              "https://via.placeholder.com/300x300?text=No+Image"
+            }
+            alt={product.name}
+            style={{
+              width: "100%",
+              height: 200,
+              objectFit: "cover",
+              transition: "transform 0.4s ease",
+            }}
+            onMouseEnter={(e) =>
+              ((e.currentTarget as HTMLElement).style.transform = "scale(1.08)")
+            }
+            onMouseLeave={(e) =>
+              ((e.currentTarget as HTMLElement).style.transform = "scale(1)")
+            }
+          />
+        </Link>
+        {discount && (
+          <div
+            style={{
+              position: "absolute",
+              top: 10,
+              left: 10,
+              background: "var(--error)",
+              color: "white",
+              fontSize: 11,
+              fontWeight: 700,
+              padding: "3px 7px",
+              borderRadius: "var(--radius-sm)",
+            }}
+          >
+            -{discount}%
+          </div>
+        )}
+        {badgeStyle && (
+          <div
+            style={{
+              position: "absolute",
+              top: 10,
+              right: 10,
+              background: badgeStyle.bg,
+              color: badgeStyle.color,
+              fontSize: 10,
+              fontWeight: 700,
+              padding: "3px 7px",
+              borderRadius: "var(--radius-sm)",
+              textTransform: "uppercase",
+              letterSpacing: "0.4px",
+            }}
+          >
+            {product.badge}
+          </div>
+        )}
         <button
           onClick={() => setWishlisted(!wishlisted)}
           style={{
@@ -382,37 +276,25 @@ const ProductCard = ({
             letterSpacing: "0.5px",
           }}
         >
-          {product.category}
+          {product.category_name ?? ""}
         </p>
-        <p
-          style={{
-            fontSize: 13,
-            fontWeight: 600,
-            color: "var(--text-primary)",
-            lineHeight: 1.45,
-            marginBottom: 8,
-            flex: 1,
-            overflow: "hidden",
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-          }}
-        >
-          {product.name}
-        </p>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            marginBottom: 10,
-          }}
-        >
-          <Star rating={product.rating} />
-          <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
-            ({product.reviews.toLocaleString()})
-          </span>
-        </div>
+        <Link to={`/product/${product.id}`} style={{ flex: 1 }}>
+          <p
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: "var(--text-primary)",
+              lineHeight: 1.45,
+              marginBottom: 8,
+              overflow: "hidden",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+            }}
+          >
+            {product.name}
+          </p>
+        </Link>
         <div
           style={{
             display: "flex",
@@ -426,15 +308,17 @@ const ProductCard = ({
           >
             Rs. {product.price.toLocaleString()}
           </span>
-          <span
-            style={{
-              fontSize: 12,
-              color: "var(--text-muted)",
-              textDecoration: "line-through",
-            }}
-          >
-            Rs. {product.originalPrice.toLocaleString()}
-          </span>
+          {product.originalPrice && (
+            <span
+              style={{
+                fontSize: 12,
+                color: "var(--text-muted)",
+                textDecoration: "line-through",
+              }}
+            >
+              Rs. {product.originalPrice.toLocaleString()}
+            </span>
+          )}
         </div>
         <button
           onClick={handleAddToCart}
@@ -454,16 +338,6 @@ const ProductCard = ({
             border: "none",
             cursor: "pointer",
           }}
-          onMouseEnter={(e) =>
-            !addedToCart &&
-            ((e.currentTarget as HTMLElement).style.background =
-              "var(--primary-hover)")
-          }
-          onMouseLeave={(e) =>
-            !addedToCart &&
-            ((e.currentTarget as HTMLElement).style.background =
-              "var(--primary)")
-          }
         >
           <HiOutlineShoppingCart size={15} />
           {addedToCart ? "Added to Cart ✓" : "Add to Cart"}
@@ -473,10 +347,44 @@ const ProductCard = ({
   );
 };
 
+const ProductSkeleton = () => (
+  <div className="card" style={{ overflow: "hidden" }}>
+    <div
+      style={{
+        height: 200,
+        background:
+          "linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%)",
+        backgroundSize: "200% 100%",
+        animation: "shimmer 1.4s infinite",
+      }}
+    />
+    <div style={{ padding: 14 }}>
+      {[60, 90, 50].map((w, i) => (
+        <div
+          key={i}
+          style={{
+            height: 12,
+            background: "#f0f0f0",
+            borderRadius: 6,
+            marginBottom: 10,
+            width: `${w}%`,
+            animation: "shimmer 1.4s infinite",
+          }}
+        />
+      ))}
+    </div>
+  </div>
+);
+
 /* ─── Main Page ─────────────────────────────────────── */
 const HomePage = () => {
   const [heroSlide, setHeroSlide] = useState(0);
   const slide = HERO_SLIDES[heroSlide];
+
+  // Fetch 8 newest products from API
+  const { data: productsData, isLoading: productsLoading } =
+    useGetProductsQuery({ limit: 8, sort: "created_at" });
+  const featuredProducts = productsData?.products ?? [];
 
   const nextSlide = () =>
     setHeroSlide((prev) => (prev + 1) % HERO_SLIDES.length);
@@ -967,17 +875,41 @@ const HomePage = () => {
             </Link>
           </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: 16,
-            }}
-          >
-            {FEATURED_PRODUCTS.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          {productsLoading ? (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(4, 1fr)",
+                gap: 16,
+              }}
+            >
+              {[...Array(8)].map((_, i) => (
+                <ProductSkeleton key={i} />
+              ))}
+            </div>
+          ) : featuredProducts.length === 0 ? (
+            <div
+              style={{
+                textAlign: "center",
+                padding: "40px 0",
+                color: "var(--text-muted)",
+              }}
+            >
+              No products available yet.
+            </div>
+          ) : (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(4, 1fr)",
+                gap: 16,
+              }}
+            >
+              {featuredProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

@@ -397,7 +397,7 @@ const AboutPage = () => (
           Join millions of happy shoppers and discover amazing deals every day.
         </p>
         <Link
-          to="/shop"
+          to="/products"
           style={{
             padding: "14px 40px",
             background: "white",

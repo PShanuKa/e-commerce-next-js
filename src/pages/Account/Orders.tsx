@@ -154,7 +154,7 @@ const OrdersPage = () => {
               No {tab.toLowerCase()} orders
             </p>
             <Link
-              to="/shop"
+              to="/products"
               style={{ color: "var(--primary)", fontWeight: 600, fontSize: 13 }}
             >
               Browse Products
