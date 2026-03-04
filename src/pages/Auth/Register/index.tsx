@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { MdOutlineEmail, MdLockOutline, MdPersonOutline } from "react-icons/md";
 import { FiPhone } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook, FaCheck } from "react-icons/fa";
+import { useRegisterMutation } from "@/services/authSlice";
 
 const PASSWORD_RULES = [
   { label: "At least 8 characters", test: (p: string) => p.length >= 8 },
@@ -17,6 +18,9 @@ const PASSWORD_RULES = [
 ];
 
 const Register = () => {
+  const navigate = useNavigate();
+  const [register, { isLoading }] = useRegisterMutation();
+
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -28,7 +32,6 @@ const Register = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [passwordFocused, setPasswordFocused] = useState(false);
 
@@ -48,9 +51,23 @@ const Register = () => {
       return;
     }
 
-    setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 1300));
-    setIsLoading(false);
+    try {
+      await register({
+        name: `${form.firstName} ${form.lastName}`.trim(),
+        email: form.email,
+        phone: form.phone || undefined,
+        password: form.password,
+      }).unwrap();
+
+      navigate("/login");
+    } catch (err: unknown) {
+      const apiError = err as { data?: { message?: string }; message?: string };
+      setError(
+        apiError?.data?.message ||
+          apiError?.message ||
+          "Registration failed. Please try again.",
+      );
+    }
   };
 
   const passwordStrength = PASSWORD_RULES.filter((r) =>

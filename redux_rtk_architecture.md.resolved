@@ -1,0 +1,131 @@
+# Redux Toolkit (RTK) සහ RTK Query Architecture Document
+
+මෙම ව්‍යාපෘතියේ State Management සහ API අමතන්න (API Calls) ප්‍රධාන වශයෙන් භාවිතා කරන්නේ **Redux Toolkit (RTK)** සහ **RTK Query** වේ.
+
+## 1. ගොනු ව්‍යුහය (Folder Structure)
+
+Redux සම්බන්ධ ගොනු ප්‍රධාන කොටස් 3කට බෙදා ඇත:
+
+- [src/app/store.ts](file:///c:/Users/shanu/Desktop/Project%20Git/mabarana-group-admin-dashboard/src/app/store.ts): ප්‍රධාන Redux Store එක configure කරන ගොනුව.
+- `src/features/`: සාමාන්‍ය Redux Slices අඩංගු ෆෝල්ඩරය (උදා: Local state, Authentication state පවත්වා ගැනීමට).
+- `src/services/`: RTK Query හරහා API calls සිදු කරන ගොනු අඩංගු ෆෝල්ඩරය (උදා: `apiSlice.ts`, `userSlice.ts`).
+
+---
+
+## 2. Main Store Configuration (`src/app/store.ts`)
+
+මෙහිදී යෙදුමේ ප්‍රධාන store එක නිර්මාණය කරයි. `configureStore` භාවිතා කර ඇති අතර, සාමාන්‍ය reducers (`auth`, `meta`) සහ RTK Query හි `apiSlice.reducer` එක එයට සම්බන්ධ කර ඇත.
+
+API caching සහ අනෙකුත් RTK Query පහසුකම් ලබාගැනීම සඳහා `apiSlice.middleware` එකද මෙයට එක් කර ඇත.
+
+```typescript
+export const store = configureStore({
+  reducer: {
+    meta: metaSlice.reducer,
+    auth: authSlice.reducer,
+    [apiSlice.reducerPath]: apiSlice.reducer,
+  },
+  middleware(getDefaultMiddleware) {
+    return getDefaultMiddleware().concat(apiSlice.middleware);
+  },
+});
+```
+
+---
+
+## 3. API Config සහ Token Refresh Mechanism (`src/services/apiSlice.ts`)
+
+මෙම ගොනුව RTK Query හි හදවතයි. මෙහිදී `fetchBaseQuery` යොදාගෙන සාමාන්‍ය API request එකක් යවන ආකාරය සකස් කර ඇත.
+
+- **Token Injection**: සෑම request එකකදීම `localStorage` හෝ Redux state එකෙන් `accessToken` එක අරගෙන `Authorization` header එකට ඇතුලත් කරයි.
+- **Automatic Token Refresh**: යම් හෙයකින් Token එක expire වී ඇත්නම් (උදා: API එකෙන් 401 Error එකක් හෝ `"TOKEN_EXPIRED"` ආවොත්), අලුත් token එකක් ලබාගැනීමට `baseQueryWithReauth` function එකක් ලියා ඇත. මෙහි විශේෂත්වය නම් **`async-mutex`** භාවිතා කර එකම වෙලාවට refresh requests කිහිපයක් යෑම වලක්වා තිබීමයි (Multiple refresh attempts prevention). අලුත් token එක ලැබුණු පසු මුල් request එක නැවත ස්වයංක්‍රීයව යවයි.
+
+---
+
+## 4. Standard RTK Slices (`src/features/authSlice.ts`)
+
+UI එකේ state එක සහ `localStorage` එක sync කර තබා ගැනීමට සාමාන්‍ය `createSlice` භාවිතා කර ඇත.
+උදාහරණයක් ලෙස `authSlice` හි user details, tokens සහ selected branch එක ගබඩා කර තබා ගනී.
+
+```typescript
+export const authSlice = createSlice({
+  name: "auth",
+  initialState,
+  reducers: {
+    setUserInfo: (state, action) => { ... },
+    logout: (state) => { ... },
+    setTokens: (state, action) => { ... },
+  }
+});
+```
+
+---
+
+## 5. API Endpoints Injection (`src/services/userSlice.ts`)
+
+විශාල ව්‍යාපෘතියක් බැවින් සියලුම API calls එකම ෆයිල් එකක ලියන්නේ නැතිව `apiSlice.injectEndpoints` හරහා අදාල අංශයට (උදා: users, merchants) වෙන් වෙන් වශයෙන් ගොනු නිර්මාණය කර ඇත. 
+
+- **Queries (`builder.query`)**: Data ලබාගැනීම සඳහා (GET requests).
+- **Mutations (`builder.mutation`)**: Data ඇතුලත් කිරීම, වෙනස් කිරීම හෝ මැකීම සඳහා (POST, PUT, DELETE requests).
+- **Tags (`providesTags`, `invalidatesTags`)**: මේ මගින් cache එක අලුත් කිරීම පාලනය කරයි. උදාහරණයක් ලෙස අලුත් user කෙනෙක් create කල විට `["Users"]` ටැග් එක invalidate (අවලංගු) කරන අතර, එවිට ස්වයංක්‍රීයව අලුත් list එක යලි fetch වේ.
+
+```typescript
+export const userSlice = apiSlice.injectEndpoints({
+  endpoints: (builder) => ({
+    getAllUsers: builder.query<any, any>({
+      providesTags: ["Users"],
+      query: (params) => ({ url: `users`, method: "GET" }),
+    }),
+    createUser: builder.mutation<any, any>({
+      invalidatesTags: ["Users"],
+      query: (body) => ({ url: "users/create", method: "POST", body }),
+    }),
+  }),
+});
+
+// React components වල භාවිතා කිරීමට Hooks ස්වයංක්‍රීයව export වේ
+export const { useGetAllUsersQuery, useCreateUserMutation } = userSlice;
+```
+
+---
+
+## 6. Components වල භාවිතා කරන ආකාරය (Usage)
+
+1. **API වලින් Data ලබා ගැනීමට (GET)**:
+   ```tsx
+   import { useGetAllUsersQuery } from '../services/userSlice';
+
+   // Component එක තුල:
+   const { data, isLoading, error } = useGetAllUsersQuery({ page: 1, limit: 10 });
+   ```
+
+2. **Data යැවීමට හෝ වෙනස් කිරීමට (POST/PUT/DELETE)**:
+   ```tsx
+   import { useCreateUserMutation } from '../services/userSlice';
+
+   // Component එක තුල:
+   const [createUser, { isLoading }] = useCreateUserMutation();
+   
+   const handleSave = async (formData) => {
+       try {
+           await createUser(formData).unwrap();
+           // සාර්ථක නම්
+       } catch (err) {
+           // Error එකක් නම්
+       }
+   };
+   ```
+
+3. **සාමාන්‍ය State එක ලබා ගැනීමට (Local State - Auth)**:
+   ```tsx
+   import { useSelector, useDispatch } from 'react-redux';
+   import { logout } from '../features/authSlice';
+   
+   // Component එක තුල:
+   const userInfo = useSelector((state: RootState) => state.auth.userInfo);
+   const dispatch = useDispatch();
+
+   const onLogout = () => {
+       dispatch(logout());
+   }
+   ```

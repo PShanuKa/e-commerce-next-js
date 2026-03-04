@@ -1,16 +1,19 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { MdOutlineEmail, MdLockOutline } from "react-icons/md";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
+import { useLoginMutation } from "@/services/authSlice";
 
 const Login = () => {
+  const navigate = useNavigate();
+  const [login, { isLoading }] = useLoginMutation();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -22,11 +25,17 @@ const Login = () => {
       return;
     }
 
-    setIsLoading(true);
-    // Simulate API call
-    await new Promise((r) => setTimeout(r, 1200));
-    setIsLoading(false);
-    // navigate("/") after real auth
+    try {
+      await login({ email, password }).unwrap();
+      navigate("/");
+    } catch (err: unknown) {
+      const apiError = err as { data?: { message?: string }; message?: string };
+      setError(
+        apiError?.data?.message ||
+          apiError?.message ||
+          "Login failed. Please check your credentials.",
+      );
+    }
   };
 
   return (

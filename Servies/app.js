@@ -44,7 +44,7 @@ async function buildApp() {
   await app.register(wishlistRoutes, { prefix: "/api/wishlist" });
   await app.register(addressesRoutes, { prefix: "/api/addresses" });
   await app.register(reviewsRoutes, { prefix: "/api/reviews" });
-  await app.register(adminRoutes, { prefix: "/api/admin" });
+  await app.register(adminRoutes,{ prefix: "/api/admin" });
 
   // ── Global Error Handler ──────────────────────────
   app.setErrorHandler((error, request, reply) => {
