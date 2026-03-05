@@ -437,7 +437,9 @@ const ContactPage = () => {
         {/* FAQ */}
         <div>
           <h2
-            className="section-heading"
+            className="md:text-[22px] text-[16px] font-bold text-[var(--text-primary)] relative pb-[10px] 
+after:content-[''] after:absolute after:bottom-0 after:left-0 
+after:w-[40px] after:h-[3px] after:bg-[var(--primary)] after:rounded-[2px]"
             style={{ marginBottom: 8, textAlign: "center" }}
           >
             Frequently Asked Questions

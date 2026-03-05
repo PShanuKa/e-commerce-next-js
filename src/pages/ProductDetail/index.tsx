@@ -832,7 +832,13 @@ const ProductDetail = () => {
                 marginBottom: 20,
               }}
             >
-              <h2 className="section-heading">Related Products</h2>
+              <h2
+                className="md:text-[22px] text-[16px] font-bold text-[var(--text-primary)] relative pb-[10px] 
+after:content-[''] after:absolute after:bottom-0 after:left-0 
+after:w-[40px] after:h-[3px] after:bg-[var(--primary)] after:rounded-[2px]"
+              >
+                Related Products
+              </h2>
               <Link
                 to={`/products?category=${product.category_slug}`}
                 style={{

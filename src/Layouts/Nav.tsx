@@ -7,6 +7,7 @@ import { HiOutlineMenuAlt2 } from "react-icons/hi";
 import { FaAngleDown, FaTag } from "react-icons/fa";
 import { FiPhone } from "react-icons/fi";
 import { MdOutlineLocalShipping } from "react-icons/md";
+import { useGetCartQuery } from "@/services/cartSlice";
 
 const NAV_LINKS = [
   { label: "Home", path: "/" },
@@ -16,6 +17,7 @@ const NAV_LINKS = [
   // { label: "Electronics", path: "/products" },
   // { label: "Fashion", path: "/products" },
   // { label: "About Us", path: "/about" },
+  // { label: "Contact Us", path: "/contact" },
 ];
 
 const Navbar = () => {
@@ -23,6 +25,8 @@ const Navbar = () => {
   const [searchFocused, setSearchFocused] = useState(false);
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
+
+  const { data: cartData } = useGetCartQuery();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -138,7 +142,7 @@ const Navbar = () => {
           </Link>
 
           {/* Search Bar */}
-          <div
+          {/* <div
             style={{
               flex: 1,
               maxWidth: 680,
@@ -210,7 +214,7 @@ const Navbar = () => {
             >
               <IoSearch size={18} />
             </button>
-          </div>
+          </div> */}
 
           {/* Right Actions */}
           <div
@@ -318,14 +322,19 @@ const Navbar = () => {
                     fontWeight: 700,
                   }}
                 >
-                  0
+                  {cartData?.count || 0}
                 </span>
               </div>
               <div>
                 <div style={{ fontSize: 10, opacity: 0.8, lineHeight: 1 }}>
                   My Cart
                 </div>
-                <div style={{ fontSize: 13, lineHeight: 1.2 }}>Rs. 0.00</div>
+                <div style={{ fontSize: 13, lineHeight: 1.2 }}>
+                  Rs.{" "}
+                  {Number(cartData?.total || 0).toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                  })}
+                </div>
               </div>
             </Link>
           </div>

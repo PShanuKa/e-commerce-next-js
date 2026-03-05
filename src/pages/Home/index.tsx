@@ -486,9 +486,7 @@ const HomePage = () => {
             // display: "grid",
             // gridTemplateColumns: "repeat(3, 1fr)",
             gap: 16,
-
           }}
-    
         >
           {PROMO_BANNERS.map((b, i) => (
             <Link
@@ -552,7 +550,13 @@ const HomePage = () => {
               marginBottom: 24,
             }}
           >
-            <h2 className="section-heading">Shop by Category</h2>
+            <h2
+              className="md:text-[22px] text-[16px] font-bold text-[var(--text-primary)] relative pb-[10px] 
+after:content-[''] after:absolute after:bottom-0 after:left-0 
+after:w-[40px] after:h-[3px] after:bg-[var(--primary)] after:rounded-[2px] "
+            >
+              Shop by Category
+            </h2>
             <Link
               to="/categories"
               style={{
@@ -569,7 +573,7 @@ const HomePage = () => {
           </div>
 
           <div
-          className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8"
+            className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8"
             style={{
               // display: "grid ",
               // gridTemplateColumns: "repeat(8, 1fr)",
@@ -644,7 +648,13 @@ const HomePage = () => {
               marginBottom: 24,
             }}
           >
-            <h2 className="section-heading">Featured Products</h2>
+            <h2
+              className="md:text-[22px] text-[16px] font-bold text-[var(--text-primary)] relative pb-[10px] 
+after:content-[''] after:absolute after:bottom-0 after:left-0 
+after:w-[40px] after:h-[3px] after:bg-[var(--primary)] after:rounded-[2px]"
+            >
+              Featured Products
+            </h2>
             <Link
               to="/products"
               style={{
@@ -667,7 +677,7 @@ const HomePage = () => {
                 // gridTemplateColumns: "repeat(4, 1fr)",
                 gap: 16,
               }}
-               className="grid md:grid-cols-3  lg:grid-cols-4 sm:grid-cols-2"
+              className="grid md:grid-cols-3  lg:grid-cols-4 sm:grid-cols-2"
             >
               {[...Array(8)].map((_, i) => (
                 <ProductSkeleton key={i} />
@@ -689,7 +699,6 @@ const HomePage = () => {
                 // display: "grid",
                 // gridTemplateColumns: "repeat(4, 1fr)",
                 gap: 16,
-                
               }}
               className="grid md:grid-cols-3  lg:grid-cols-4 sm:grid-cols-2"
             >

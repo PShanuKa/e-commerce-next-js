@@ -156,7 +156,9 @@ const AboutPage = () => (
       {/* Mission & Values */}
       <div style={{ marginBottom: 60 }}>
         <h2
-          className="section-heading"
+          className="md:text-[22px] text-[16px] font-bold text-[var(--text-primary)] relative pb-[10px] 
+after:content-[''] after:absolute after:bottom-0 after:left-0 
+after:w-[40px] after:h-[3px] after:bg-[var(--primary)] after:rounded-[2px] "
           style={{ textAlign: "center", marginBottom: 40 }}
         >
           Our Values
@@ -238,7 +240,9 @@ const AboutPage = () => (
       {/* Timeline */}
       <div style={{ marginBottom: 60 }}>
         <h2
-          className="section-heading"
+          className="md:text-[22px] text-[16px] font-bold text-[var(--text-primary)] relative pb-[10px] 
+after:content-[''] after:absolute after:bottom-0 after:left-0 
+after:w-[40px] after:h-[3px] after:bg-[var(--primary)] after:rounded-[2px]"
           style={{ textAlign: "center", marginBottom: 40 }}
         >
           Our Journey
@@ -320,7 +324,9 @@ const AboutPage = () => (
       {/* Team */}
       <div style={{ marginBottom: 60 }}>
         <h2
-          className="section-heading"
+          className="md:text-[22px] text-[16px] font-bold text-[var(--text-primary)] relative pb-[10px] 
+after:content-[''] after:absolute after:bottom-0 after:left-0 
+after:w-[40px] after:h-[3px] after:bg-[var(--primary)] after:rounded-[2px]"
           style={{ textAlign: "center", marginBottom: 8 }}
         >
           Meet the Team
