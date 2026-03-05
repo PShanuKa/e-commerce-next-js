@@ -2,12 +2,19 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { GrCart } from "react-icons/gr";
 import { IoSearch, IoHeartOutline, IoLocationOutline } from "react-icons/io5";
-import { AiOutlineUser } from "react-icons/ai";
+import {
+  AiOutlineUser,
+  AiOutlineLogin,
+  AiOutlineUserAdd,
+  AiOutlineUsergroupAdd,
+} from "react-icons/ai";
 import { HiOutlineMenuAlt2 } from "react-icons/hi";
 import { FaAngleDown, FaTag } from "react-icons/fa";
 import { FiPhone } from "react-icons/fi";
 import { MdOutlineLocalShipping } from "react-icons/md";
 import { useGetCartQuery } from "@/services/cartSlice";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/app/store";
 
 const NAV_LINKS = [
   { label: "Home", path: "/" },
@@ -25,6 +32,7 @@ const Navbar = () => {
   const [searchFocused, setSearchFocused] = useState(false);
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
+  const { isAuthenticated } = useSelector((s: RootState) => s.auth);
 
   const { data: cartData } = useGetCartQuery();
 
@@ -45,7 +53,10 @@ const Navbar = () => {
       }}
     >
       {/* ── Top Bar ── */}
-      <div style={{ background: "var(--text-primary)", padding: "6px 0" }} className="hidden md:block">
+      <div
+        style={{ background: "var(--text-primary)", padding: "6px 0" }}
+        className="hidden md:block"
+      >
         <div
           className="container"
           style={{
@@ -225,62 +236,136 @@ const Navbar = () => {
               marginLeft: "auto",
             }}
           >
-            <Link
-              to="/wishlist"
-              style={{
-                // display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 2,
-                padding: "8px 12px",
-                borderRadius: "var(--radius-sm)",
-                color: "var(--text-secondary)",
-                transition: "var(--transition)",
-              }}
-              className="hidden md:flex"
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.background =
-                  "var(--primary-light)";
-                (e.currentTarget as HTMLElement).style.color = "var(--primary)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.background =
-                  "transparent";
-                (e.currentTarget as HTMLElement).style.color =
-                  "var(--text-secondary)";
-              }}
-            >
-              <IoHeartOutline size={22} />
-              <span style={{ fontSize: 11, fontWeight: 500 }}>Wishlist</span>
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <Link
+                  to="/wishlist"
+                  style={{
+                    // display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 2,
+                    padding: "8px 12px",
+                    borderRadius: "var(--radius-sm)",
+                    color: "var(--text-secondary)",
+                    transition: "var(--transition)",
+                  }}
+                  className="hidden md:flex"
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.background =
+                      "var(--primary-light)";
+                    (e.currentTarget as HTMLElement).style.color =
+                      "var(--primary)";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.background =
+                      "transparent";
+                    (e.currentTarget as HTMLElement).style.color =
+                      "var(--text-secondary)";
+                  }}
+                >
+                  <IoHeartOutline size={22} />
+                  <span style={{ fontSize: 11, fontWeight: 500 }}>
+                    Wishlist
+                  </span>
+                </Link>
 
-            <Link
-              to="/account"
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 2,
-                padding: "8px 12px",
-                borderRadius: "var(--radius-sm)",
-                color: "var(--text-secondary)",
-                transition: "var(--transition)",
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.background =
-                  "var(--primary-light)";
-                (e.currentTarget as HTMLElement).style.color = "var(--primary)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.background =
-                  "transparent";
-                (e.currentTarget as HTMLElement).style.color =
-                  "var(--text-secondary)";
-              }}
-            >
-              <AiOutlineUser size={22} />
-              <span style={{ fontSize: 11, fontWeight: 500 }}>Account</span>
-            </Link>
+                <Link
+                  to="/account"
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 2,
+                    padding: "8px 12px",
+                    borderRadius: "var(--radius-sm)",
+                    color: "var(--text-secondary)",
+                    transition: "var(--transition)",
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.background =
+                      "var(--primary-light)";
+                    (e.currentTarget as HTMLElement).style.color =
+                      "var(--primary)";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.background =
+                      "transparent";
+                    (e.currentTarget as HTMLElement).style.color =
+                      "var(--text-secondary)";
+                  }}
+                >
+                  <AiOutlineUser size={22} />
+                  <span style={{ fontSize: 11, fontWeight: 500 }}>Account</span>
+                </Link>
+              </>
+            ) : (
+              <>
+              <Link
+                  to="/register"
+                  style={{
+                    // display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 2,
+                    padding: "8px 12px",
+                    borderRadius: "var(--radius-sm)",
+                    color: "var(--text-secondary)",
+                    transition: "var(--transition)",
+                  }}
+                  className="hidden md:flex"
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.background =
+                      "var(--primary-light)";
+                    (e.currentTarget as HTMLElement).style.color =
+                      "var(--primary)";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.background =
+                      "transparent";
+                    (e.currentTarget as HTMLElement).style.color =
+                      "var(--text-secondary)";
+                  }}
+                >
+                  <AiOutlineUsergroupAdd size={22} />
+                  <span style={{ fontSize: 11, fontWeight: 500 }}>
+                    Register
+                  </span>
+                </Link>
+                <Link
+                  to="/login"
+                  style={{
+                    // display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 2,
+                    padding: "8px 12px",
+                    borderRadius: "var(--radius-sm)",
+                    color: "var(--text-secondary)",
+                    transition: "var(--transition)",
+                  }}
+                  className="hidden md:flex"
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.background =
+                      "var(--primary-light)";
+                    (e.currentTarget as HTMLElement).style.color =
+                      "var(--primary)";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.background =
+                      "transparent";
+                    (e.currentTarget as HTMLElement).style.color =
+                      "var(--text-secondary)";
+                  }}
+                >
+                  <AiOutlineLogin size={22} />
+                  <span style={{ fontSize: 11, fontWeight: 500 }}>
+                    Login
+                  </span>
+                </Link>
+                
+              </>
+            )}
 
             <Link
               to="/cart"
