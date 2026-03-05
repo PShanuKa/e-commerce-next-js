@@ -10,12 +10,13 @@ const AuthDefault = ({ children }: { children: React.ReactNode }) => {
         background:
           "linear-gradient(135deg, #1E3A8A 0%, #2563EB 40%, #7C3AED 100%)",
       }}
+      
+
     >
       {/* Left Panel — Branding */}
       <div
         style={{
           flex: 1,
-          display: "flex",
           flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
@@ -23,7 +24,7 @@ const AuthDefault = ({ children }: { children: React.ReactNode }) => {
           position: "relative",
           overflow: "hidden",
         }}
-        className="hidden-mobile"
+        className="hidden  md:flex"
       >
         {/* Decorative circles */}
         {[180, 280, 380].map((size, i) => (

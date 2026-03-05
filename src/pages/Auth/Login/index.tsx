@@ -195,7 +195,7 @@ const Login = () => {
         </div>
 
         {/* Remember Me */}
-        <label
+        {/* <label
           style={{
             display: "flex",
             alignItems: "center",
@@ -217,7 +217,7 @@ const Login = () => {
           <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
             Remember me for 30 days
           </span>
-        </label>
+        </label> */}
 
         {/* Submit */}
         <button

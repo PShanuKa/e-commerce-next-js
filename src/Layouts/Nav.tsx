@@ -10,11 +10,12 @@ import { MdOutlineLocalShipping } from "react-icons/md";
 
 const NAV_LINKS = [
   { label: "Home", path: "/" },
-  { label: "Shop", path: "/products" },
-  { label: "Hot Deals", path: "/products" },
-  { label: "Electronics", path: "/products" },
-  { label: "Fashion", path: "/products" },
-  { label: "About Us", path: "/about" },
+  { label: "Products", path: "/products" },
+  { label: "Orders", path: "/account/orders" },
+  // { label: "Hot Deals", path: "/products" },
+  // { label: "Electronics", path: "/products" },
+  // { label: "Fashion", path: "/products" },
+  // { label: "About Us", path: "/about" },
 ];
 
 const Navbar = () => {
@@ -342,7 +343,7 @@ const Navbar = () => {
           }}
         >
           {/* All Departments */}
-          <button
+          {/* <button
             style={{
               display: "flex",
               alignItems: "center",
@@ -369,7 +370,7 @@ const Navbar = () => {
             <HiOutlineMenuAlt2 size={18} />
             All Departments
             <FaAngleDown size={12} style={{ marginLeft: "auto" }} />
-          </button>
+          </button> */}
 
           {/* Nav Links */}
           <nav style={{ display: "flex", alignItems: "center" }}>

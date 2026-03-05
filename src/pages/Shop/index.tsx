@@ -546,7 +546,7 @@ const ShopPage = () => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 500000]);
   const [page, setPage] = useState(Number(searchParams.get("page") ?? 1));
   const [view, setView] = useState<"grid" | "list">("grid");
-  const [showFilter, setShowFilter] = useState(true);
+  const [showFilter, setShowFilter] = useState(false);
 
   // Debounce search
   useEffect(() => {
@@ -634,7 +634,7 @@ const ShopPage = () => {
         <div style={{ display: "flex", gap: 24 }}>
           {/* ── Sidebar Filters ── */}
           {showFilter && (
-            <div style={{ width: 240, flexShrink: 0 }}>
+            <div style={{ width: 240, flexShrink: 0 }} className="hidden md:block">
               <div className="card" style={{ padding: 20 }}>
                 <div
                   style={{
@@ -890,6 +890,194 @@ const ShopPage = () => {
                       : ""}
                 </span>
               </div>
+               {showFilter && (
+            <div style={{ width: "100%", flexShrink: 0 }} className="md:hidden" >
+              <div className="card" style={{ padding: 20 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 20,
+                  }}
+                >
+                  <h3
+                    style={{
+                      fontSize: 15,
+                      fontWeight: 700,
+                      color: "var(--text-primary)",
+                    }}
+                  >
+                    Filters
+                  </h3>
+                  <button
+                    onClick={() => {
+                      setSelectedCategory("");
+                      setSelectedAvailability("");
+                      setPriceRange([0, 500000]);
+                      setSearch("");
+                      setPage(1);
+                      navigate("/products");
+                    }}
+                    style={{
+                      fontSize: 12,
+                      color: "var(--primary)",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Clear All
+                  </button>
+                </div>
+
+                {/* Category */}
+                <FilterSection title="Category">
+                  <div
+                    style={{ display: "flex", flexDirection: "column", gap: 8 }}
+                  >
+                    {[
+                      {
+                        slug: "",
+                        name: "All",
+                        product_count: meta?.total ?? 0,
+                      },
+                      ...apiCategories,
+                    ].map((cat) => {
+                      const isSelected = selectedCategory === cat.slug;
+                      return (
+                        <label
+                          key={cat.slug}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            cursor: "pointer",
+                          }}
+                        >
+                          <input
+                            type="radio"
+                            name="category"
+                            checked={isSelected}
+                            onChange={() => handleCategoryChange(cat.slug)}
+                            style={{
+                              accentColor: "var(--primary)",
+                              width: 15,
+                              height: 15,
+                            }}
+                          />
+                          <span
+                            style={{
+                              fontSize: 13,
+                              color: "var(--text-secondary)",
+                              fontWeight: isSelected ? 600 : 400,
+                            }}
+                          >
+                            {cat.name}
+                          </span>
+                          <span
+                            style={{
+                              marginLeft: "auto",
+                              fontSize: 11,
+                              color: "var(--text-muted)",
+                            }}
+                          >
+                            {cat.product_count}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </FilterSection>
+
+                {/* Availability */}
+                <FilterSection title="Availability">
+                  <div
+                    style={{ display: "flex", flexDirection: "column", gap: 8 }}
+                  >
+                    {AVAILABILITY_OPTIONS.map((opt) => {
+                      const isSelected = selectedAvailability === opt.value;
+                      return (
+                        <label
+                          key={opt.value}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            cursor: "pointer",
+                          }}
+                        >
+                          <input
+                            type="radio"
+                            name="availability"
+                            checked={isSelected}
+                            onChange={() => {
+                              setSelectedAvailability(opt.value);
+                              setPage(1);
+                            }}
+                            style={{
+                              accentColor: "var(--primary)",
+                              width: 15,
+                              height: 15,
+                            }}
+                          />
+                          <span
+                            style={{
+                              fontSize: 13,
+                              color: "var(--text-secondary)",
+                              fontWeight: isSelected ? 600 : 400,
+                            }}
+                          >
+                            {opt.label}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </FilterSection>
+
+                {/* Price Range */}
+                <FilterSection title="Price Range (Rs.)">
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <input
+                      type="number"
+                      placeholder="Min"
+                      value={priceRange[0] || ""}
+                      onChange={(e) =>
+                        setPriceRange([Number(e.target.value), priceRange[1]])
+                      }
+                      style={{
+                        width: "50%",
+                        padding: "6px 8px",
+                        border: "1px solid var(--border)",
+                        borderRadius: "var(--radius-sm)",
+                        fontSize: 12,
+                      }}
+                    />
+                    <input
+                      type="number"
+                      placeholder="Max"
+                      value={priceRange[1] === 500000 ? "" : priceRange[1]}
+                      onChange={(e) =>
+                        setPriceRange([
+                          priceRange[0],
+                          Number(e.target.value) || 500000,
+                        ])
+                      }
+                      style={{
+                        width: "50%",
+                        padding: "6px 8px",
+                        border: "1px solid var(--border)",
+                        borderRadius: "var(--radius-sm)",
+                        fontSize: 12,
+                      }}
+                    />
+                  </div>
+                </FilterSection>
+              </div>
+            </div>
+          )}
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <select
                   value={sortBy}

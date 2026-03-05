@@ -42,16 +42,16 @@ const NAV_LINKS = [
     label: "Addresses",
     icon: <TbTruckDelivery size={17} />,
   },
-  {
-    path: "/account/security",
-    label: "Security",
-    icon: <IoShieldCheckmark size={17} />,
-  },
-  {
-    path: "/account/settings",
-    label: "Settings",
-    icon: <IoSettings size={17} />,
-  },
+  // {
+  //   path: "/account/security",
+  //   label: "Security",
+  //   icon: <IoShieldCheckmark size={17} />,
+  // },
+  // {
+  //   path: "/account/settings",
+  //   label: "Settings",
+  //   icon: <IoSettings size={17} />,
+  // },
 ];
 
 /* ─── Account Layout ────────────────────────────── */

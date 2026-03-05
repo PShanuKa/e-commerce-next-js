@@ -263,9 +263,10 @@ const WishlistPage = () => {
 
         {/* Grid */}
         <div
+          className="grid ld:grid-cols-4 md:grid-cols-3  sm:grid-cols-2 gap-4"
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
+            // display: "grid",
+            // gridTemplateColumns: "repeat(4, 1fr)",
             gap: 16,
           }}
         >

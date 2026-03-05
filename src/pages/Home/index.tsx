@@ -411,12 +411,12 @@ const HomePage = () => {
         }}
       >
         <div
-          className="container"
+          className="container  grid md:grid-cols-2  lg:grid-cols-4 "
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
+            // display: "grid",
+            // gridTemplateColumns: "repeat(4, 1fr)",
             gap: 1,
-            background: "var(--border)",
+            // background: "var(--border)",
             borderTop: "1px solid var(--border)",
           }}
         >
@@ -481,12 +481,14 @@ const HomePage = () => {
       {/* ────────────────── Promo Banners ────────────────── */}
       <section style={{ padding: "32px 0" }}>
         <div
-          className="container"
+          className="container grid md:grid-cols-2  lg:grid-cols-3 "
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
+            // display: "grid",
+            // gridTemplateColumns: "repeat(3, 1fr)",
             gap: 16,
+
           }}
+    
         >
           {PROMO_BANNERS.map((b, i) => (
             <Link
@@ -544,7 +546,7 @@ const HomePage = () => {
         <div className="container">
           <div
             style={{
-              display: "flex",
+              display: "flex ",
               justifyContent: "space-between",
               alignItems: "center",
               marginBottom: 24,
@@ -567,9 +569,10 @@ const HomePage = () => {
           </div>
 
           <div
+          className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8"
             style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(8, 1fr)",
+              // display: "grid ",
+              // gridTemplateColumns: "repeat(8, 1fr)",
               gap: 12,
             }}
           >
@@ -660,10 +663,11 @@ const HomePage = () => {
           {productsLoading ? (
             <div
               style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(4, 1fr)",
+                // display: "grid",
+                // gridTemplateColumns: "repeat(4, 1fr)",
                 gap: 16,
               }}
+               className="grid md:grid-cols-3  lg:grid-cols-4 sm:grid-cols-2"
             >
               {[...Array(8)].map((_, i) => (
                 <ProductSkeleton key={i} />
@@ -682,10 +686,12 @@ const HomePage = () => {
           ) : (
             <div
               style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(4, 1fr)",
+                // display: "grid",
+                // gridTemplateColumns: "repeat(4, 1fr)",
                 gap: 16,
+                
               }}
+              className="grid md:grid-cols-3  lg:grid-cols-4 sm:grid-cols-2"
             >
               {featuredProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
