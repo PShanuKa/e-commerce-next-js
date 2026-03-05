@@ -223,23 +223,25 @@ const HomePage = () => {
             </span>
             <h1
               style={{
-                fontSize: 48,
+                // fontSize: 48,
                 fontWeight: 900,
                 lineHeight: 1.1,
                 marginBottom: 16,
                 letterSpacing: "-1.5px",
               }}
+              className="text-3xl md:text-5xl"
             >
               {slide.title}
             </h1>
             <p
               style={{
-                fontSize: 16,
+                // fontSize: 16,
                 opacity: 0.85,
                 marginBottom: 32,
                 maxWidth: 440,
                 lineHeight: 1.7,
               }}
+              className="text-sm md:text-[16px]"
             >
               {slide.description}
             </p>
@@ -296,6 +298,7 @@ const HomePage = () => {
               boxShadow: "0 30px 60px rgba(0,0,0,0.3)",
               border: "2px solid rgba(255,255,255,0.2)",
             }}
+            className="hidden md:block"
           >
             <img
               src={slide.image}

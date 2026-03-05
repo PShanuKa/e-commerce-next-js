@@ -2,9 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import {
   IoPerson,
-  IoSettings,
   IoHeart,
-  IoShieldCheckmark,
   IoLogOut,
   IoCameraOutline,
   IoCheckmarkCircle,
@@ -12,7 +10,7 @@ import {
 } from "react-icons/io5";
 import { HiOutlineShoppingBag } from "react-icons/hi";
 import { TbTruckDelivery } from "react-icons/tb";
-import { MdLockOutline } from "react-icons/md";
+import { MdLockOutline, MdLogin } from "react-icons/md";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "@/app/store";
 import { setUser, clearUser } from "@/features/authSlice";
@@ -74,6 +72,90 @@ export const AccountLayout = ({ children }: { children?: React.ReactNode }) => {
     navigate("/login");
   };
 
+  if (!isAuthenticated) {
+    return (
+      <div style={{ padding: "28px 0 60px", background: "var(--bg-base)" }}>
+        <div className="container">
+          {/* Breadcrumb */}
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              alignItems: "center",
+              marginBottom: 28,
+              fontSize: 13,
+              color: "var(--text-muted)",
+            }}
+          >
+            <Link to="/" style={{ color: "var(--primary)" }}>
+              Home
+            </Link>{" "}
+            <span>/</span>
+            <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>
+              My Account
+            </span>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              minHeight: "50vh",
+              padding: 40,
+              textAlign: "center",
+              background: "white",
+              borderRadius: "var(--radius-sm)",
+              boxShadow: "var(--shadow-sm)",
+            }}
+          >
+            <div style={{ fontSize: 64, marginBottom: 20 }}>🔒</div>
+            <h2
+              style={{
+                fontSize: 22,
+                fontWeight: 800,
+                color: "var(--text-primary)",
+                marginBottom: 8,
+              }}
+            >
+              Login Required
+            </h2>
+            <p
+              style={{
+                fontSize: 14,
+                color: "var(--text-muted)",
+                marginBottom: 28,
+                maxWidth: 320,
+              }}
+            >
+              Please log in to view and manage your account profile, orders, and
+              settings.
+            </p>
+            <Link
+              to="/login"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "12px 32px",
+                background: "var(--primary)",
+                color: "white",
+                borderRadius: "var(--radius-sm)",
+                fontWeight: 700,
+                fontSize: 15,
+                textDecoration: "none",
+                transition: "var(--transition)",
+              }}
+            >
+              <MdLogin size={18} /> Login to Account
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ padding: "28px 0 60px", background: "var(--bg-base)" }}>
       <div className="container">
@@ -98,7 +180,6 @@ export const AccountLayout = ({ children }: { children?: React.ReactNode }) => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6">
-
           {/* ── Sidebar ── */}
           <div>
             <div className="card" style={{ padding: 20, marginBottom: 12 }}>
@@ -476,7 +557,6 @@ const ProfilePage = () => {
                   cursor: "pointer",
                 }}
                 className="text-sm md:text-[13px]"
-                
               >
                 Edit Profile
               </button>
@@ -631,7 +711,7 @@ const ProfilePage = () => {
       </div>
 
       {/* ══ Change Password ══ */}
-      <div className="card md:p-6 p-4 " style={{ padding: 24 }}  >
+      <div className="card md:p-6 p-4 " style={{ padding: 24 }}>
         <div
           style={{
             display: "flex",
@@ -650,7 +730,7 @@ const ProfilePage = () => {
                   color: "var(--text-primary)",
                   margin: 0,
                 }}
-               className="text-sm md:text-[15px]"
+                className="text-sm md:text-[15px]"
               >
                 Change Password
               </h3>
