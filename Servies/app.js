@@ -29,7 +29,7 @@ async function buildApp() {
   await app.register(swaggerPlugin);
 
   // ── Health ────────────────────────────────────────
-  app.get("/health", async () => ({
+  app.get("/api/health", async () => ({
     status: "ok",
     service: "ShopLK API",
     timestamp: new Date().toISOString(),
