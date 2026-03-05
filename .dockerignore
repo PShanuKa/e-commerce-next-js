@@ -1,0 +1,16 @@
+node_modules
+dist
+.git
+.env
+.vscode
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
+.prettiercache
+Dockerfile
+.dockerignore
+README.md
+adminPanel
+Servies

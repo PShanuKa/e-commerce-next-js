@@ -97,9 +97,8 @@ export const AccountLayout = ({ children }: { children?: React.ReactNode }) => {
           </span>
         </div>
 
-        <div
-          style={{ display: "grid", gridTemplateColumns: "240px 1fr", gap: 24 }}
-        >
+        <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6">
+
           {/* ── Sidebar ── */}
           <div>
             <div className="card" style={{ padding: 20, marginBottom: 12 }}>
@@ -433,10 +432,11 @@ const ProfilePage = () => {
         >
           <h2
             style={{
-              fontSize: 18,
+              // fontSize: 18,
               fontWeight: 800,
               color: "var(--text-primary)",
             }}
+            className="text-sm md:text-[18px]"
           >
             Personal Information
           </h2>
@@ -470,11 +470,13 @@ const ProfilePage = () => {
                   background: "var(--primary)",
                   color: "white",
                   borderRadius: "var(--radius-sm)",
-                  fontSize: 13,
+                  // fontSize: 13,
                   fontWeight: 600,
                   border: "none",
                   cursor: "pointer",
                 }}
+                className="text-sm md:text-[13px]"
+                
               >
                 Edit Profile
               </button>
@@ -554,7 +556,8 @@ const ProfilePage = () => {
 
         {/* Fields grid */}
         <div
-          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}
+          // style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}
+          className="grid grid-cols-1 md:grid-cols-2 gap-6"
         >
           <Field
             label="Full Name"
@@ -628,7 +631,7 @@ const ProfilePage = () => {
       </div>
 
       {/* ══ Change Password ══ */}
-      <div className="card" style={{ padding: 24 }}>
+      <div className="card md:p-6 p-4 " style={{ padding: 24 }}  >
         <div
           style={{
             display: "flex",
@@ -642,11 +645,12 @@ const ProfilePage = () => {
             <div>
               <h3
                 style={{
-                  fontSize: 15,
+                  // fontSize: 15,
                   fontWeight: 700,
                   color: "var(--text-primary)",
                   margin: 0,
                 }}
+               className="text-sm md:text-[15px]"
               >
                 Change Password
               </h3>

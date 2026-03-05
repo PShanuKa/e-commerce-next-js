@@ -45,7 +45,7 @@ const Navbar = () => {
       }}
     >
       {/* ── Top Bar ── */}
-      <div style={{ background: "var(--text-primary)", padding: "6px 0" }}>
+      <div style={{ background: "var(--text-primary)", padding: "6px 0" }} className="hidden md:block">
         <div
           className="container"
           style={{
@@ -228,7 +228,7 @@ const Navbar = () => {
             <Link
               to="/wishlist"
               style={{
-                display: "flex",
+                // display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 gap: 2,
@@ -237,6 +237,7 @@ const Navbar = () => {
                 color: "var(--text-secondary)",
                 transition: "var(--transition)",
               }}
+              className="hidden md:flex"
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLElement).style.background =
                   "var(--primary-light)";
@@ -416,13 +417,14 @@ const Navbar = () => {
           <div
             style={{
               padding: "8px 20px",
-              display: "flex",
+              // display: "flex",
               alignItems: "center",
               gap: 6,
               color: "var(--secondary)",
               fontSize: 12,
               fontWeight: 600,
             }}
+            className="hidden md:flex"
           >
             🔥 Today's Hot Deals
           </div>
