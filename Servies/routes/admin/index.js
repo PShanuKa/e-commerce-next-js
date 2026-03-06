@@ -2,7 +2,7 @@
 
 import * as handler from "./handler.js";
 
-export default async function adminRoutes(fastify) {;
+export default async function adminRoutes(fastify) {
   const admin = { preHandler: [fastify.authenticateAdmin] };
 
   fastify.get("/stats", {
@@ -55,4 +55,44 @@ export default async function adminRoutes(fastify) {;
     schema: { tags: ["Admin"], summary: "All customers" },
     handler: handler.listAllUsers,
   });
-};
+  fastify.post("/users", {
+    ...admin,
+    schema: {
+      tags: ["Admin"],
+      summary: "Create customer",
+      body: {
+        type: "object",
+        required: ["name", "email", "password"],
+        properties: {
+          name: { type: "string" },
+          email: { type: "string", format: "email" },
+          phone: { type: "string" },
+          password: { type: "string", minLength: 6 },
+        },
+      },
+    },
+    handler: handler.createCustomer,
+  });
+  fastify.put("/users/:id", {
+    ...admin,
+    schema: {
+      tags: ["Admin"],
+      summary: "Update customer",
+      params: {
+        type: "object",
+        properties: { id: { type: "integer" } },
+      },
+      body: {
+        type: "object",
+        properties: {
+          name: { type: "string" },
+          email: { type: "string", format: "email" },
+          phone: { type: "string" },
+          role: { type: "string" },
+          isActive: { type: "boolean" },
+        },
+      },
+    },
+    handler: handler.updateCustomer,
+  });
+}

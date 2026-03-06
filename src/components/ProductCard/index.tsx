@@ -55,7 +55,11 @@ const ProductCard = ({ product, view = "grid" }: ProductCardProps) => {
   const badge = product.badge
     ? (BADGE_COLORS[product.badge] ?? { bg: "#F1F5F9", color: "#475569" })
     : null;
-  const avail = AVAIL_LABELS[product.availability];
+
+  const isOutOfStock = product.stockQty <= 0;
+  const avail = isOutOfStock
+    ? { label: "Out of Stock", color: "#EF4444" }
+    : AVAIL_LABELS[product.availability];
   const imgHeight = view === "list" ? 160 : 200;
 
   /* ── Handlers ── */
@@ -276,7 +280,9 @@ const ProductCard = ({ product, view = "grid" }: ProductCardProps) => {
               {/* Cart */}
               <button
                 onClick={handleAddToCart}
-                disabled={adding || addedToCart || !isAuthenticated}
+                disabled={
+                  adding || addedToCart || !isAuthenticated || isOutOfStock
+                }
                 style={{
                   padding: "0 20px",
                   height: 36,
@@ -302,7 +308,9 @@ const ProductCard = ({ product, view = "grid" }: ProductCardProps) => {
                   : addedToCart
                     ? "Added ✓"
                     : isAuthenticated
-                      ? "Add to Cart"
+                      ? isOutOfStock
+                        ? "Out of Stock"
+                        : "Add to Cart"
                       : "Login to Add"}
               </button>
             </div>
@@ -494,7 +502,7 @@ const ProductCard = ({ product, view = "grid" }: ProductCardProps) => {
         {/* Add to Cart button */}
         <button
           onClick={handleAddToCart}
-          disabled={adding || addedToCart || !isAuthenticated}
+          disabled={adding || addedToCart || !isAuthenticated || isOutOfStock}
           style={{
             width: "100%",
             padding: "9px",
@@ -519,7 +527,9 @@ const ProductCard = ({ product, view = "grid" }: ProductCardProps) => {
             : addedToCart
               ? "Added ✓"
               : isAuthenticated
-                ? "Add to Cart"
+                ? isOutOfStock
+                  ? "Out of Stock"
+                  : "Add to Cart"
                 : "Login to Add"}
         </button>
       </div>

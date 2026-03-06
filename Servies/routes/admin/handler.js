@@ -1,6 +1,7 @@
 "use strict";
 
 import prisma from "../../config/prisma.js";
+import bcryptJs from "bcryptjs";
 
 const getDashboardStats = async (request, reply) => {
   const [orders, users, products, revenue] = await Promise.all([
@@ -93,7 +94,6 @@ const listAllUsers = async (request, reply) => {
   const skip = (Number(page) - 1) * Number(limit);
 
   const users = await prisma.user.findMany({
-    where: { role: "customer" },
     skip,
     take: Number(limit),
     orderBy: { createdAt: "desc" },
@@ -102,6 +102,7 @@ const listAllUsers = async (request, reply) => {
       name: true,
       email: true,
       phone: true,
+      role: true,
       isActive: true,
       createdAt: true,
       _count: { select: { orders: true } },
@@ -116,7 +117,79 @@ const listAllUsers = async (request, reply) => {
   return { success: true, users: formatted };
 };
 
-export { getDashboardStats,
+const createCustomer = async (request, reply) => {
+  const { name, email, phone, password } = request.body;
+
+  if (!name || !email || !password) {
+    return reply
+      .status(400)
+      .send({ success: false, error: "Missing required fields." });
+  }
+
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) {
+    return reply
+      .status(400)
+      .send({ success: false, error: "Email already in use." });
+  }
+
+  const salt = await bcryptJs.genSalt(10);
+  const passwordHash = await bcryptJs.hash(password, salt);
+
+  const user = await prisma.user.create({
+    data: {
+      name,
+      email,
+      phone,
+      passwordHash,
+      role: "customer",
+    },
+  });
+
+  return {
+    success: true,
+    user: { id: user.id, name: user.name, email: user.email },
+  };
+};
+
+const updateCustomer = async (request, reply) => {
+  const { id } = request.params;
+  const { name, email, phone, role, isActive } = request.body;
+
+  const data = {};
+  if (name !== undefined) data.name = name;
+  if (email !== undefined) data.email = email;
+  if (phone !== undefined) data.phone = phone;
+  if (role !== undefined) data.role = role;
+  if (isActive !== undefined) data.isActive = isActive;
+
+  const user = await prisma.user
+    .update({
+      where: { id: Number(id) },
+      data,
+    })
+    .catch(() => null);
+
+  if (!user)
+    return reply.status(404).send({ success: false, error: "User not found." });
+
+  return {
+    success: true,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+    },
+  };
+};
+
+export {
+  getDashboardStats,
   listAllOrders,
   updateOrderStatus,
-  listAllUsers, };
+  listAllUsers,
+  createCustomer,
+  updateCustomer,
+};

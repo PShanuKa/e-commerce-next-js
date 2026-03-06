@@ -273,7 +273,10 @@ const ProductDetail = () => {
   const badge = product.badge
     ? (BADGE_COLORS[product.badge] ?? { bg: "#F1F5F9", color: "#475569" })
     : null;
-  const avail = AVAIL[product.availability] ?? AVAIL["in_stock"];
+  const isOutOfStock = product.stockQty <= 0;
+  const avail = isOutOfStock
+    ? { label: "Out of Stock", color: "#EF4444" }
+    : (AVAIL[product.availability] ?? AVAIL["in_stock"]);
 
   return (
     <div style={{ padding: "28px 0 60px", background: "var(--bg-base)" }}>
@@ -487,7 +490,19 @@ const ProductDetail = () => {
                   gap: 4,
                 }}
               >
-                <IoCheckmarkCircle size={15} /> {avail.label}
+                {isOutOfStock ? (
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      background: avail.color,
+                    }}
+                  />
+                ) : (
+                  <IoCheckmarkCircle size={15} />
+                )}{" "}
+                {avail.label}
               </span>
               {product.stockQty > 0 && (
                 <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
@@ -583,6 +598,8 @@ const ProductDetail = () => {
                   border: "1.5px solid var(--border)",
                   borderRadius: "var(--radius-sm)",
                   overflow: "hidden",
+                  opacity: isOutOfStock ? 0.5 : 1,
+                  pointerEvents: isOutOfStock ? "none" : "auto",
                 }}
               >
                 <button
@@ -635,7 +652,12 @@ const ProductDetail = () => {
             <div style={{ display: "flex", gap: 12, marginBottom: 28 }}>
               <button
                 onClick={handleCart}
-                disabled={addingToCart || addedToCart || !isAuthenticated}
+                disabled={
+                  addingToCart ||
+                  addedToCart ||
+                  !isAuthenticated ||
+                  isOutOfStock
+                }
                 style={{
                   flex: 1,
                   padding: "14px",
@@ -663,16 +685,21 @@ const ProductDetail = () => {
                   : addedToCart
                     ? "Added to Cart ✓"
                     : isAuthenticated
-                      ? "Add to Cart"
+                      ? isOutOfStock
+                        ? "Out of Stock"
+                        : "Add to Cart"
                       : "Login to Add"}
               </button>
               <Link
-                to="/checkout"
+                to={isOutOfStock ? "#" : "/checkout"}
+                onClick={(e) => isOutOfStock && e.preventDefault()}
                 style={{
                   flex: 1,
                   padding: "14px",
-                  background: "var(--secondary)",
-                  color: "white",
+                  background: isOutOfStock
+                    ? "var(--bg-muted)"
+                    : "var(--secondary)",
+                  color: isOutOfStock ? "var(--text-muted)" : "white",
                   borderRadius: "var(--radius-sm)",
                   fontSize: 15,
                   fontWeight: 700,
@@ -682,6 +709,7 @@ const ProductDetail = () => {
                   gap: 8,
                   textDecoration: "none",
                   transition: "var(--transition)",
+                  cursor: isOutOfStock ? "not-allowed" : "pointer",
                 }}
               >
                 Buy Now

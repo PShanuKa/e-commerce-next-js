@@ -4,6 +4,7 @@ import LoginPage from "@/pages/auth/LoginPage";
 import DashboardPage from "@/pages/dashboard/DashboardPage";
 import CategoriesPage from "@/pages/categories/CategoriesPage";
 import ProductsPage from "@/pages/products/ProductsPage";
+import CustomersPage from "@/pages/customers/CustomersPage";
 
 const AppRoutes = () => (
   <Routes>
@@ -16,7 +17,7 @@ const AppRoutes = () => (
       <Route path="/categories" element={<CategoriesPage />} />
       <Route path="/products" element={<ProductsPage />} />
       {/* <Route path="/orders"     element={<OrdersPage />} /> */}
-      {/* <Route path="/customers"  element={<CustomersPage />} /> */}
+      <Route path="/customers" element={<CustomersPage />} />
     </Route>
 
     {/* Fallback */}
