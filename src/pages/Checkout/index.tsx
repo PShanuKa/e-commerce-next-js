@@ -17,6 +17,7 @@ import {
   type AddressBody,
 } from "@/services/addressSlice";
 import { usePlaceOrderMutation } from "@/services/orderSlice";
+import { useInitPayHereMutation } from "@/services/payhereSlice";
 
 /* ─── Constants ─────────────────────────────────── */
 const STEPS = ["Shipping", "Payment", "Review"];
@@ -117,6 +118,7 @@ const CheckoutPage = () => {
   /* ── Mutations ── */
   const [addAddress, { isLoading: addingAddr }] = useAddAddressMutation();
   const [placeOrder, { isLoading: placingOrder }] = usePlaceOrderMutation();
+  const [initPayHere, { isLoading: initingPayHere }] = useInitPayHereMutation();
 
   /* ── Step state ── */
   const [step, setStep] = useState(0);
@@ -176,7 +178,31 @@ const CheckoutPage = () => {
         address_id: effectiveAddressId ?? undefined,
         payment_method: payMethod,
       }).unwrap();
-      navigate(`/order-success?id=${res.order.id}`);
+
+      if (payMethod === "card") {
+        const payRes = await initPayHere({ order_id: res.order.id }).unwrap();
+
+        const payhere = (window as any).payhere;
+        if (payhere) {
+          payhere.onCompleted = () => {
+            navigate(`/order-success?id=${res.order.id}`);
+          };
+          payhere.onDismissed = () => {
+            setOrderError(
+              "Payment dismissed. You can try again from your orders.",
+            );
+          };
+          payhere.onError = (err: string) => {
+            setOrderError(`Payment error: ${err}`);
+          };
+
+          payhere.startPayment(payRes.paymentParams);
+        } else {
+          setOrderError("Payment gateway not loaded. Please refresh.");
+        }
+      } else {
+        navigate(`/order-success?id=${res.order.id}`);
+      }
     } catch (e: unknown) {
       const err = e as { data?: { message?: string } };
       setOrderError(

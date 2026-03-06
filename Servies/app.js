@@ -16,6 +16,7 @@ import wishlistRoutes from "./routes/wishlist/index.js";
 import addressesRoutes from "./routes/addresses/index.js";
 import reviewsRoutes from "./routes/reviews/index.js";
 import adminRoutes from "./routes/admin/index.js";
+import payhereRoutes from "./routes/payhere/index.js";
 
 async function buildApp() {
   const app = fastify({
@@ -44,7 +45,8 @@ async function buildApp() {
   await app.register(wishlistRoutes, { prefix: "/api/wishlist" });
   await app.register(addressesRoutes, { prefix: "/api/addresses" });
   await app.register(reviewsRoutes, { prefix: "/api/reviews" });
-  await app.register(adminRoutes,{ prefix: "/api/admin" });
+  await app.register(adminRoutes, { prefix: "/api/admin" });
+  await app.register(payhereRoutes, { prefix: "/api/payhere" });
 
   // ── Global Error Handler ──────────────────────────
   app.setErrorHandler((error, request, reply) => {

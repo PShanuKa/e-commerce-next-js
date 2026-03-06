@@ -147,8 +147,28 @@ model Order {
   user       User        @relation(fields: [userId], references: [id])
   address    Address?    @relation(fields: [addressId], references: [id])
   orderItems OrderItem[]
+  payments   Payment[]
 
   @@map("orders")
+}
+
+// ─── Payments ─────────────────────────────────────────────────────────────────
+model Payment {
+  id               Int      @id @default(autoincrement())
+  orderId          Int      @map("order_id")
+  paymentMethod    String   @map("payment_method") @db.VarChar(30)
+  transactionId    String?  @map("transaction_id") @db.VarChar(100)
+  amount           Decimal  @db.Decimal(14, 2)
+  currency         String   @default("LKR") @db.VarChar(10)
+  status           String   @db.VarChar(30) // 'success' | 'failed' | 'pending'
+  payhereStatus    Int?     @map("payhere_status") // status_code from PayHere
+  payhereMessage   String?  @map("payhere_message")
+  payhereReference String?  @map("payhere_reference") @db.VarChar(100) // payhere_payment_id
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
 }
 
 // ─── Order Items ──────────────────────────────────────────────────────────────
