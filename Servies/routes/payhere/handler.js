@@ -55,17 +55,16 @@ const initPayment = async (request, reply) => {
     items: `Order #${order.id}`,
     amount: amount,
     currency: currency,
-    hash: mainHash,
     first_name: order.user?.name?.split(" ")[0] || "Guest",
-    last_name: order.user?.name?.split(" ").slice(1).join(" ") || "",
+    last_name: order.user?.name?.split(" ").slice(1).join(" ") || "LastName",
     email: order.user?.email || "",
     phone: order.user?.phone || order.address?.phone || "",
     address:
-      `${order.address?.addressLine1 || ""}${order.address?.addressLine2 ? ", " + order.address.addressLine2 : ""}`.trim(),
+    `${order.address?.addressLine1 || ""}${order.address?.addressLine2 ? ", " + order.address.addressLine2 : ""}`.trim(),
     city: order.address?.city || "",
     country: "Sri Lanka",
-    recurrence: "", // Optional: e.g. "1 Month" (for recurring)
-    duration: "", // Optional: e.g. "Forever" (for recurring)
+    hash: mainHash,
+    
   };
 
   return { success: true, paymentParams };

@@ -194,7 +194,10 @@ const CheckoutPage = () => {
           };
           payhere.onError = (err: string) => {
             setOrderError(`Payment error: ${err}`);
+
           };
+
+          console.log('payRes.paymentParams', payRes.paymentParams);
 
           payhere.startPayment(payRes.paymentParams);
         } else {
