@@ -26,6 +26,18 @@ export default async function adminRoutes(fastify) {
     },
     handler: handler.listAllOrders,
   });
+  fastify.get("/orders/:id", {
+    ...admin,
+    schema: {
+      tags: ["Admin"],
+      summary: "Get order details",
+      params: {
+        type: "object",
+        properties: { id: { type: "integer" } },
+      },
+    },
+    handler: handler.getOrderDetails,
+  });
   fastify.put("/orders/:id/status", {
     ...admin,
     schema: {

@@ -89,6 +89,30 @@ const updateOrderStatus = async (request, reply) => {
   return { success: true, order };
 };
 
+const getOrderDetails = async (request, reply) => {
+  const { id } = request.params;
+
+  const order = await prisma.order.findUnique({
+    where: { id: Number(id) },
+    include: {
+      user: { select: { name: true, email: true, phone: true } },
+      address: true,
+      orderItems: {
+        include: {
+          product: { select: { name: true, slug: true } },
+        },
+      },
+    },
+  });
+
+  if (!order)
+    return reply
+      .status(404)
+      .send({ success: false, error: "Order not found." });
+
+  return { success: true, order };
+};
+
 const listAllUsers = async (request, reply) => {
   const { page = 1, limit = 20 } = request.query;
   const skip = (Number(page) - 1) * Number(limit);
@@ -192,4 +216,5 @@ export {
   listAllUsers,
   createCustomer,
   updateCustomer,
+  getOrderDetails,
 };

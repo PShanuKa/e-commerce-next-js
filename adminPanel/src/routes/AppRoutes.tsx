@@ -5,6 +5,8 @@ import DashboardPage from "@/pages/dashboard/DashboardPage";
 import CategoriesPage from "@/pages/categories/CategoriesPage";
 import ProductsPage from "@/pages/products/ProductsPage";
 import CustomersPage from "@/pages/customers/CustomersPage";
+import OrdersPage from "@/pages/orders/OrdersPage";
+import OrderDetailsPage from "@/pages/orders/OrderDetailsPage";
 
 const AppRoutes = () => (
   <Routes>
@@ -16,7 +18,8 @@ const AppRoutes = () => (
       <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="/categories" element={<CategoriesPage />} />
       <Route path="/products" element={<ProductsPage />} />
-      {/* <Route path="/orders"     element={<OrdersPage />} /> */}
+      <Route path="/orders" element={<OrdersPage />} />
+      <Route path="/orders/:id" element={<OrderDetailsPage />} />
       <Route path="/customers" element={<CustomersPage />} />
     </Route>
 
