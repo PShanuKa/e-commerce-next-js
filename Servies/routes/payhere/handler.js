@@ -3,6 +3,7 @@
 import prisma from "../../config/prisma.js";
 import { NotFound, BadRequest } from "../../utils/errors.js";
 import crypto from "crypto";
+import md5 from "crypto-js/md5.js";
 
 const initPayment = async (request, reply) => {
   const { order_id } = request.body;
@@ -29,21 +30,13 @@ const initPayment = async (request, reply) => {
 
   const merchant_id = process.env.PAYHERE_MERCHANT_ID;
   const merchant_secret = process.env.PAYHERE_SECRET;
-  const amount = Number(order.total).toFixed(2);
+  const amount =  parseFloat( order.total ).toLocaleString( 'en-us', { minimumFractionDigits : 2 } ).replaceAll(',', '');
   const currency = "LKR";
 
   // Generate Hash
   // MD5(Merchant ID + Order ID + Amount + Currency + MD5(Merchant Secret))
-  const hashedSecret = crypto
-    .createHash("md5")
-    .update(merchant_secret)
-    .digest("hex")
-    .toUpperCase();
-  const mainHash = crypto
-    .createHash("md5")
-    .update(merchant_id + order.id + amount + currency + hashedSecret)
-    .digest("hex")
-    .toUpperCase();
+  const hashedSecret = md5(merchant_secret).toString().toUpperCase();
+  const mainHash =md5(merchant_id + order.id.toString() + amount + currency + hashedSecret).toString().toUpperCase();
 
   const paymentParams = {
     sandbox: process.env.NODE_ENV !== "production",
@@ -60,11 +53,10 @@ const initPayment = async (request, reply) => {
     email: order.user?.email || "",
     phone: order.user?.phone || order.address?.phone || "",
     address:
-    `${order.address?.addressLine1 || ""}${order.address?.addressLine2 ? ", " + order.address.addressLine2 : ""}`.trim(),
+      `${order.address?.addressLine1 || ""}${order.address?.addressLine2 ? ", " + order.address.addressLine2 : ""}`.trim(),
     city: order.address?.city || "",
     country: "Sri Lanka",
     hash: mainHash,
-    
   };
 
   return { success: true, paymentParams };
