@@ -1,49 +1,168 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { IoCheckmarkCircle, IoCopyOutline } from "react-icons/io5";
+import { Link, useSearchParams } from "react-router-dom";
+import { IoCheckmarkCircle, IoCopyOutline, IoWarning } from "react-icons/io5";
 import { TbTruckDelivery } from "react-icons/tb";
-
-const ORDER_ID = "SLK-" + Math.random().toString(36).toUpperCase().slice(2, 9);
-
-const ORDER_ITEMS = [
-  {
-    id: 1,
-    name: "Sony WH-1000XM5 Headphones",
-    price: 34500,
-    qty: 1,
-    image:
-      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=80&h=80&fit=crop",
-  },
-  {
-    id: 3,
-    name: "Apple AirPods Pro (2nd Gen)",
-    price: 58000,
-    qty: 2,
-    image:
-      "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=80&h=80&fit=crop",
-  },
-];
-
-const STEPS = [
-  { label: "Order Placed", time: "Just now", done: true },
-  { label: "Processing", time: "Within 1 hour", done: false },
-  { label: "Shipped", time: "1-2 Business Days", done: false },
-  { label: "Delivered", time: "3-5 Business Days", done: false },
-];
+import { useGetOrderQuery } from "@/services/orderSlice";
 
 const OrderSuccess = () => {
+  const [searchParams] = useSearchParams();
+  const orderIdParam = searchParams.get("id");
+  const orderId = orderIdParam ? Number(orderIdParam) : null;
+
+  const { data, isLoading, error } = useGetOrderQuery(orderId!, {
+    skip: !orderId,
+  });
+
   const [copied, setCopied] = useState(false);
   const [confetti, setConfetti] = useState(true);
 
   useEffect(() => {
-    setTimeout(() => setConfetti(false), 4000);
-  }, []);
+    if (data?.success) {
+      const timer = setTimeout(() => setConfetti(false), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [data]);
 
   const copyOrderId = () => {
-    navigator.clipboard.writeText(ORDER_ID).catch(() => {});
+    if (!orderId) return;
+    navigator.clipboard.writeText(orderId.toString()).catch(() => {});
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  if (!orderId) {
+    return (
+      <div
+        style={{
+          padding: "80px 0",
+          textAlign: "center",
+          background: "var(--bg-base)",
+          minHeight: "80vh",
+        }}
+      >
+        <div className="container">
+          <IoWarning
+            size={64}
+            color="var(--error)"
+            style={{ marginBottom: 20 }}
+          />
+          <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 12 }}>
+            Invalid Order
+          </h1>
+          <p style={{ color: "var(--text-muted)", marginBottom: 24 }}>
+            We couldn't find the order ID in the URL.
+          </p>
+          <Link
+            to="/"
+            style={{
+              padding: "12px 24px",
+              background: "var(--primary)",
+              color: "white",
+              borderRadius: "var(--radius-sm)",
+              fontWeight: 700,
+              textDecoration: "none",
+            }}
+          >
+            Return to Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div
+        style={{
+          padding: "80px 0",
+          textAlign: "center",
+          background: "var(--bg-base)",
+          minHeight: "80vh",
+        }}
+      >
+        <div className="container text-center">
+          <div
+            className="shimmer"
+            style={{
+              width: 80,
+              height: 80,
+              borderRadius: "50%",
+              margin: "0 auto 20px",
+            }}
+          />
+          <div
+            className="shimmer"
+            style={{ width: 200, height: 32, margin: "0 auto 10px" }}
+          />
+          <div
+            className="shimmer"
+            style={{ width: 300, height: 20, margin: "0 auto" }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !data?.success) {
+    return (
+      <div
+        style={{
+          padding: "80px 0",
+          textAlign: "center",
+          background: "var(--bg-base)",
+          minHeight: "80vh",
+        }}
+      >
+        <div className="container">
+          <IoWarning
+            size={64}
+            color="var(--error)"
+            style={{ marginBottom: 20 }}
+          />
+          <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 12 }}>
+            Order Not Found
+          </h1>
+          <p style={{ color: "var(--text-muted)", marginBottom: 24 }}>
+            Something went wrong while fetching your order details.
+          </p>
+          <Link
+            to="/account/orders"
+            style={{
+              padding: "12px 24px",
+              background: "var(--primary)",
+              color: "white",
+              borderRadius: "var(--radius-sm)",
+              fontWeight: 700,
+              textDecoration: "none",
+            }}
+          >
+            Go to My Orders
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const { order } = data;
+
+  const STEPS = [
+    { label: "Order Placed", time: "Just now", done: true },
+    {
+      label: "Processing",
+      time: "Within 1 hour",
+      done: order.status !== "pending",
+    },
+    {
+      label: "Shipped",
+      time: "1-2 Business Days",
+      done: ["shipped", "delivered"].includes(order.status),
+    },
+    {
+      label: "Delivered",
+      time: "3-5 Business Days",
+      done: order.status === "delivered",
+    },
+  ];
 
   return (
     <div
@@ -151,7 +270,7 @@ const OrderSuccess = () => {
                   fontFamily: "monospace",
                 }}
               >
-                {ORDER_ID}
+                #{order.id}
               </strong>
               <button
                 onClick={copyOrderId}
@@ -273,32 +392,34 @@ const OrderSuccess = () => {
             >
               Order Items
             </h3>
-            {ORDER_ITEMS.map((item, i) => (
+            {order.orderItems?.map((item, i) => (
               <div
                 key={item.id}
                 style={{
                   display: "flex",
                   gap: 14,
                   alignItems: "center",
-                  paddingBottom: i < ORDER_ITEMS.length - 1 ? 14 : 0,
-                  marginBottom: i < ORDER_ITEMS.length - 1 ? 14 : 0,
+                  paddingBottom: i < order.orderItems!.length - 1 ? 14 : 0,
+                  marginBottom: i < order.orderItems!.length - 1 ? 14 : 0,
                   borderBottom:
-                    i < ORDER_ITEMS.length - 1
+                    i < order.orderItems!.length - 1
                       ? "1px solid var(--border)"
                       : "none",
                 }}
               >
-                <img
-                  src={item.image}
-                  alt={item.name}
-                  style={{
-                    width: 56,
-                    height: 56,
-                    objectFit: "cover",
-                    borderRadius: "var(--radius-sm)",
-                    border: "1px solid var(--border)",
-                  }}
-                />
+                {item.imageUrl && (
+                  <img
+                    src={item.imageUrl}
+                    alt={item.name}
+                    style={{
+                      width: 56,
+                      height: 56,
+                      objectFit: "cover",
+                      borderRadius: "var(--radius-sm)",
+                      border: "1px solid var(--border)",
+                    }}
+                  />
+                )}
                 <div style={{ flex: 1 }}>
                   <p
                     style={{
@@ -310,8 +431,19 @@ const OrderSuccess = () => {
                   >
                     {item.name}
                   </p>
+                  {item.variant && (
+                    <p
+                      style={{
+                        fontSize: 11,
+                        color: "var(--text-muted)",
+                        marginBottom: 2,
+                      }}
+                    >
+                      {item.variant}
+                    </p>
+                  )}
                   <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
-                    Qty: {item.qty}
+                    Qty: {item.quantity}
                   </p>
                 </div>
                 <span
@@ -321,7 +453,7 @@ const OrderSuccess = () => {
                     color: "var(--primary)",
                   }}
                 >
-                  Rs. {(item.price * item.qty).toLocaleString()}
+                  Rs. {(Number(item.price) * item.quantity).toLocaleString()}
                 </span>
               </div>
             ))}
@@ -349,11 +481,7 @@ const OrderSuccess = () => {
                   color: "var(--primary)",
                 }}
               >
-                Rs.{" "}
-                {ORDER_ITEMS.reduce(
-                  (s, i) => s + i.price * i.qty,
-                  0,
-                ).toLocaleString()}
+                Rs. {Number(order.total).toLocaleString()}
               </span>
             </div>
           </div>
@@ -387,19 +515,33 @@ const OrderSuccess = () => {
                   >
                     Delivery Address
                   </p>
-                  <p
-                    style={{
-                      fontSize: 12,
-                      color: "var(--text-muted)",
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    Kasun Perera
-                    <br />
-                    123 Galle Rd, Colombo 03
-                    <br />
-                    +94 77 123 4567
-                  </p>
+                  {order.address ? (
+                    <p
+                      style={{
+                        fontSize: 12,
+                        color: "var(--text-muted)",
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {order.address.name}
+                      <br />
+                      {order.address.addressLine1}
+                      {order.address.addressLine2 && (
+                        <>
+                          <br />
+                          {order.address.addressLine2}
+                        </>
+                      )}
+                      <br />
+                      {order.address.city}
+                      <br />
+                      {order.address.phone}
+                    </p>
+                  ) : (
+                    <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                      No address info.
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

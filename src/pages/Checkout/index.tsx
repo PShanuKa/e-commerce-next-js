@@ -172,11 +172,11 @@ const CheckoutPage = () => {
   const handlePlaceOrder = async () => {
     setOrderError("");
     try {
-      await placeOrder({
+      const res = await placeOrder({
         address_id: effectiveAddressId ?? undefined,
         payment_method: payMethod,
       }).unwrap();
-      navigate("/order-success");
+      navigate(`/order-success?id=${res.order.id}`);
     } catch (e: unknown) {
       const err = e as { data?: { message?: string } };
       setOrderError(
