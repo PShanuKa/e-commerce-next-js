@@ -4,8 +4,21 @@ import { BsUpload } from "react-icons/bs";
 import { IoCloseCircle } from "react-icons/io5";
 
 // Input Component Props Interface
-interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'onBlur' | 'onFocus' | 'value'> {
-  type?: "text" | "email" | "password" | "number" | "tel" | "url" | "search" | "date" | "time" | "datetime-local";
+interface InputProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "onChange" | "onBlur" | "onFocus" | "value"
+> {
+  type?:
+    | "text"
+    | "email"
+    | "password"
+    | "number"
+    | "tel"
+    | "url"
+    | "search"
+    | "date"
+    | "time"
+    | "datetime-local";
   placeholder?: string;
   label?: string;
   value?: string | number;
@@ -33,6 +46,7 @@ interface SelectProps {
 
 // Textarea Component Props Interface
 interface TextareaProps {
+  name?: string;
   placeholder?: string;
   label?: string;
   value?: string;
@@ -86,7 +100,7 @@ export const Input = ({
             "text-[12px] font-medium block mb-1",
             errorMessage
               ? "text-(--Warning)"
-              : "text-(--table-body-font-color)"
+              : "text-(--table-body-font-color)",
           )}
         >
           {label}
@@ -109,7 +123,7 @@ export const Input = ({
           "focus:border-(--Primary) focus:ring-1 focus:ring-(--Primary)/20",
           "disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-(--gray-100)",
           errorMessage && "border-(--Warning) bg-(--Warning)/5",
-          !errorMessage && "bg-white"
+          !errorMessage && "bg-white",
         )}
       />
       {errorMessage && (
@@ -136,7 +150,6 @@ export const Select = ({
 }: SelectProps) => {
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     onChange?.(e.target.value);
-    
   };
 
   return (
@@ -147,7 +160,7 @@ export const Select = ({
             "text-[12px] font-normal block mb-1 ",
             errorMessage
               ? "text-(--Warning)"
-              : "text-(--table-body-font-color)"
+              : "text-(--table-body-font-color)",
           )}
         >
           {label}
@@ -168,7 +181,7 @@ export const Select = ({
             "disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-(--gray-100)",
             errorMessage && "border-(--Warning) bg-(--Warning)/5",
             !errorMessage && "bg-white",
-            !value && "text-(--table-body-font-color) opacity-50" // Placeholder style
+            !value && "text-(--table-body-font-color) opacity-50", // Placeholder style
           )}
         >
           {placeholder && (
@@ -233,7 +246,7 @@ export const Textarea = ({
             "text-[12px] font-medium block mb-1",
             errorMessage
               ? "text-(--Warning)"
-              : "text-(--table-body-font-color)"
+              : "text-(--table-body-font-color)",
           )}
         >
           {label}
@@ -256,7 +269,7 @@ export const Textarea = ({
           "focus:border-(--Primary) focus:ring-1 focus:ring-(--Primary)/20",
           "disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-(--gray-100)",
           errorMessage && "border-(--Warning) bg-(--Warning)/5",
-          !errorMessage && "bg-white"
+          !errorMessage && "bg-white",
         )}
       />
       {errorMessage && (
@@ -358,16 +371,13 @@ export const ImageUpload = ({
     }
   }, [value]);
 
-
   return (
     <div className={cn("w-full", className)}>
       {label && (
         <label
           className={cn(
             "text-[12px] font-medium block mb-1",
-            errorMessage || error
-              ? "text-(--Warning)"
-              : "text-(--default)"
+            errorMessage || error ? "text-(--Warning)" : "text-(--default)",
           )}
         >
           {label}
@@ -394,7 +404,8 @@ export const ImageUpload = ({
             errorMessage || error
               ? "border-(--Warning) bg-(--Warning)/5"
               : "bg-white",
-            disabled && "opacity-50 cursor-not-allowed hover:border-(--border-color-secondary) hover:bg-white"
+            disabled &&
+              "opacity-50 cursor-not-allowed hover:border-(--border-color-secondary) hover:bg-white",
           )}
         >
           {preview ? (

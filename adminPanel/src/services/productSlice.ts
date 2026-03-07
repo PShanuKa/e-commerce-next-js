@@ -19,6 +19,11 @@ export interface Product {
   createdAt: string;
 }
 
+export interface SingleProductResponse {
+  success: boolean;
+  product: Product & { images: string[] };
+}
+
 export interface ProductMeta {
   total: number;
   page: number;
@@ -70,6 +75,10 @@ export const productApiSlice = apiSlice.injectEndpoints({
         return `products/admin/all?${p.toString()}`;
       },
     }),
+    getProduct: builder.query<SingleProductResponse, string | number>({
+      providesTags: (_result, _error, id) => [{ type: "Product", id }],
+      query: (id) => `products/${id}`,
+    }),
     createProduct: builder.mutation<
       { success: boolean; product: Product },
       CreateBody
@@ -81,7 +90,10 @@ export const productApiSlice = apiSlice.injectEndpoints({
       { success: boolean; product: Product },
       UpdateBody
     >({
-      invalidatesTags: ["Product"],
+      invalidatesTags: (_result, _error, { id }) => [
+        "Product",
+        { type: "Product", id },
+      ],
       query: ({ id, ...data }) => ({
         url: `products/${id}`,
         method: "PUT",
@@ -97,6 +109,7 @@ export const productApiSlice = apiSlice.injectEndpoints({
 
 export const {
   useGetAdminProductsQuery,
+  useGetProductQuery,
   useCreateProductMutation,
   useUpdateProductMutation,
   useDeleteProductMutation,

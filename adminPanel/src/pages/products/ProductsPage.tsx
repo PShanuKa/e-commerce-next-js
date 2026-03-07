@@ -1,8 +1,6 @@
 import { useState } from "react";
 import {
   useGetAdminProductsQuery,
-  useCreateProductMutation,
-  useUpdateProductMutation,
   useDeleteProductMutation,
   type Product,
 } from "@/services/productSlice";
@@ -11,14 +9,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/common/Button";
-import {
-  MdAdd,
-  MdEdit,
-  MdDeleteOutline,
-  MdSearch,
-  MdChevronLeft,
-  MdChevronRight,
-} from "react-icons/md";
+import { MdAdd, MdSearch } from "react-icons/md";
 import TableWrap, {
   TableWrapBody,
   TableWrapFooter,
@@ -33,11 +24,25 @@ import {
   TableHeaderRow,
 } from "@/components/common/Table";
 import { Link } from "react-router-dom";
-import { FiEdit2, FiEye, FiTrash2 } from "react-icons/fi";
+import { FiEdit2, FiTrash2 } from "react-icons/fi";
 import Breadcrumb from "@/components/common/Breadcrumb";
 import Pagination from "@/components/common/Pagination";
 import { CiFilter } from "react-icons/ci";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const AVAILABILITY_OPTIONS = [
   { value: "in_stock", label: "In Stock" },
@@ -51,295 +56,14 @@ const AVAIL_VARIANT: Record<string, "success" | "warning" | "info"> = {
   pre_order: "info",
 };
 
-// ── Product Modal ─────────────────────────────────────────────────────────────
-interface ModalProps {
-  initial?: Partial<Product>;
-  onClose: () => void;
-  onSave: (data: Record<string, unknown>) => void;
-  saving: boolean;
-  categories: { id: number; name: string; slug: string }[];
-}
-
-const emptyForm = {
-  name: "",
-  description: "",
-  price: "",
-  original_price: "",
-  stock_qty: "0",
-  brand: "",
-  badge: "",
-  image: "",
-  category_id: "",
-  availability: "in_stock",
-  is_active: true,
-};
-
-const ProductModal = ({
-  initial,
-  onClose,
-  onSave,
-  saving,
-  categories,
-}: ModalProps) => {
-  const [form, setForm] = useState({
-    ...emptyForm,
-    ...(initial
-      ? {
-          name: initial.name ?? "",
-          description: initial.description ?? "",
-          price: String(initial.price ?? ""),
-          original_price: String(initial.originalPrice ?? ""),
-          stock_qty: String(initial.stockQty ?? 0),
-          brand: initial.brand ?? "",
-          badge: initial.badge ?? "",
-          image: initial.image ?? "",
-          category_id: String(initial.categoryId ?? ""),
-          availability: initial.availability ?? "in_stock",
-        }
-      : {}),
-  });
-  const [error, setError] = useState("");
-
-  const handleSave = () => {
-    if (!form.name.trim()) {
-      setError("Product name is required.");
-      return;
-    }
-    if (!form.price) {
-      setError("Price is required.");
-      return;
-    }
-    setError("");
-    onSave({
-      name: form.name.trim(),
-      description: form.description || undefined,
-      price: Number(form.price),
-      original_price: form.original_price
-        ? Number(form.original_price)
-        : undefined,
-      stock_qty: Number(form.stock_qty) || 0,
-      category_id: form.category_id ? Number(form.category_id) : null,
-      brand: form.brand || undefined,
-      badge: form.badge || undefined,
-      availability: form.availability,
-      images: form.image ? [form.image] : undefined,
-      is_active: form.is_active,
-    });
-  };
-
-  const field = (
-    label: string,
-    key: keyof typeof form,
-    type = "text",
-    placeholder = "",
-  ) => (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label}
-      </label>
-      <input
-        type={type}
-        value={String(form[key])}
-        placeholder={placeholder}
-        onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
-        className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-      />
-    </div>
-  );
-
-  return (
-    <div className="fixed inset-0 bg-black/40 flex items-start justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6 my-8">
-        <h2 className="text-lg font-bold text-gray-800 mb-5">
-          {initial?.id ? "Edit Product" : "New Product"}
-        </h2>
-
-        {error && (
-          <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-4">
-            ⚠️ {error}
-          </p>
-        )}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="sm:col-span-2">
-            {field("Product Name *", "name", "text", "e.g. Sony WH-1000XM5")}
-          </div>
-          {field("Price (Rs.) *", "price", "number", "0")}
-          {field("Original Price (Rs.)", "original_price", "number", "0")}
-          {field("Stock Qty", "stock_qty", "number", "0")}
-          {field("Brand", "brand", "text", "e.g. Sony")}
-
-          {/* Category */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Category
-            </label>
-            <select
-              value={form.category_id}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, category_id: e.target.value }))
-              }
-              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
-            >
-              <option value="">— No Category —</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Availability */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Availability
-            </label>
-            <select
-              value={form.availability}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, availability: e.target.value }))
-              }
-              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
-            >
-              {AVAILABILITY_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Badge */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Badge
-            </label>
-            <select
-              value={form.badge}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, badge: e.target.value }))
-              }
-              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
-            >
-              <option value="">— None —</option>
-              {["Best Seller", "New", "Top Rated", "Sale", "Hot"].map((b) => (
-                <option key={b} value={b}>
-                  {b}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Image URL */}
-          <div className="sm:col-span-2">
-            {field("Image URL", "image", "url", "https://...")}
-          </div>
-          {form.image && (
-            <div className="sm:col-span-2">
-              <img
-                src={form.image}
-                alt="Preview"
-                className="h-28 object-cover rounded-lg border border-gray-100"
-              />
-            </div>
-          )}
-
-          {/* Description */}
-          <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description
-            </label>
-            <textarea
-              rows={3}
-              value={form.description}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, description: e.target.value }))
-              }
-              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
-              placeholder="Product description..."
-            />
-          </div>
-
-          {/* Active toggle (edit only) */}
-          {initial?.id && (
-            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer sm:col-span-2">
-              <input
-                type="checkbox"
-                checked={form.is_active as unknown as boolean}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, is_active: e.target.checked }))
-                }
-                className="accent-indigo-600"
-              />
-              Active (visible on storefront)
-            </label>
-          )}
-        </div>
-
-        <div className="flex justify-end gap-3 mt-6">
-          <Button variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} loading={saving}>
-            {initial?.id ? "Save Changes" : "Create Product"}
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ── Delete Modal ──────────────────────────────────────────────────────────────
-const ConfirmModal = ({
-  product,
-  onClose,
-  onConfirm,
-  loading,
-}: {
-  product: Product;
-  onClose: () => void;
-  onConfirm: () => void;
-  loading: boolean;
-}) => (
-  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-    <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
-      <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-        <MdDeleteOutline size={28} className="text-red-500" />
-      </div>
-      <h2 className="text-lg font-bold text-gray-800 mb-2">
-        Deactivate Product?
-      </h2>
-      <p className="text-sm text-gray-500 mb-6">
-        "<strong className="text-gray-700">{product.name}</strong>" will be
-        hidden from the storefront.
-      </p>
-      <div className="flex gap-3">
-        <Button variant="secondary" className="flex-1" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button
-          variant="danger"
-          className="flex-1"
-          onClick={onConfirm}
-          loading={loading}
-        >
-          Deactivate
-        </Button>
-      </div>
-    </div>
-  </div>
-);
-
 // ── Main Page ─────────────────────────────────────────────────────────────────
 const ProductsPage = () => {
-
-  const [page, setPage] = useState(1);
-  const [showModal, setShowModal] = useState(false);
-  const [editProduct, setEditProduct] = useState<Product | null>(null);
-  const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
   const [globalError, setGlobalError] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState({
+    isOpen: false,
+    productId: null as number | null,
+  });
 
   const [pagination, setPagination] = useState({
     page: 1,
@@ -353,42 +77,32 @@ const ProductsPage = () => {
   });
 
   const { data, isLoading } = useGetAdminProductsQuery({
-    page,
-    limit: 20,
+    page: pagination.page,
+    limit: pagination.limit,
     search: filter.search,
+    category: filter.category,
+    // Add status filter if backend supports it, or just use category/search
   });
   const { data: catData } = useGetAdminCategoriesQuery();
-  const [create, { isLoading: creating }] = useCreateProductMutation();
-  const [update, { isLoading: updating }] = useUpdateProductMutation();
-  const [remove, { isLoading: deleting }] = useDeleteProductMutation();
+  const [remove] = useDeleteProductMutation();
 
   const products = data?.products ?? [];
   const meta = data?.meta;
   const categories = (catData?.categories ?? []).filter((c) => !c.isDeleted);
 
-  const handleSave = async (formData: Record<string, unknown>) => {
-    try {
-      setGlobalError("");
-      if (editProduct) {
-        await update({ id: editProduct.id, ...formData } as Parameters<
-          typeof update
-        >[0]).unwrap();
-      } else {
-        await create(formData as Parameters<typeof create>[0]).unwrap();
-      }
-      setShowModal(false);
-      setEditProduct(null);
-    } catch (err: unknown) {
-      const e = err as { data?: { message?: string } };
-      setGlobalError(e?.data?.message || "An error occurred.");
-    }
+  const handlePageChange = (newPage: number) => {
+    setPagination((p) => ({ ...p, page: newPage }));
   };
 
-  const handleDelete = async () => {
-    if (!deleteProduct) return;
+  const handleLimitChange = (newLimit: number) => {
+    setPagination((p) => ({ ...p, limit: newLimit, page: 1 }));
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("Are you sure you want to deactivate this product?"))
+      return;
     try {
-      await remove(deleteProduct.id).unwrap();
-      setDeleteProduct(null);
+      await remove(id).unwrap();
     } catch {
       setGlobalError("Failed to deactivate product.");
     }
@@ -396,46 +110,27 @@ const ProductsPage = () => {
 
   return (
     <DashboardLayout title="Products">
-
-       <Breadcrumb title="Products Management" path="Products " />
+      <DeleteProduct
+        isOpen={isDeleteOpen.isOpen}
+        productId={isDeleteOpen.productId}
+        onClose={() => setIsDeleteOpen({ isOpen: false, productId: null })}
+      />
+      <Breadcrumb title="Products Management" path="Products " />
       {/* Top bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-        <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 w-64">
-          <MdSearch size={18} className="text-gray-400 shrink-0" />
-          <input
-            type="text"
-            placeholder="Search products..."
-            value={filter.search}
-            onChange={(e) => {
-              setFilter((f) => ({ ...f, search: e.target.value }));
-              setPage(1);
-            }}
-            className="bg-transparent text-sm text-gray-600 placeholder-gray-400 outline-none w-full"
-          />
-        </div>
-        <Button
-          onClick={() => {
-            setEditProduct(null);
-            setShowModal(true);
-          }}
-          className="flex items-center gap-2"
-        >
-          <MdAdd size={18} /> New Product
-        </Button>
-      </div>
+     
 
       <TableWrap>
         <TableWrapHeader
           title="Products"
           description="Manage your products"
         >
-          <Link to="/product/add">
+          <Link to="/products/add">
             <Button variant="outline" size="sm">
               Add Product
             </Button>
           </Link>
         </TableWrapHeader>
-         <TableWrapBody>
+        <TableWrapBody>
           <div className="w-full border-t border-(--border-color-primary) px-4">
             <div className="h-16 flex items-center justify-between w-1/4 gap-2">
               <p className="text-[12px] text-(--table-body-font-color) font-light">
@@ -445,7 +140,9 @@ const ProductsPage = () => {
                 type="text"
                 placeholder="Search"
                 value={filter.search}
-                onChange={(e) => setFilter({ ...filter, search: e.target.value })}
+                onChange={(e) =>
+                  setFilter({ ...filter, search: e.target.value })
+                }
                 className="w-full h-[30px] border border-(--border-color-secondary) rounded-(--border-rounded-primary) px-4 text-[12px] text-(--table-body-font-color) outline-none  "
               />
               <button
@@ -460,50 +157,54 @@ const ProductsPage = () => {
             </div>
           </div>
         </TableWrapBody>
-            <TableWrapBody>
+        <TableWrapBody>
           <div
-            className={`w-full border-t  border-(--border-color-primary) px-4 transition-all duration-300 ease-in-out overflow-hidden ${isFilterOpen ? "max-h-[200px] opacity-100" : "max-h-0 opacity-0"
-              }`}
+            className={`w-full border-t  border-(--border-color-primary) px-4 transition-all duration-300 ease-in-out overflow-hidden ${
+              isFilterOpen ? "max-h-[200px] opacity-100" : "max-h-0 opacity-0"
+            }`}
           >
             <div className="h-16 flex items-center gap-3">
               <p className="text-[12px] text-(--table-body-font-color) font-light ">
                 Filter:
               </p>
 
-              {/* Status Select */}
+              {/* Category Filter */}
               <div className="flex items-center gap-2  ">
-                <Select value={filter.category} onValueChange={(value) => setFilter({ ...filter, category: value })}>
+                <Select
+                  value={filter.category}
+                  onValueChange={(value) =>
+                    setFilter({ ...filter, category: value })
+                  }
+                >
                   <SelectTrigger
                     size="sm"
                     className="h-[30px] w-[180px] text-[12px] border-border-(--border-color-secondary) rounded-(--border-rounded-primary)"
                   >
-                    <SelectValue placeholder="Select category" />
+                    <SelectValue placeholder="Select Category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="SUPERMARKETS">Supermarkets</SelectItem>
-                    <SelectItem value="ELECTRONICS">Electronics</SelectItem>
-                    <SelectItem value="FASHION_AND_TEXTILE">Fashion & Textile</SelectItem>
-                    <SelectItem value="HOTELS_AND_RESORTS">Hotels & Resorts</SelectItem>
-                    <SelectItem value="FOOD_AND_DINE_IN">Food & Dine-in</SelectItem>
-                    <SelectItem value="HEALTH_BEAUTY_AND_WELLNESS">Health, Beauty & Wellness</SelectItem>
-                    <SelectItem value="HOME_AND_GARDEN">Home & Garden</SelectItem>
-                    <SelectItem value="AUTOMOTIVE">Automotive</SelectItem>
-                    <SelectItem value="TRAVEL_AND_TOURS">Travel & Tours</SelectItem>
-                    <SelectItem value="EDUCATION">Education</SelectItem>
-                    <SelectItem value="ENTERTAINMENT">Entertainment</SelectItem>
-                    <SelectItem value="PET_CARE">Pet Care</SelectItem>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.slug}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* Category Select */}
-              <div className="flex items-center gap-2" >
-                <Select value={filter.status} onValueChange={(value) => setFilter({ ...filter, status: value })}>
+              {/* Status Filter */}
+              <div className="flex items-center gap-2">
+                <Select
+                  value={filter.status}
+                  onValueChange={(value) =>
+                    setFilter({ ...filter, status: value })
+                  }
+                >
                   <SelectTrigger
                     size="sm"
                     className="h-[30px] w-[180px]  text-[12px] border-border-(--border-color-secondary) rounded-(--border-rounded-primary)"
                   >
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue placeholder="Select Status" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="true">Active</SelectItem>
@@ -513,7 +214,12 @@ const ProductsPage = () => {
               </div>
 
               {/* Clear Filter Button */}
-              <button onClick={() => setFilter({ status: "", category: "", search: "" })} className="cursor-pointer h-[30px] px-4 text-[12px] text-(--Primary) underline border-border-(--border-color-secondary) rounded-(--border-rounded-primary)">
+              <button
+                onClick={() =>
+                  setFilter({ status: "", category: "", search: "" })
+                }
+                className="cursor-pointer h-[30px] px-4 text-[12px] text-(--Primary) underline border-border-(--border-color-secondary) rounded-(--border-rounded-primary)"
+              >
                 Clear Filters
               </button>
             </div>
@@ -532,25 +238,84 @@ const ProductsPage = () => {
               <TableHeaderCell className="text-center">ACTION</TableHeaderCell>
             </TableHeaderRow>
             <TableBody>
-              {products.map((p) => (
+              {isLoading ? (
                 <TableBodyRow>
-                  <TableBodyCell className=" py-4">USER NAME</TableBodyCell>
-                  <TableHeaderCell>USER NAME</TableHeaderCell>
-                  <TableHeaderCell>EMAIL</TableHeaderCell>
-                  <TableHeaderCell>ROLE</TableHeaderCell>
-                  <TableHeaderCell>PHONE</TableHeaderCell>
-                  <TableHeaderCell>STATUS</TableHeaderCell>
-                  <TableHeaderCell className="text-center">
-                  <div className="flex items-center justify-center gap-2">
-                        {/* <Link to={``}>
-                          <div
-                            className="p-1.5 hover:bg-(--Info)/10 rounded transition-colors"
-                            title="View"
-                          >
-                            <FiEye size={16} className="text-(--Info)" />
+                  <TableBodyCell colSpan={7} className="py-16 text-center">
+                    <div className="flex items-center justify-center">
+                      <div className="w-8 h-8 border-4 border-(--Primary) border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  </TableBodyCell>
+                </TableBodyRow>
+              ) : products.length === 0 ? (
+                <TableBodyRow>
+                  <TableBodyCell
+                    colSpan={7}
+                    className="py-16 text-center text-sm text-gray-400"
+                  >
+                    No products found.
+                  </TableBodyCell>
+                </TableBodyRow>
+              ) : (
+                products.map((p) => (
+                  <TableBodyRow key={p.id}>
+                    <TableBodyCell className="py-4">
+                      <div className="flex items-center gap-3">
+                        {p.image ? (
+                          <img
+                            src={p.image}
+                            alt={p.name}
+                            className="w-10 h-10 rounded-lg object-cover border border-(--border-color-secondary)"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
+                            IMG
                           </div>
-                        </Link> */}
-                        <Link to={``}>
+                        )}
+                        <div>
+                          <p className="font-medium text-gray-800 line-clamp-1 max-w-[200px]">
+                            {p.name}
+                          </p>
+                          {p.badge && (
+                            <span className="text-[10px] text-(--Primary) font-medium">
+                              {p.badge}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </TableBodyCell>
+                    <TableBodyCell>{p.category_name ?? "—"}</TableBodyCell>
+                    <TableBodyCell>
+                      <div className="flex flex-col">
+                        <span className="font-semibold">
+                          Rs. {p.price.toLocaleString()}
+                        </span>
+                        {p.originalPrice && p.originalPrice > p.price && (
+                          <span className="text-[10px] text-gray-400 line-through">
+                            Rs. {p.originalPrice.toLocaleString()}
+                          </span>
+                        )}
+                      </div>
+                    </TableBodyCell>
+                    <TableBodyCell>{p.stockQty}</TableBodyCell>
+                    <TableBodyCell>
+                      <Badge
+                        label={
+                          AVAILABILITY_OPTIONS.find(
+                            (o) => o.value === p.availability,
+                          )?.label ?? p.availability
+                        }
+                        variant={AVAIL_VARIANT[p.availability] ?? "info"}
+                      />
+                    </TableBodyCell>
+                    <TableBodyCell>
+                      <Badge
+                        label={p.isActive ? "Active" : "Inactive"}
+                        variant={p.isActive ? "success" : "danger"}
+                      />
+                    </TableBodyCell>
+                    <TableBodyCell className="text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <Link to={`/products/${p.id}`}>
                           <button
                             className="p-1.5 hover:bg-(--Primary)/10 rounded transition-colors"
                             title="Edit"
@@ -560,20 +325,29 @@ const ProductsPage = () => {
                         </Link>
                         <button
                           className="p-1.5 hover:bg-(--Danger)/10 rounded transition-colors"
+                          onClick={() =>
+                            setIsDeleteOpen({ isOpen: true, productId: p.id })
+                          }
                           title="Delete"
                         >
                           <FiTrash2 size={16} className="text-(--Danger)" />
                         </button>
                       </div>
-                  </TableHeaderCell>
-                </TableBodyRow>
-              ))}
+                    </TableBodyCell>
+                  </TableBodyRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </TableWrapBody>
-         <TableWrapFooter>
+        <TableWrapFooter>
           <Pagination
-           
+            currentPage={pagination.page}
+            totalPages={meta?.pages || 1}
+            limit={pagination.limit}
+            total={meta?.total || 0}
+            onPageChange={handlePageChange}
+            onLimitChange={handleLimitChange}
           />
         </TableWrapFooter>
       </TableWrap>
@@ -583,172 +357,64 @@ const ProductsPage = () => {
           ⚠️ {globalError}
         </div>
       )}
-
-      <Card>
-        {isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : products.length === 0 ? (
-          <div className="py-16 text-center text-sm text-gray-400">
-            No products found.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-gray-50 text-xs text-gray-500 uppercase">
-                  <th className="px-6 py-3 text-left font-medium">Product</th>
-                  <th className="px-6 py-3 text-left font-medium">Category</th>
-                  <th className="px-6 py-3 text-left font-medium">Price</th>
-                  <th className="px-6 py-3 text-left font-medium">Stock</th>
-                  <th className="px-6 py-3 text-left font-medium">
-                    Availability
-                  </th>
-                  <th className="px-6 py-3 text-left font-medium">Status</th>
-                  <th className="px-6 py-3 text-right font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {products.map((p) => (
-                  <tr
-                    key={p.id}
-                    className={`hover:bg-gray-50/50 transition-colors ${!p.isActive ? "opacity-50" : ""}`}
-                  >
-                    <td className="px-6 py-3.5">
-                      <div className="flex items-center gap-3">
-                        {p.image ? (
-                          <img
-                            src={p.image}
-                            alt={p.name}
-                            className="w-10 h-10 rounded-lg object-cover border border-gray-100"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
-                            ?
-                          </div>
-                        )}
-                        <div>
-                          <p className="font-medium text-gray-800 max-w-[180px] truncate">
-                            {p.name}
-                          </p>
-                          {p.badge && (
-                            <span className="text-xs text-indigo-500 font-medium">
-                              {p.badge}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-3.5 text-gray-500 text-xs">
-                      {p.category_name ?? "—"}
-                    </td>
-                    <td className="px-6 py-3.5">
-                      <div>
-                        <span className="font-semibold text-gray-800">
-                          Rs. {p.price.toLocaleString()}
-                        </span>
-                        {p.originalPrice && (
-                          <span className="block text-xs text-gray-400 line-through">
-                            Rs. {p.originalPrice.toLocaleString()}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-3.5 text-gray-600">{p.stockQty}</td>
-                    <td className="px-6 py-3.5">
-                      <Badge
-                        label={
-                          AVAILABILITY_OPTIONS.find(
-                            (o) => o.value === p.availability,
-                          )?.label ?? p.availability
-                        }
-                        variant={AVAIL_VARIANT[p.availability] ?? "default"}
-                      />
-                    </td>
-                    <td className="px-6 py-3.5">
-                      <Badge
-                        label={p.isActive ? "Active" : "Inactive"}
-                        variant={p.isActive ? "success" : "danger"}
-                      />
-                    </td>
-                    <td className="px-6 py-3.5">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setEditProduct(p);
-                            setShowModal(true);
-                          }}
-                        >
-                          <MdEdit size={16} /> Edit
-                        </Button>
-                        {p.isActive && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-red-500"
-                            onClick={() => setDeleteProduct(p)}
-                          >
-                            <MdDeleteOutline size={16} />
-                          </Button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {/* Pagination */}
-            {meta && meta.pages > 1 && (
-              <div className="flex items-center justify-center gap-2 px-6 py-4 border-t border-gray-50">
-                <button
-                  disabled={page <= 1}
-                  onClick={() => setPage(page - 1)}
-                  className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <MdChevronLeft size={18} />
-                </button>
-                <span className="text-sm text-gray-600">
-                  Page {page} of {meta.pages} · {meta.total} products
-                </span>
-                <button
-                  disabled={page >= meta.pages}
-                  onClick={() => setPage(page + 1)}
-                  className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <MdChevronRight size={18} />
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </Card>
-
-      {showModal && (
-        <ProductModal
-          initial={editProduct ?? undefined}
-          onClose={() => {
-            setShowModal(false);
-            setEditProduct(null);
-          }}
-          onSave={handleSave}
-          saving={creating || updating}
-          categories={categories}
-        />
-      )}
-      {deleteProduct && (
-        <ConfirmModal
-          product={deleteProduct}
-          onClose={() => setDeleteProduct(null)}
-          onConfirm={handleDelete}
-          loading={deleting}
-        />
-      )}
     </DashboardLayout>
   );
 };
 
 export default ProductsPage;
+
+export const DeleteProduct = ({
+  isOpen,
+  onClose,
+  productId,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  productId: number | null;
+}) => {
+  const [remove, { isLoading }] = useDeleteProductMutation();
+
+  const handleDelete = async () => {
+    if (!productId) return;
+    try {
+      await remove(productId).unwrap();
+      onClose();
+    } catch (error) {
+      console.error("Failed to delete product:", error);
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete Product</DialogTitle>
+          <DialogDescription>
+            <p className="text-(--Danger) text-xs font-medium">
+              This action cannot be undone. This will permanently deactivate the
+              product and remove it from the active store listings.
+            </p>
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="p-4 gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onClose}
+            disabled={isLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={handleDelete}
+            loading={isLoading}
+          >
+            Delete Product
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
