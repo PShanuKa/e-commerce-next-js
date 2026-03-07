@@ -7,6 +7,7 @@ import {
   MdPeople,
   MdCategory,
   MdLogout,
+  MdHistory,
 } from "react-icons/md";
 import { useDispatch } from "react-redux";
 import { clearUser } from "@/features/authSlice";
@@ -22,6 +23,7 @@ const navItems: NavItem[] = [
   { to: "/dashboard", icon: <MdDashboard size={20} />, label: "Dashboard" },
   { to: "/products", icon: <MdInventory2 size={20} />, label: "Products" },
   { to: "/orders", icon: <MdShoppingCart size={20} />, label: "Orders" },
+  { to: "/payments", icon: <MdHistory size={20} />, label: "Payments" },
   { to: "/customers", icon: <MdPeople size={20} />, label: "Customers" },
   { to: "/categories", icon: <MdCategory size={20} />, label: "Categories" },
 ];

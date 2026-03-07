@@ -7,6 +7,7 @@ import ProductsPage from "@/pages/products/ProductsPage";
 import CustomersPage from "@/pages/customers/CustomersPage";
 import OrdersPage from "@/pages/orders/OrdersPage";
 import OrderDetailsPage from "@/pages/orders/OrderDetailsPage";
+import PaymentsPage from "@/pages/payments/PaymentsPage";
 
 const AppRoutes = () => (
   <Routes>
@@ -20,6 +21,7 @@ const AppRoutes = () => (
       <Route path="/products" element={<ProductsPage />} />
       <Route path="/orders" element={<OrdersPage />} />
       <Route path="/orders/:id" element={<OrderDetailsPage />} />
+      <Route path="/payments" element={<PaymentsPage />} />
       <Route path="/customers" element={<CustomersPage />} />
     </Route>
 

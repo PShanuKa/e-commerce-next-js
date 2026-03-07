@@ -1,0 +1,82 @@
+# Email Template Documentation
+
+This document explains how email templates are managed and used in the system.
+
+## 📁 Directory Structure
+
+Emails are located in the `templates/emails/` directory:
+
+- `templates/emails/`: Contains individual email content files (e.g., `otp-verification.html`, `password-reset.html`).
+- `templates/emails/layouts/`: Contains the common layout file `base.html`.
+
+## 🏗️ Template Structure
+
+The system uses a **Base Layout** approach to ensure consistency across all emails.
+
+### 1. Base Layout (`layouts/base.html`)
+The `base.html` file provides the overall structure, styling, header, and footer. It contains placeholders for dynamic content:
+
+- `{{headerIcon}}`: Emoji or icon for the email header.
+- `{{headerTitle}}`: Title shown in the colorful header area.
+- `{{emailBody}}`: **(Crucial)** This is where the content from specific templates is injected.
+- `{{companyName}}`, `{{companyAddress}}`, `{{year}}`: Shared footer information.
+- `{{accentColor}}`, `{{headerGradientStart}}`, etc.: Theme colors.
+
+### 2. Specific Templates (Content)
+Specific templates like `otp-verification.html` only contain the core message.
+Example (`otp-verification.html`):
+```html
+<p>Hello {{userName}},</p>
+<p>Your OTP code is:</p>
+<div class="code-box">{{otpCode}}</div>
+<p>This code expires in {{expiryTime}}.</p>
+```
+
+## 🛠️ Email Service (`utils/email.js`)
+
+The `EmailService` class is responsible for loading templates, replacing placeholders, and sending emails.
+
+### Key Methods:
+
+- **`buildEmail(templateName, variables, theme)`**:
+    1. Loads `base.html`.
+    2. Loads the template specified by `templateName`.
+    3. Replaces variables in the content template.
+    4. Injects the result into the `{{emailBody}}` of the base layout.
+    5. Replaces global variables (company info) and theme variables.
+- **`sendEmail(email, subject, html)`**: Sends the final HTML using `nodemailer`.
+
+### Specific Functions:
+The service provides dedicated methods for common emails:
+- `sendOtpEmail(email, userName, otp)`
+- `sendPasswordResetEmail(email, resetToken, userName)`
+- `sendPaymentSuccessEmail(email, userName, paymentDetails)`
+- ... and others.
+
+---
+
+## ➕ How to Add a New Email Template
+
+1. **Create the HTML File**: Add a new `.html` file in `templates/emails/` (e.g., `new-alert.html`). Use `{{variableName}}` for dynamic parts.
+2. **Add a Method in `EmailService`**:
+   Open `utils/email.js` and add a new method:
+   ```javascript
+   async sendNewAlertEmail(email, userName, alertData) {
+     const html = await this.buildEmail(
+       "new-alert", // filename without .html
+       { userName, ...alertData }, // variables
+       {
+         headerIcon: "🔔",
+         headerTitle: "New Alert",
+         headerGradientStart: "#3b82f6",
+         headerGradientEnd: "#2563eb",
+         accentColor: "#3b82f6",
+       }
+     );
+     return await this.sendEmail(email, "New System Alert", html);
+   }
+   ```
+3. **Call the Method**: Use the service in your routes or controllers:
+   ```javascript
+   await fastify.emailService.sendNewAlertEmail(user.email, user.name, { message: "Something happened!" });
+   ```
