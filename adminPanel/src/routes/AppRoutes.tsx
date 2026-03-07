@@ -8,6 +8,7 @@ import CustomersPage from "@/pages/customers/CustomersPage";
 import OrdersPage from "@/pages/orders/OrdersPage";
 import OrderDetailsPage from "@/pages/orders/OrderDetailsPage";
 import PaymentsPage from "@/pages/payments/PaymentsPage";
+import ProductSingle from "@/pages/products/productSingle";
 
 const AppRoutes = () => (
   <Routes>
@@ -19,6 +20,7 @@ const AppRoutes = () => (
       <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="/categories" element={<CategoriesPage />} />
       <Route path="/products" element={<ProductsPage />} />
+      <Route path="/products/:id" element={<ProductSingle />} />
       <Route path="/orders" element={<OrdersPage />} />
       <Route path="/orders/:id" element={<OrderDetailsPage />} />
       <Route path="/payments" element={<PaymentsPage />} />

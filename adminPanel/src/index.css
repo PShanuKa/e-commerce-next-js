@@ -1,1 +1,105 @@
 @import "tailwindcss";
+
+:root {
+    --layout-bg: #F5F6FB;
+    --default: #172b4d;
+    --Primary:#5e72e4;
+    --Secondary:#f4f5f7;
+    --Success:#2dce89;
+    --Info:#11cdef;
+    --Warning:#fb6340;
+    --Danger:#f5365c;
+
+    --gray-100:#f6f9fc;
+    --gray-200:#e9ecef;
+    --gray-300:#dee2e6;
+    --gray-400:#ced4da;
+    --gray-500:#adb5bd;
+    --gray-600:#6c757d;
+    --gray-700:#495057;
+    --gray-800:#343a40;
+    --gray-900:#212529;
+
+    --navbar-bg:#212529;
+
+    --border-rounded-primary:3px;
+
+
+    --font-color-primary:#32325D;
+    --font-color-secondary:#525F7F;
+
+    --border-color-primary:#E1E1E1;
+    --border-color-secondary:#E0E3E7;
+
+    --table-header-row-bg:#F6F9FC;
+    --table-header-font-color:#9698B2;
+    --table-body-font-color:#9698B2;
+
+
+/* Shadcn UI */
+
+    --radius: 0.625rem;
+
+    --background: oklch(1 0 0);
+
+    --foreground: oklch(0.145 0 0);
+
+    --card: oklch(1 0 0);
+
+    --card-foreground: oklch(0.145 0 0);
+
+    --popover: oklch(1 0 0);
+
+    --popover-foreground: oklch(0.145 0 0);
+
+    --primary: oklch(0.205 0 0);
+
+    --primary-foreground: oklch(0.985 0 0);
+
+    --secondary: oklch(0.97 0 0);
+
+    --secondary-foreground: oklch(0.205 0 0);
+
+    --muted: oklch(0.97 0 0);
+
+    --muted-foreground: oklch(0.556 0 0);
+
+    --accent: oklch(0.97 0 0);
+
+    --accent-foreground: oklch(0.205 0 0);
+
+    --destructive: oklch(0.577 0.245 27.325);
+
+    --border: oklch(0.922 0 0);
+
+    --input: oklch(0.922 0 0);
+
+    --ring: oklch(0.708 0 0);
+
+    --chart-1: oklch(0.646 0.222 41.116);
+
+    --chart-2: oklch(0.6 0.118 184.704);
+
+    --chart-3: oklch(0.398 0.07 227.392);
+
+    --chart-4: oklch(0.828 0.189 84.429);
+
+    --chart-5: oklch(0.769 0.188 70.08);
+
+    --sidebar: oklch(0.985 0 0);
+
+    --sidebar-foreground: oklch(0.145 0 0);
+
+    --sidebar-primary: oklch(0.205 0 0);
+
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+
+    --sidebar-accent: oklch(0.97 0 0);
+
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+
+    --sidebar-border: oklch(0.922 0 0);
+
+    --sidebar-ring: oklch(0.708 0 0);
+
+}

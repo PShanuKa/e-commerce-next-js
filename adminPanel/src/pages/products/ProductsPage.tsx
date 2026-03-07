@@ -10,7 +10,7 @@ import { useGetAdminCategoriesQuery } from "@/services/categorySlice";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
-import Button from "@/components/ui/Button";
+import Button from "@/components/common/Button";
 import {
   MdAdd,
   MdEdit,
@@ -19,6 +19,25 @@ import {
   MdChevronLeft,
   MdChevronRight,
 } from "react-icons/md";
+import TableWrap, {
+  TableWrapBody,
+  TableWrapFooter,
+  TableWrapHeader,
+} from "@/components/common/TableWrap";
+import {
+  Table,
+  TableBody,
+  TableBodyCell,
+  TableBodyRow,
+  TableHeaderCell,
+  TableHeaderRow,
+} from "@/components/common/Table";
+import { Link } from "react-router-dom";
+import { FiEdit2, FiEye, FiTrash2 } from "react-icons/fi";
+import Breadcrumb from "@/components/common/Breadcrumb";
+import Pagination from "@/components/common/Pagination";
+import { CiFilter } from "react-icons/ci";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const AVAILABILITY_OPTIONS = [
   { value: "in_stock", label: "In Stock" },
@@ -134,6 +153,7 @@ const ProductModal = ({
         <h2 className="text-lg font-bold text-gray-800 mb-5">
           {initial?.id ? "Edit Product" : "New Product"}
         </h2>
+
         {error && (
           <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-4">
             ⚠️ {error}
@@ -313,17 +333,29 @@ const ConfirmModal = ({
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 const ProductsPage = () => {
-  const [search, setSearch] = useState("");
+
   const [page, setPage] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
   const [globalError, setGlobalError] = useState("");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+  });
+
+  const [filter, setFilter] = useState({
+    status: "",
+    category: "",
+    search: "",
+  });
 
   const { data, isLoading } = useGetAdminProductsQuery({
     page,
     limit: 20,
-    search,
+    search: filter.search,
   });
   const { data: catData } = useGetAdminCategoriesQuery();
   const [create, { isLoading: creating }] = useCreateProductMutation();
@@ -364,6 +396,8 @@ const ProductsPage = () => {
 
   return (
     <DashboardLayout title="Products">
+
+       <Breadcrumb title="Products Management" path="Products " />
       {/* Top bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 w-64">
@@ -371,9 +405,9 @@ const ProductsPage = () => {
           <input
             type="text"
             placeholder="Search products..."
-            value={search}
+            value={filter.search}
             onChange={(e) => {
-              setSearch(e.target.value);
+              setFilter((f) => ({ ...f, search: e.target.value }));
               setPage(1);
             }}
             className="bg-transparent text-sm text-gray-600 placeholder-gray-400 outline-none w-full"
@@ -389,6 +423,160 @@ const ProductsPage = () => {
           <MdAdd size={18} /> New Product
         </Button>
       </div>
+
+      <TableWrap>
+        <TableWrapHeader
+          title="Products"
+          description="Manage your products"
+        >
+          <Link to="/product/add">
+            <Button variant="outline" size="sm">
+              Add Product
+            </Button>
+          </Link>
+        </TableWrapHeader>
+         <TableWrapBody>
+          <div className="w-full border-t border-(--border-color-primary) px-4">
+            <div className="h-16 flex items-center justify-between w-1/4 gap-2">
+              <p className="text-[12px] text-(--table-body-font-color) font-light">
+                Search:
+              </p>
+              <input
+                type="text"
+                placeholder="Search"
+                value={filter.search}
+                onChange={(e) => setFilter({ ...filter, search: e.target.value })}
+                className="w-full h-[30px] border border-(--border-color-secondary) rounded-(--border-rounded-primary) px-4 text-[12px] text-(--table-body-font-color) outline-none  "
+              />
+              <button
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className="h-[30px] w-10 border border-(--border-color-secondary) rounded-(--border-rounded-primary) text-[12px] flex items-center justify-center hover:bg-secondary transition-all duration-200"
+              >
+                <CiFilter
+                  size={16}
+                  className={`text-(--table-body-font-color) transition-transform duration-300 `}
+                />
+              </button>
+            </div>
+          </div>
+        </TableWrapBody>
+            <TableWrapBody>
+          <div
+            className={`w-full border-t  border-(--border-color-primary) px-4 transition-all duration-300 ease-in-out overflow-hidden ${isFilterOpen ? "max-h-[200px] opacity-100" : "max-h-0 opacity-0"
+              }`}
+          >
+            <div className="h-16 flex items-center gap-3">
+              <p className="text-[12px] text-(--table-body-font-color) font-light ">
+                Filter:
+              </p>
+
+              {/* Status Select */}
+              <div className="flex items-center gap-2  ">
+                <Select value={filter.category} onValueChange={(value) => setFilter({ ...filter, category: value })}>
+                  <SelectTrigger
+                    size="sm"
+                    className="h-[30px] w-[180px] text-[12px] border-border-(--border-color-secondary) rounded-(--border-rounded-primary)"
+                  >
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="SUPERMARKETS">Supermarkets</SelectItem>
+                    <SelectItem value="ELECTRONICS">Electronics</SelectItem>
+                    <SelectItem value="FASHION_AND_TEXTILE">Fashion & Textile</SelectItem>
+                    <SelectItem value="HOTELS_AND_RESORTS">Hotels & Resorts</SelectItem>
+                    <SelectItem value="FOOD_AND_DINE_IN">Food & Dine-in</SelectItem>
+                    <SelectItem value="HEALTH_BEAUTY_AND_WELLNESS">Health, Beauty & Wellness</SelectItem>
+                    <SelectItem value="HOME_AND_GARDEN">Home & Garden</SelectItem>
+                    <SelectItem value="AUTOMOTIVE">Automotive</SelectItem>
+                    <SelectItem value="TRAVEL_AND_TOURS">Travel & Tours</SelectItem>
+                    <SelectItem value="EDUCATION">Education</SelectItem>
+                    <SelectItem value="ENTERTAINMENT">Entertainment</SelectItem>
+                    <SelectItem value="PET_CARE">Pet Care</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Category Select */}
+              <div className="flex items-center gap-2" >
+                <Select value={filter.status} onValueChange={(value) => setFilter({ ...filter, status: value })}>
+                  <SelectTrigger
+                    size="sm"
+                    className="h-[30px] w-[180px]  text-[12px] border-border-(--border-color-secondary) rounded-(--border-rounded-primary)"
+                  >
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="true">Active</SelectItem>
+                    <SelectItem value="false">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Clear Filter Button */}
+              <button onClick={() => setFilter({ status: "", category: "", search: "" })} className="cursor-pointer h-[30px] px-4 text-[12px] text-(--Primary) underline border-border-(--border-color-secondary) rounded-(--border-rounded-primary)">
+                Clear Filters
+              </button>
+            </div>
+          </div>
+        </TableWrapBody>
+
+        <TableWrapBody>
+          <Table>
+            <TableHeaderRow>
+              <TableHeaderCell>Product</TableHeaderCell>
+              <TableHeaderCell>Category</TableHeaderCell>
+              <TableHeaderCell>Price</TableHeaderCell>
+              <TableHeaderCell>Stock</TableHeaderCell>
+              <TableHeaderCell>Availability</TableHeaderCell>
+              <TableHeaderCell>Status</TableHeaderCell>
+              <TableHeaderCell className="text-center">ACTION</TableHeaderCell>
+            </TableHeaderRow>
+            <TableBody>
+              {products.map((p) => (
+                <TableBodyRow>
+                  <TableBodyCell className=" py-4">USER NAME</TableBodyCell>
+                  <TableHeaderCell>USER NAME</TableHeaderCell>
+                  <TableHeaderCell>EMAIL</TableHeaderCell>
+                  <TableHeaderCell>ROLE</TableHeaderCell>
+                  <TableHeaderCell>PHONE</TableHeaderCell>
+                  <TableHeaderCell>STATUS</TableHeaderCell>
+                  <TableHeaderCell className="text-center">
+                  <div className="flex items-center justify-center gap-2">
+                        {/* <Link to={``}>
+                          <div
+                            className="p-1.5 hover:bg-(--Info)/10 rounded transition-colors"
+                            title="View"
+                          >
+                            <FiEye size={16} className="text-(--Info)" />
+                          </div>
+                        </Link> */}
+                        <Link to={``}>
+                          <button
+                            className="p-1.5 hover:bg-(--Primary)/10 rounded transition-colors"
+                            title="Edit"
+                          >
+                            <FiEdit2 size={16} className="text-(--Primary)" />
+                          </button>
+                        </Link>
+                        <button
+                          className="p-1.5 hover:bg-(--Danger)/10 rounded transition-colors"
+                          title="Delete"
+                        >
+                          <FiTrash2 size={16} className="text-(--Danger)" />
+                        </button>
+                      </div>
+                  </TableHeaderCell>
+                </TableBodyRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableWrapBody>
+         <TableWrapFooter>
+          <Pagination
+           
+          />
+        </TableWrapFooter>
+      </TableWrap>
 
       {globalError && (
         <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
