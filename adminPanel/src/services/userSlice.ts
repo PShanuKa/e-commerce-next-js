@@ -14,7 +14,7 @@ export interface User {
 export const userSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getAdminUsers: builder.query<
-      { success: boolean; users: User[] },
+      { success: boolean; users: User[]; meta: any },
       { page?: number; limit?: number } | void
     >({
       query: (params) => ({

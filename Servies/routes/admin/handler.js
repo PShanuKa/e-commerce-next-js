@@ -36,16 +36,21 @@ const listAllOrders = async (request, reply) => {
   const { status, page = 1, limit = 20 } = request.query;
   const skip = (Number(page) - 1) * Number(limit);
 
-  const orders = await prisma.order.findMany({
-    where: status ? { status } : {},
-    skip,
-    take: Number(limit),
-    orderBy: { createdAt: "desc" },
-    include: {
-      user: { select: { name: true, email: true } },
-      _count: { select: { orderItems: true } },
-    },
-  });
+  const where = status ? { status } : {};
+
+  const [orders, total] = await Promise.all([
+    prisma.order.findMany({
+      where,
+      skip,
+      take: Number(limit),
+      orderBy: { createdAt: "desc" },
+      include: {
+        user: { select: { name: true, email: true } },
+        _count: { select: { orderItems: true } },
+      },
+    }),
+    prisma.order.count({ where }),
+  ]);
 
   const formatted = orders.map((o) => ({
     ...o,
@@ -56,7 +61,16 @@ const listAllOrders = async (request, reply) => {
     _count: undefined,
   }));
 
-  return { success: true, orders: formatted };
+  return {
+    success: true,
+    orders: formatted,
+    meta: {
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      pages: Math.ceil(total / Number(limit)),
+    },
+  };
 };
 
 const updateOrderStatus = async (request, reply) => {
@@ -117,28 +131,41 @@ const listAllUsers = async (request, reply) => {
   const { page = 1, limit = 20 } = request.query;
   const skip = (Number(page) - 1) * Number(limit);
 
-  const users = await prisma.user.findMany({
-    skip,
-    take: Number(limit),
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      phone: true,
-      role: true,
-      isActive: true,
-      createdAt: true,
-      _count: { select: { orders: true } },
-    },
-  });
+  const [users, total] = await Promise.all([
+    prisma.user.findMany({
+      skip,
+      take: Number(limit),
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+        _count: { select: { orders: true } },
+      },
+    }),
+    prisma.user.count({ where: { role: "customer" } }),
+  ]);
 
   const formatted = users.map((u) => ({
     ...u,
     order_count: u._count.orders,
     _count: undefined,
   }));
-  return { success: true, users: formatted };
+
+  return {
+    success: true,
+    users: formatted,
+    meta: {
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      pages: Math.ceil(total / Number(limit)),
+    },
+  };
 };
 
 const createCustomer = async (request, reply) => {

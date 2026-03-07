@@ -1,13 +1,32 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  useGetAdminOrdersQuery,
-  useUpdateOrderStatusMutation,
-} from "@/services/orderSlice";
+import { useGetAdminOrdersQuery } from "@/services/orderSlice";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
-import { MdFilterList, MdVisibility } from "react-icons/md";
+import { FiEye } from "react-icons/fi";
+import Breadcrumb from "@/components/common/Breadcrumb";
+import TableWrap, {
+  TableWrapBody,
+  TableWrapFooter,
+  TableWrapHeader,
+} from "@/components/common/TableWrap";
+import {
+  Table,
+  TableBody,
+  TableBodyCell,
+  TableBodyRow,
+  TableHeaderCell,
+  TableHeaderRow,
+} from "@/components/common/Table";
+import Pagination from "@/components/common/Pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { CiFilter } from "react-icons/ci";
 
 const STATUS_VARIANTS: Record<
   string,
@@ -21,157 +40,211 @@ const STATUS_VARIANTS: Record<
 };
 
 const STATUS_OPTIONS = [
-  "pending",
-  "processing",
-  "shipped",
-  "delivered",
-  "cancelled",
+  { label: "All Statuses", value: "all" },
+  { label: "Pending", value: "pending" },
+  { label: "Processing", value: "processing" },
+  { label: "Shipped", value: "shipped" },
+  { label: "Delivered", value: "delivered" },
+  { label: "Cancelled", value: "cancelled" },
 ];
 
 const OrdersPage = () => {
-  const [statusFilter, setStatusFilter] = useState<string>("");
-  const [page, setPage] = useState(1);
-  const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+  });
+
+  const [filter, setFilter] = useState({
+    status: "all",
+    search: "",
+  });
 
   const { data, isLoading } = useGetAdminOrdersQuery({
-    status: statusFilter || undefined,
-    page,
-    limit: 20,
+    status: filter.status === "all" ? undefined : filter.status,
+    page: pagination.page,
+    limit: pagination.limit,
+    // Note: backend listAllOrders doesn't seem to support search yet,
+    // but I'll pass it anyway in case it's added.
   });
-  const [updateStatus] = useUpdateOrderStatusMutation();
 
   const orders = data?.orders ?? [];
+  const meta = data?.meta;
 
-  const handleStatusChange = async (id: number, newStatus: string) => {
-    try {
-      setUpdatingId(id);
-      await updateStatus({ id, status: newStatus }).unwrap();
-    } catch (err) {
-      console.error("Failed to update status:", err);
-    } finally {
-      setUpdatingId(null);
-    }
+  const handlePageChange = (newPage: number) => {
+    setPagination((p) => ({ ...p, page: newPage }));
+  };
+
+  const handleLimitChange = (newLimit: number) => {
+    setPagination((p) => ({ ...p, limit: newLimit, page: 1 }));
   };
 
   return (
     <DashboardLayout title="Orders">
-      {/* Filters */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <MdFilterList
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-              size={18}
-            />
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setPage(1);
-              }}
-              className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-400 appearance-none min-w-[160px]"
-            >
-              <option value="">All Statuses</option>
-              {STATUS_OPTIONS.map((s) => (
-                <option key={s} value={s}>
-                  {s.charAt(0).toUpperCase() + s.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
+      <Breadcrumb title="Orders Management" path="Orders" />
 
-      <Card>
-        {isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      <TableWrap>
+        <TableWrapHeader title="Orders" description="Manage customer orders" />
+
+        <TableWrapBody>
+          <div className="w-full border-t border-(--border-color-primary) px-4">
+            <div className="h-16 flex items-center justify-between w-1/4 gap-2">
+              <p className="text-[12px] text-(--table-body-font-color) font-light">
+                Search:
+              </p>
+              <input
+                type="text"
+                placeholder="Search"
+                value={filter.search}
+                onChange={(e) =>
+                  setFilter({ ...filter, search: e.target.value })
+                }
+                className="w-full h-[30px] border border-(--border-color-secondary) rounded-(--border-rounded-primary) px-4 text-[12px] text-(--table-body-font-color) outline-none"
+              />
+              <button
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className="h-[30px] w-10 border border-(--border-color-secondary) rounded-(--border-rounded-primary) text-[12px] flex items-center justify-center hover:bg-secondary transition-all duration-200"
+              >
+                <CiFilter
+                  size={16}
+                  className="text-(--table-body-font-color)"
+                />
+              </button>
+            </div>
           </div>
-        ) : orders.length === 0 ? (
-          <div className="py-16 text-center text-sm text-gray-400">
-            No orders found.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-gray-50 text-xs text-gray-500 uppercase">
-                  <th className="px-6 py-3 text-left font-medium">Order ID</th>
-                  <th className="px-6 py-3 text-left font-medium">Customer</th>
-                  <th className="px-6 py-3 text-left font-medium">Date</th>
-                  <th className="px-6 py-3 text-left font-medium">Total</th>
-                  <th className="px-6 py-3 text-left font-medium">Items</th>
-                  <th className="px-6 py-3 text-left font-medium">Status</th>
-                  <th className="px-6 py-3 text-right font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {orders.map((order) => (
-                  <tr
-                    key={order.id}
-                    className="hover:bg-gray-50/50 transition-colors"
+        </TableWrapBody>
+
+        <TableWrapBody>
+          <div
+            className={`w-full border-t border-(--border-color-primary) px-4 transition-all duration-300 ease-in-out overflow-hidden ${
+              isFilterOpen ? "max-h-[200px] opacity-100" : "max-h-0 opacity-0"
+            }`}
+          >
+            <div className="h-16 flex items-center gap-3">
+              <p className="text-[12px] text-(--table-body-font-color) font-light">
+                Filter:
+              </p>
+              <div className="flex items-center gap-2">
+                <Select
+                  value={filter.status}
+                  onValueChange={(value) =>
+                    setFilter({ ...filter, status: value })
+                  }
+                >
+                  <SelectTrigger
+                    size="sm"
+                    className="h-[30px] w-[180px] text-[12px] border-border-(--border-color-secondary) rounded-(--border-rounded-primary)"
                   >
-                    <td className="px-6 py-3.5 font-medium text-gray-900">
+                    <SelectValue placeholder="Select Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <button
+                onClick={() => setFilter({ status: "all", search: "" })}
+                className="cursor-pointer h-[30px] px-4 text-[12px] text-(--Primary) underline"
+              >
+                Clear Filters
+              </button>
+            </div>
+          </div>
+        </TableWrapBody>
+
+        <TableWrapBody>
+          <Table>
+            <TableHeaderRow>
+              <TableHeaderCell>Order ID</TableHeaderCell>
+              <TableHeaderCell>Customer</TableHeaderCell>
+              <TableHeaderCell>Date</TableHeaderCell>
+              <TableHeaderCell>Total</TableHeaderCell>
+              <TableHeaderCell>Items</TableHeaderCell>
+              <TableHeaderCell>Status</TableHeaderCell>
+              <TableHeaderCell className="text-center">ACTION</TableHeaderCell>
+            </TableHeaderRow>
+            <TableBody>
+              {isLoading ? (
+                <TableBodyRow>
+                  <TableBodyCell colSpan={7} className="py-16 text-center">
+                    <div className="flex items-center justify-center">
+                      <div className="w-8 h-8 border-4 border-(--Primary) border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  </TableBodyCell>
+                </TableBodyRow>
+              ) : orders.length === 0 ? (
+                <TableBodyRow>
+                  <TableBodyCell
+                    colSpan={7}
+                    className="py-16 text-center text-sm text-gray-400"
+                  >
+                    No orders found.
+                  </TableBodyCell>
+                </TableBodyRow>
+              ) : (
+                orders.map((order) => (
+                  <TableBodyRow key={order.id}>
+                    <TableBodyCell className="font-semibold text-(--Primary)">
                       #{order.id}
-                    </td>
-                    <td className="px-6 py-3.5">
-                      <div>
-                        <p className="font-medium text-gray-800">
+                    </TableBodyCell>
+                    <TableBodyCell>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-gray-800">
                           {order.customer_name}
-                        </p>
-                        <p className="text-xs text-gray-500">
+                        </span>
+                        <span className="text-[10px] text-gray-400">
                           {order.customer_email}
-                        </p>
+                        </span>
                       </div>
-                    </td>
-                    <td className="px-6 py-3.5 text-gray-500 text-xs">
+                    </TableBodyCell>
+                    <TableBodyCell className="text-gray-500">
                       {new Date(order.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-3.5 font-semibold text-gray-800">
+                    </TableBodyCell>
+                    <TableBodyCell className="font-semibold">
                       Rs. {Number(order.total).toLocaleString()}
-                    </td>
-                    <td className="px-6 py-3.5 text-gray-600">
-                      {order.item_count} items
-                    </td>
-                    <td className="px-6 py-3.5">
+                    </TableBodyCell>
+                    <TableBodyCell>{order.item_count} items</TableBodyCell>
+                    <TableBodyCell>
                       <Badge
-                        label={
-                          order.status.charAt(0).toUpperCase() +
-                          order.status.slice(1)
-                        }
+                        label={order.status.toUpperCase()}
                         variant={STATUS_VARIANTS[order.status] ?? "default"}
                       />
-                    </td>
-                    <td className="px-6 py-3.5 text-right flex items-center justify-end gap-2">
-                      <Link
-                        to={`/orders/${order.id}`}
-                        className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                        title="View Details"
-                      >
-                        <MdVisibility size={18} />
-                      </Link>
-                      <select
-                        value={order.status}
-                        disabled={updatingId === order.id}
-                        onChange={(e) =>
-                          handleStatusChange(order.id, e.target.value)
-                        }
-                        className="text-xs border border-gray-200 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-400 bg-white"
-                      >
-                        {STATUS_OPTIONS.map((s) => (
-                          <option key={s} value={s}>
-                            {s.charAt(0).toUpperCase() + s.slice(1)}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
+                    </TableBodyCell>
+                    <TableBodyCell className="text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <Link to={`/orders/${order.id}`}>
+                          <button
+                            className="p-1.5 hover:bg-(--Primary)/10 rounded transition-colors"
+                            title="View Details"
+                          >
+                            <FiEye size={18} className="text-(--Primary)" />
+                          </button>
+                        </Link>
+                      </div>
+                    </TableBodyCell>
+                  </TableBodyRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableWrapBody>
+
+        <TableWrapFooter>
+          <Pagination
+            currentPage={pagination.page}
+            totalPages={meta?.pages || 1}
+            limit={pagination.limit}
+            total={meta?.total || 0}
+            onPageChange={handlePageChange}
+            onLimitChange={handleLimitChange}
+          />
+        </TableWrapFooter>
+      </TableWrap>
     </DashboardLayout>
   );
 };

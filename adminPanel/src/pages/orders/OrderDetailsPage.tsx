@@ -1,21 +1,28 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   useGetAdminOrderByIdQuery,
   useUpdateOrderStatusMutation,
   type OrderItem,
 } from "@/services/orderSlice";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import {
-  MdChevronLeft,
   MdEmail,
   MdPhone,
   MdLocationOn,
   MdAccessTime,
   MdPayment,
 } from "react-icons/md";
+import Breadcrumb from "@/components/common/Breadcrumb";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { FiArrowLeft } from "react-icons/fi";
 
 const STATUS_VARIANTS: Record<
   string,
@@ -29,15 +36,16 @@ const STATUS_VARIANTS: Record<
 };
 
 const STATUS_OPTIONS = [
-  "pending",
-  "processing",
-  "shipped",
-  "delivered",
-  "cancelled",
+  { label: "Pending", value: "pending" },
+  { label: "Processing", value: "processing" },
+  { label: "Shipped", value: "shipped" },
+  { label: "Delivered", value: "delivered" },
+  { label: "Cancelled", value: "cancelled" },
 ];
 
 const OrderDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { data, isLoading, error } = useGetAdminOrderByIdQuery(Number(id));
   const [updateStatus, { isLoading: isUpdating }] =
     useUpdateOrderStatusMutation();
@@ -46,7 +54,7 @@ const OrderDetailsPage = () => {
     return (
       <DashboardLayout title="Order Details">
         <div className="flex items-center justify-center py-20">
-          <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+          <div className="w-10 h-10 border-4 border-(--Primary) border-t-transparent rounded-full animate-spin" />
         </div>
       </DashboardLayout>
     );
@@ -57,9 +65,9 @@ const OrderDetailsPage = () => {
       <DashboardLayout title="Order Details">
         <div className="text-center py-20">
           <p className="text-red-500 mb-4">Failed to load order details.</p>
-          <Link to="/orders">
-            <Button variant="secondary">Back to Orders</Button>
-          </Link>
+          <Button onClick={() => navigate("/orders")} variant="secondary">
+            Back to Orders
+          </Button>
         </div>
       </DashboardLayout>
     );
@@ -77,64 +85,91 @@ const OrderDetailsPage = () => {
 
   return (
     <DashboardLayout title={`Order #${order.id}`}>
-      <div className="mb-6">
-        <Link
-          to="/orders"
-          className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-indigo-600 transition-colors"
+      <Breadcrumb title={`Order #${order.id}`} path="Orders " />
+
+      <div className="mb-6 flex items-center justify-between">
+        <button
+          onClick={() => navigate("/orders")}
+          className="flex items-center gap-2 text-sm text-(--font-color-secondary) hover:text-(--Primary) transition-all"
         >
-          <MdChevronLeft size={20} />
+          <FiArrowLeft size={16} />
           Back to Orders
-        </Link>
+        </button>
+
+        <div className="flex items-center gap-3">
+          <p className="text-sm font-medium text-(--font-color-secondary)">
+            Status:
+          </p>
+          <Select
+            value={order.status}
+            disabled={isUpdating}
+            onValueChange={handleStatusChange}
+          >
+            <SelectTrigger className="w-[180px] h-[35px] text-xs">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Order Items */}
-          <Card>
-            <div className="px-6 py-4 border-b border-gray-50">
-              <h3 className="font-bold text-gray-800">
+          <div className="bg-white rounded-lg border border-(--border-color-primary) overflow-hidden">
+            <div className="px-6 py-4 border-b border-(--border-color-primary) bg-gray-50/30">
+              <h3 className="font-semibold text-(--font-color-primary)">
                 Order Items ({order.orderItems?.length})
               </h3>
             </div>
-            <div className="divide-y divide-gray-50">
+            <div className="divide-y divide-(--border-color-primary)">
               {order.orderItems?.map((item: OrderItem) => (
                 <div
                   key={item.id}
                   className="px-6 py-4 flex items-center gap-4"
                 >
-                  <div className="w-16 h-16 rounded-lg bg-gray-50 flex items-center justify-center shrink-0 border border-gray-100 overflow-hidden">
+                  <div className="w-16 h-16 rounded-md bg-white border border-(--border-color-secondary) p-1 overflow-hidden shrink-0">
                     {item.imageUrl ? (
                       <img
                         src={item.imageUrl}
                         alt={item.name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain"
                       />
                     ) : (
-                      <span className="text-gray-400 text-xs">No Image</span>
+                      <div className="w-full h-full bg-gray-50 flex items-center justify-center">
+                        <span className="text-gray-400 text-[10px]">
+                          No Image
+                        </span>
+                      </div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 truncate">
+                    <p className="font-medium text-(--font-color-primary) text-sm truncate">
                       {item.name}
                     </p>
-                    <p className="text-xs text-gray-500">
-                      {item.variant || "No variant"}
+                    <p className="text-[11px] text-(--font-color-secondary)">
+                      {item.variant || "Standard Edition"}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-gray-900">
+                    <p className="font-semibold text-(--font-color-primary) text-sm">
                       Rs. {Number(item.price).toLocaleString()}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-[11px] text-(--font-color-secondary)">
                       Qty: {item.quantity}
                     </p>
                   </div>
                 </div>
               ))}
             </div>
-            <div className="px-6 py-4 bg-gray-50/50 space-y-2">
-              <div className="flex justify-between text-sm text-gray-600">
+            <div className="px-6 py-5 bg-gray-50/20 border-t border-(--border-color-primary) space-y-3">
+              <div className="flex justify-between text-sm text-(--font-color-secondary)">
                 <span>Subtotal</span>
                 <span>
                   Rs.{" "}
@@ -143,45 +178,40 @@ const OrderDetailsPage = () => {
                   ).toLocaleString()}
                 </span>
               </div>
-              <div className="flex justify-between text-sm text-gray-600">
+              <div className="flex justify-between text-sm text-(--font-color-secondary)">
                 <span>Delivery Fee</span>
                 <span>Rs. {Number(order.deliveryFee).toLocaleString()}</span>
               </div>
               {Number(order.couponDiscount) > 0 && (
-                <div className="flex justify-between text-sm text-green-600">
+                <div className="flex justify-between text-sm text-red-500">
                   <span>Coupon Discount</span>
                   <span>
                     - Rs. {Number(order.couponDiscount).toLocaleString()}
                   </span>
                 </div>
               )}
-              <div className="flex justify-between text-lg font-bold text-gray-800 pt-2 border-t border-gray-200">
-                <span>Total</span>
-                <span className="text-indigo-600">
+              <div className="flex justify-between text-lg font-bold text-(--font-color-primary) pt-3 border-t border-(--border-color-primary)">
+                <span>Total Amount</span>
+                <span className="text-(--Primary)">
                   Rs. {Number(order.total).toLocaleString()}
                 </span>
               </div>
             </div>
-          </Card>
+          </div>
 
-          {/* Shipping Address */}
-          <Card>
-            <div className="px-6 py-4 border-b border-gray-50 flex items-center gap-2">
-              <MdLocationOn className="text-indigo-500" size={20} />
-              <h3 className="font-bold text-gray-800">Shipping Address</h3>
+          <div className="bg-white rounded-lg border border-(--border-color-primary)">
+            <div className="px-6 py-4 border-b border-(--border-color-primary) flex items-center gap-2">
+              <MdLocationOn className="text-(--Primary)" size={18} />
+              <h3 className="font-semibold text-(--font-color-primary)">
+                Shipping Address
+              </h3>
             </div>
             {order.address ? (
-              <div className="px-6 py-5 space-y-3">
-                <div>
-                  <p className="font-bold text-gray-800 text-lg">
-                    {order.address.name}
-                  </p>
-                  <div className="flex items-center gap-2 text-gray-600 mt-1">
-                    <MdPhone size={16} />
-                    <span className="text-sm">{order.address.phone}</span>
-                  </div>
-                </div>
-                <div className="text-sm text-gray-600 leading-relaxed">
+              <div className="px-6 py-5 text-sm">
+                <p className="font-bold text-(--font-color-primary) mb-2">
+                  {order.address.name}
+                </p>
+                <div className="space-y-1 text-(--font-color-secondary)">
                   <p>{order.address.addressLine1}</p>
                   {order.address.addressLine2 && (
                     <p>{order.address.addressLine2}</p>
@@ -190,106 +220,95 @@ const OrderDetailsPage = () => {
                     {order.address.city}, {order.address.postalCode}
                   </p>
                   <p>{order.address.province}</p>
+                  <p className="flex items-center gap-2 mt-2 font-medium text-(--font-color-primary)">
+                    <MdPhone size={14} />
+                    {order.address.phone}
+                  </p>
                 </div>
               </div>
             ) : (
-              <div className="px-6 py-5 text-gray-500 italic text-sm">
+              <div className="px-6 py-5 text-gray-400 italic text-sm">
                 No shipping address provided.
               </div>
             )}
-          </Card>
+          </div>
         </div>
 
-        {/* Sidebar Info */}
+        {/* Sidebar */}
         <div className="space-y-6">
-          {/* Status Card */}
-          <Card>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                  Order Status
-                </label>
-                <div className="flex items-center justify-between gap-4">
-                  <Badge
-                    label={order.status.toUpperCase()}
-                    variant={STATUS_VARIANTS[order.status] ?? "default"}
-                  />
-                  <select
-                    value={order.status}
-                    disabled={isUpdating}
-                    onChange={(e) => handleStatusChange(e.target.value)}
-                    className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
-                  >
-                    {STATUS_OPTIONS.map((s) => (
-                      <option key={s} value={s}>
-                        {s.charAt(0).toUpperCase() + s.slice(1)}
-                      </option>
-                    ))}
-                  </select>
+          <div className="bg-white rounded-lg border border-(--border-color-primary) p-5">
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
+              General Information
+            </h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2 text-(--font-color-secondary)">
+                  <MdAccessTime size={16} />
+                  <span>Ordered Date</span>
                 </div>
+                <span className="font-medium text-(--font-color-primary)">
+                  {new Date(order.createdAt).toLocaleDateString()}
+                </span>
               </div>
-
-              <div className="pt-4 border-t border-gray-50 space-y-4 text-sm">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-gray-500">
-                    <MdAccessTime size={18} />
-                    <span>Ordered On</span>
-                  </div>
-                  <span className="font-medium text-gray-800">
-                    {new Date(order.createdAt).toLocaleString()}
-                  </span>
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2 text-(--font-color-secondary)">
+                  <MdPayment size={16} />
+                  <span>Payment Info</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-gray-500">
-                    <MdPayment size={18} />
-                    <span>Payment</span>
-                  </div>
-                  <span className="font-medium text-gray-800 uppercase">
-                    {order.paymentMethod}
-                  </span>
-                </div>
+                <span className="font-medium text-(--font-color-primary) uppercase">
+                  {order.paymentMethod}
+                </span>
+              </div>
+              <div className="pt-2">
+                <Badge
+                  label={order.status.toUpperCase()}
+                  variant={STATUS_VARIANTS[order.status] ?? "default"}
+                  className="w-full justify-center py-1 text-xs"
+                />
               </div>
             </div>
-          </Card>
+          </div>
 
-          {/* Customer Card */}
-          <Card>
-            <div className="px-6 py-4 border-b border-gray-50 flex items-center gap-2">
-              <h3 className="font-bold text-gray-800">Customer Info</h3>
-            </div>
-            <div className="p-6 space-y-4 text-sm">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold shrink-0">
-                  {order.user?.name.charAt(0)}
-                </div>
-                <div className="min-w-0">
-                  <p className="font-bold text-gray-800 truncate">
-                    {order.user?.name}
-                  </p>
-                  <p className="text-gray-500 truncate">{order.user?.email}</p>
-                </div>
+          <div className="bg-white rounded-lg border border-(--border-color-primary) p-5">
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
+              Customer Details
+            </h3>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-(--Primary)/10 flex items-center justify-center text-(--Primary) font-bold shrink-0">
+                {order.user?.name.charAt(0)}
               </div>
-              <div className="flex items-center gap-2 text-gray-600">
-                <MdEmail className="shrink-0" size={16} />
+              <div className="min-w-0">
+                <p className="font-bold text-(--font-color-primary) text-sm truncate">
+                  {order.user?.name}
+                </p>
+                <p className="text-xs text-(--font-color-secondary) truncate">
+                  {order.user?.email}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3 pt-3 border-t border-(--border-color-primary)">
+              <div className="flex items-center gap-2 text-xs text-(--font-color-secondary)">
+                <MdEmail size={14} className="shrink-0" />
                 <span className="truncate">{order.user?.email}</span>
               </div>
               {order.user?.phone && (
-                <div className="flex items-center gap-2 text-gray-600">
-                  <MdPhone className="shrink-0" size={16} />
+                <div className="flex items-center gap-2 text-xs text-(--font-color-secondary)">
+                  <MdPhone size={14} className="shrink-0" />
                   <span>{order.user.phone}</span>
                 </div>
               )}
-              <Link to={`/customers`} className="block">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full text-indigo-600 border border-indigo-100 mt-2"
-                >
-                  View Customer History
-                </Button>
-              </Link>
             </div>
-          </Card>
+
+            <Button
+              onClick={() => navigate("/customers")}
+              variant="secondary"
+              size="sm"
+              className="w-full mt-5 text-xs h-[32px]"
+            >
+              Customer History
+            </Button>
+          </div>
         </div>
       </div>
     </DashboardLayout>

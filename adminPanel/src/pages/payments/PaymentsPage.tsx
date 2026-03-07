@@ -1,177 +1,179 @@
 import { useState } from "react";
 import { useGetAdminPaymentsQuery } from "@/services/paymentSlice";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
+import Breadcrumb from "@/components/common/Breadcrumb";
+import TableWrap, {
+  TableWrapBody,
+  TableWrapFooter,
+  TableWrapHeader,
+} from "@/components/common/TableWrap";
 import {
-  MdReceipt,
-  MdSearch,
-  MdChevronLeft,
-  MdChevronRight,
-} from "react-icons/md";
+  Table,
+  TableBody,
+  TableBodyCell,
+  TableBodyRow,
+  TableHeaderCell,
+  TableHeaderRow,
+} from "@/components/common/Table";
+import Pagination from "@/components/common/Pagination";
+import { FiDollarSign, FiSearch, FiFilter } from "react-icons/fi";
 
 const PaymentsPage = () => {
-  const [page, setPage] = useState(1);
-  const [status, setStatus] = useState("");
-  const { data, isLoading, isError } = useGetAdminPaymentsQuery({
-    page,
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+  });
+  const [status, setStatus] = useState<string>("");
+  const [search, setSearch] = useState("");
+
+  const { data, isLoading } = useGetAdminPaymentsQuery({
+    page: pagination.page,
+    limit: pagination.limit,
     status: status || undefined,
   });
 
-  const getStatusVariant = (
-    status: string,
-  ): "success" | "danger" | "warning" | "info" | "default" => {
-    switch (status.toLowerCase()) {
-      case "success":
-        return "success";
-      case "failed":
-        return "danger";
-      case "pending":
-        return "warning";
-      default:
-        return "default";
-    }
+  const payments = data?.payments ?? [];
+  const meta = data?.meta;
+
+  const handlePageChange = (newPage: number) => {
+    setPagination((p) => ({ ...p, page: newPage }));
   };
 
-  const payments = data?.payments ?? [];
-  const pagination = data?.pagination;
+  const handleLimitChange = (newLimit: number) => {
+    setPagination((p) => ({ ...p, limit: newLimit, page: 1 }));
+  };
 
   return (
-    <DashboardLayout title="Payment History">
-      {/* Top bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-        <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 w-64">
-          <MdSearch size={18} className="text-gray-400 shrink-0" />
-          <input
-            type="text"
-            placeholder="Search transactions..."
-            className="bg-transparent text-sm text-gray-600 placeholder-gray-400 outline-none w-full"
-          />
-        </div>
+    <DashboardLayout title="Payments">
+      <Breadcrumb title="Payments History" path="Payments" />
 
-        <div className="flex items-center gap-2">
-          <select
-            value={status}
-            onChange={(e) => {
-              setStatus(e.target.value);
-              setPage(1);
-            }}
-            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600 outline-none focus:ring-2 focus:ring-indigo-400"
-          >
-            <option value="">All Status</option>
-            <option value="success">Success</option>
-            <option value="pending">Pending</option>
-            <option value="failed">Failed</option>
-          </select>
-        </div>
-      </div>
+      <TableWrap>
+        <TableWrapHeader
+          title="Payments"
+          description="Track and manage all transactions"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 w-64 focus-within:ring-2 focus-within:ring-(--Primary)/20 focus-within:border-(--Primary) transition-all">
+              <FiSearch size={16} className="text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search Transaction ID..."
+                className="bg-transparent border-none outline-none text-sm w-full text-gray-700 placeholder:text-gray-400"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
 
-      <Card>
-        {isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+            <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 transition-all">
+              <FiFilter size={16} className="text-gray-400" />
+              <select
+                className="bg-transparent border-none outline-none text-sm text-gray-700 cursor-pointer"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                <option value="">All Statuses</option>
+                <option value="success">Success</option>
+                <option value="pending">Pending</option>
+                <option value="failed">Failed</option>
+              </select>
+            </div>
           </div>
-        ) : isError ? (
-          <div className="py-16 text-center text-sm text-red-500">
-            Failed to load payments.
-          </div>
-        ) : payments.length === 0 ? (
-          <div className="py-16 text-center text-sm text-gray-400">
-            No transactions found.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-gray-50 text-xs text-gray-500 uppercase">
-                  <th className="px-6 py-3 text-left font-medium">
-                    Transaction
-                  </th>
-                  <th className="px-6 py-3 text-left font-medium">Customer</th>
-                  <th className="px-6 py-3 text-left font-medium">Amount</th>
-                  <th className="px-6 py-3 text-left font-medium">Method</th>
-                  <th className="px-6 py-3 text-left font-medium">Status</th>
-                  <th className="px-6 py-3 text-left font-medium">Date</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {payments.map((payment) => (
-                  <tr
-                    key={payment.id}
-                    className="hover:bg-gray-50/50 transition-colors"
+        </TableWrapHeader>
+
+        <TableWrapBody>
+          <Table>
+            <TableHeaderRow>
+              <TableHeaderCell>Transaction ID</TableHeaderCell>
+              <TableHeaderCell>Order ID</TableHeaderCell>
+              <TableHeaderCell>Customer</TableHeaderCell>
+              <TableHeaderCell>Amount</TableHeaderCell>
+              <TableHeaderCell>Method</TableHeaderCell>
+              <TableHeaderCell>Date</TableHeaderCell>
+              <TableHeaderCell>Status</TableHeaderCell>
+            </TableHeaderRow>
+            <TableBody>
+              {isLoading ? (
+                <TableBodyRow>
+                  <TableBodyCell colSpan={7} className="py-16 text-center">
+                    <div className="flex items-center justify-center">
+                      <div className="w-8 h-8 border-4 border-(--Primary) border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  </TableBodyCell>
+                </TableBodyRow>
+              ) : payments.length === 0 ? (
+                <TableBodyRow>
+                  <TableBodyCell
+                    colSpan={7}
+                    className="py-16 text-center text-sm text-gray-400"
                   >
-                    <td className="px-6 py-3.5">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600">
-                          <MdReceipt size={18} />
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-800">
-                            {payment.transactionId || `PAY-${payment.id}`}
-                          </p>
-                          <p className="text-xs text-gray-400">
-                            Order #{payment.orderId}
-                          </p>
-                        </div>
+                    No payments found.
+                  </TableBodyCell>
+                </TableBodyRow>
+              ) : (
+                payments.map((pay) => (
+                  <TableBodyRow key={pay.id}>
+                    <TableBodyCell className="font-mono text-xs text-gray-500">
+                      {pay.transactionId || "INTERNAL-" + pay.id}
+                    </TableBodyCell>
+                    <TableBodyCell className="font-semibold text-(--Primary)">
+                      #{pay.orderId}
+                    </TableBodyCell>
+                    <TableBodyCell>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-gray-800 text-sm">
+                          {pay.order?.user.name}
+                        </span>
+                        <span className="text-[10px] text-gray-400">
+                          {pay.order?.user.email}
+                        </span>
                       </div>
-                    </td>
-                    <td className="px-6 py-3.5">
-                      <p className="font-medium text-gray-800">
-                        {payment.order?.user.name}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {payment.order?.user.email}
-                      </p>
-                    </td>
-                    <td className="px-6 py-3.5">
-                      <span className="font-bold text-gray-800">
-                        {payment.currency}{" "}
-                        {Number(payment.amount).toLocaleString()}
+                    </TableBodyCell>
+                    <TableBodyCell>
+                      <span className="font-bold text-gray-900">
+                        {pay.currency} {pay.amount.toFixed(2)}
                       </span>
-                    </td>
-                    <td className="px-6 py-3.5 capitalize text-gray-600">
-                      {payment.paymentMethod}
-                    </td>
-                    <td className="px-6 py-3.5">
+                    </TableBodyCell>
+                    <TableBodyCell>
                       <Badge
-                        label={payment.status}
-                        variant={getStatusVariant(payment.status)}
+                        label={pay.paymentMethod.toUpperCase()}
+                        variant="secondary"
+                        className="text-[10px] font-bold"
                       />
-                    </td>
-                    <td className="px-6 py-3.5 text-gray-400 text-xs">
-                      {new Date(payment.createdAt).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </TableBodyCell>
+                    <TableBodyCell className="text-xs text-gray-500">
+                      {new Date(pay.createdAt).toLocaleString()}
+                    </TableBodyCell>
+                    <TableBodyCell>
+                      <Badge
+                        label={pay.status.toUpperCase()}
+                        variant={
+                          pay.status === "success"
+                            ? "success"
+                            : pay.status === "pending"
+                              ? "warning"
+                              : "danger"
+                        }
+                      />
+                    </TableBodyCell>
+                  </TableBodyRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableWrapBody>
 
-            {/* Pagination */}
-            {pagination && pagination.totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 px-6 py-4 border-t border-gray-50">
-                <button
-                  disabled={page <= 1}
-                  onClick={() => setPage(page - 1)}
-                  className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <MdChevronLeft size={18} />
-                </button>
-                <span className="text-sm text-gray-600">
-                  Page {page} of {pagination.totalPages} · {pagination.total}{" "}
-                  transactions
-                </span>
-                <button
-                  disabled={page >= pagination.totalPages}
-                  onClick={() => setPage(page + 1)}
-                  className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <MdChevronRight size={18} />
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </Card>
+        <TableWrapFooter>
+          <Pagination
+            currentPage={pagination.page}
+            totalPages={meta?.pages || 1}
+            limit={pagination.limit}
+            total={meta?.total || 0}
+            onPageChange={handlePageChange}
+            onLimitChange={handleLimitChange}
+          />
+        </TableWrapFooter>
+      </TableWrap>
     </DashboardLayout>
   );
 };

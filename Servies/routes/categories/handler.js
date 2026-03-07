@@ -24,12 +24,20 @@ const listCategories = async (request, reply) => {
 
 // ── List ALL categories including soft-deleted (admin) ───────────────────────
 const listAllCategories = async (request, reply) => {
-  const categories = await prisma.category.findMany({
-    orderBy: { name: "asc" },
-    include: {
-      _count: { select: { products: { where: { isActive: true } } } },
-    },
-  });
+  const { page = 1, limit = 20 } = request.query;
+  const skip = (Number(page) - 1) * Number(limit);
+
+  const [categories, total] = await Promise.all([
+    prisma.category.findMany({
+      skip,
+      take: Number(limit),
+      orderBy: { name: "asc" },
+      include: {
+        _count: { select: { products: { where: { isActive: true } } } },
+      },
+    }),
+    prisma.category.count(),
+  ]);
 
   const formatted = categories.map((c) => ({
     ...c,
@@ -37,7 +45,16 @@ const listAllCategories = async (request, reply) => {
     _count: undefined,
   }));
 
-  return { success: true, categories: formatted };
+  return {
+    success: true,
+    categories: formatted,
+    meta: {
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      pages: Math.ceil(total / Number(limit)),
+    },
+  };
 };
 
 // ── Get single category by slug (public) ─────────────────────────────────────

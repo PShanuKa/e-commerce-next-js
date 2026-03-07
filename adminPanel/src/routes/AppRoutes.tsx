@@ -9,6 +9,8 @@ import OrdersPage from "@/pages/orders/OrdersPage";
 import OrderDetailsPage from "@/pages/orders/OrderDetailsPage";
 import PaymentsPage from "@/pages/payments/PaymentsPage";
 import ProductSingle from "@/pages/products/productSingle";
+import CategorySingle from "@/pages/categories/categorySingle";
+import CustomerSingle from "@/pages/customers/customerSingle";
 
 const AppRoutes = () => (
   <Routes>
@@ -19,6 +21,8 @@ const AppRoutes = () => (
     <Route element={<AuthGuard />}>
       <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="/categories" element={<CategoriesPage />} />
+      <Route path="/categories/add" element={<CategorySingle type="add" />} />
+      <Route path="/categories/:id" element={<CategorySingle type="edit" />} />
       <Route path="/products" element={<ProductsPage />} />
       <Route path="/products/add" element={<ProductSingle type="add" />} />
       <Route path="/products/:id" element={<ProductSingle type="edit" />} />
@@ -26,6 +30,8 @@ const AppRoutes = () => (
       <Route path="/orders/:id" element={<OrderDetailsPage />} />
       <Route path="/payments" element={<PaymentsPage />} />
       <Route path="/customers" element={<CustomersPage />} />
+      <Route path="/customers/add" element={<CustomerSingle type="add" />} />
+      <Route path="/customers/:id" element={<CustomerSingle type="edit" />} />
     </Route>
 
     {/* Fallback */}

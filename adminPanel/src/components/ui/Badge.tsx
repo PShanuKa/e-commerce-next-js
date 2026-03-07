@@ -1,6 +1,7 @@
 interface BadgeProps {
   label: string;
   variant?: "success" | "warning" | "danger" | "info" | "default";
+  className?: string; // Added support for custom classes
 }
 
 const variantClasses: Record<string, string> = {
@@ -11,9 +12,9 @@ const variantClasses: Record<string, string> = {
   default: "bg-gray-100 text-gray-600",
 };
 
-const Badge = ({ label, variant = "default" }: BadgeProps) => (
+const Badge = ({ label, variant = "default", className = "" }: BadgeProps) => (
   <span
-    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variantClasses[variant]}`}
+    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variantClasses[variant]} ${className}`}
   >
     {label}
   </span>

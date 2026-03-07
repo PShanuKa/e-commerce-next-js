@@ -36,11 +36,11 @@ const listAllPayments = async (request, reply) => {
   return {
     success: true,
     payments,
-    pagination: {
+    meta: {
       total: totalCount,
       page: Number(page),
       limit: Number(limit),
-      totalPages: Math.ceil(totalCount / Number(limit)),
+      pages: Math.ceil(totalCount / Number(limit)),
     },
   };
 };

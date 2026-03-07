@@ -40,7 +40,7 @@ export interface Order {
 export const orderSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getAdminOrders: builder.query<
-      { success: boolean; orders: Order[] },
+      { success: boolean; orders: Order[]; meta: any },
       { status?: string; page?: number; limit?: number } | void
     >({
       query: (params) => ({

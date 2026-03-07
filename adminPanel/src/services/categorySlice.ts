@@ -11,10 +11,6 @@ export interface Category {
   product_count: number;
 }
 
-interface ListResponse {
-  success: boolean;
-  categories: Category[];
-}
 interface SingleResponse {
   success: boolean;
   category: Category;
@@ -30,9 +26,15 @@ interface UpdateBody {
 
 export const categoryApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    getAdminCategories: builder.query<ListResponse, void>({
+    getAdminCategories: builder.query<
+      { success: boolean; categories: Category[]; meta: any },
+      { page?: number; limit?: number } | void
+    >({
       providesTags: ["Category"],
-      query: () => "categories/admin/all",
+      query: (params) => ({
+        url: "categories/admin/all",
+        params: params || undefined,
+      }),
     }),
     createCategory: builder.mutation<SingleResponse, CreateBody>({
       invalidatesTags: ["Category"],

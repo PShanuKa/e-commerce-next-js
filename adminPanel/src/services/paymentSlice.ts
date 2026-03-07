@@ -25,7 +25,7 @@ export interface Payment {
 export const paymentSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getAdminPayments: builder.query<
-      { success: boolean; payments: Payment[]; pagination: any },
+      { success: boolean; payments: Payment[]; meta: any },
       { status?: string; page?: number; limit?: number } | void
     >({
       query: (params) => ({
