@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{headerTitle}}</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7fa;
+            color: #334155;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+        .header {
+            background: linear-gradient(135deg, {{headerGradientStart}}, {{headerGradientEnd}});
+            padding: 40px 20px;
+            text-align: center;
+            color: white;
+        }
+        .header-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        .header-title {
+            font-size: 24px;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+        .content {
+            padding: 40px 30px;
+            line-height: 1.6;
+            font-size: 16px;
+        }
+        .btn-container {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .button {
+            display: inline-block;
+            padding: 14px 28px;
+            background-color: {{accentColor}};
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+        }
+        .footer {
+            padding: 30px;
+            text-align: center;
+            background-color: #f8fafc;
+            color: #94a3b8;
+            font-size: 13px;
+            border-top: 1px solid #f1f5f9;
+        }
+        .social-links {
+            margin-bottom: 15px;
+        }
+        .social-links a {
+            margin: 0 10px;
+            color: #94a3b8;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-icon">{{headerIcon}}</div>
+            <h1 class="header-title">{{headerTitle}}</h1>
+        </div>
+        <div class="content">
+            {{emailBody}}
+        </div>
+        <div class="footer">
+            <p>&copy; {{year}} {{companyName}}. All rights reserved.</p>
+            <p>{{companyAddress}}</p>
+        </div>
+    </div>
+</body>
+</html>
