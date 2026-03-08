@@ -62,10 +62,9 @@ const OrdersPage = () => {
 
   const { data, isLoading } = useGetAdminOrdersQuery({
     status: filter.status === "all" ? undefined : filter.status,
+    search: filter.search || undefined,
     page: pagination.page,
     limit: pagination.limit,
-    // Note: backend listAllOrders doesn't seem to support search yet,
-    // but I'll pass it anyway in case it's added.
   });
 
   const orders = data?.orders ?? [];
@@ -96,9 +95,10 @@ const OrdersPage = () => {
                 type="text"
                 placeholder="Search"
                 value={filter.search}
-                onChange={(e) =>
-                  setFilter({ ...filter, search: e.target.value })
-                }
+                onChange={(e) => {
+                  setFilter({ ...filter, search: e.target.value });
+                  setPagination((p) => ({ ...p, page: 1 }));
+                }}
                 className="w-full h-[30px] border border-(--border-color-secondary) rounded-(--border-rounded-primary) px-4 text-[12px] text-(--table-body-font-color) outline-none"
               />
               <button
@@ -127,9 +127,10 @@ const OrdersPage = () => {
               <div className="flex items-center gap-2">
                 <Select
                   value={filter.status}
-                  onValueChange={(value) =>
-                    setFilter({ ...filter, status: value })
-                  }
+                  onValueChange={(value) => {
+                    setFilter({ ...filter, status: value });
+                    setPagination((p) => ({ ...p, page: 1 }));
+                  }}
                 >
                   <SelectTrigger
                     size="sm"
@@ -148,7 +149,10 @@ const OrdersPage = () => {
               </div>
 
               <button
-                onClick={() => setFilter({ status: "all", search: "" })}
+                onClick={() => {
+                  setFilter({ status: "all", search: "" });
+                  setPagination((p) => ({ ...p, page: 1 }));
+                }}
                 className="cursor-pointer h-[30px] px-4 text-[12px] text-(--Primary) underline"
               >
                 Clear Filters

@@ -41,7 +41,7 @@ export const orderSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getAdminOrders: builder.query<
       { success: boolean; orders: Order[]; meta: any },
-      { status?: string; page?: number; limit?: number } | void
+      { status?: string; search?: string; page?: number; limit?: number } | void
     >({
       query: (params) => ({
         url: "/admin/orders",

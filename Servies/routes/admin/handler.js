@@ -33,10 +33,23 @@ const getDashboardStats = async (request, reply) => {
 };
 
 const listAllOrders = async (request, reply) => {
-  const { status, page = 1, limit = 20 } = request.query;
+  const { status, search, page = 1, limit = 20 } = request.query;
   const skip = (Number(page) - 1) * Number(limit);
 
-  const where = status ? { status } : {};
+  const where = {};
+  if (status) where.status = status;
+
+  if (search) {
+    const isNum = !isNaN(Number(search));
+    where.OR = [
+      { user: { name: { contains: search, mode: "insensitive" } } },
+      { user: { email: { contains: search, mode: "insensitive" } } },
+    ];
+    if (isNum) {
+      where.OR.push({ id: Number(search) });
+      where.OR.push({ userId: Number(search) });
+    }
+  }
 
   const [orders, total] = await Promise.all([
     prisma.order.findMany({
