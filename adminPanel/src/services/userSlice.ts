@@ -45,6 +45,10 @@ export const userSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["User"],
     }),
+    getAdminUserById: builder.query<{ success: boolean; user: any }, number>({
+      query: (id) => `/admin/users/${id}`,
+      providesTags: (_result, _error, id) => [{ type: "User", id }],
+    }),
   }),
 });
 
@@ -52,4 +56,5 @@ export const {
   useGetAdminUsersQuery,
   useCreateCustomerMutation,
   useUpdateCustomerMutation,
+  useGetAdminUserByIdQuery,
 } = userSlice;

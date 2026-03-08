@@ -31,7 +31,11 @@ const AppRoutes = () => (
       <Route path="/payments" element={<PaymentsPage />} />
       <Route path="/customers" element={<CustomersPage />} />
       <Route path="/customers/add" element={<CustomerSingle type="add" />} />
-      <Route path="/customers/:id" element={<CustomerSingle type="edit" />} />
+      <Route path="/customers/:id" element={<CustomerSingle type="view" />} />
+      <Route
+        path="/customers/:id/edit"
+        element={<CustomerSingle type="edit" />}
+      />
     </Route>
 
     {/* Fallback */}

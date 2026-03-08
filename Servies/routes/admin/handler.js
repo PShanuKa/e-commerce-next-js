@@ -215,10 +215,9 @@ const createCustomer = async (request, reply) => {
     user: { id: user.id, name: user.name, email: user.email },
   };
 };
-
 const updateCustomer = async (request, reply) => {
   const { id } = request.params;
-  const { name, email, phone, role, isActive } = request.body;
+  const { name, email, phone, role, isActive, password } = request.body;
 
   const data = {};
   if (name !== undefined) data.name = name;
@@ -226,6 +225,11 @@ const updateCustomer = async (request, reply) => {
   if (phone !== undefined) data.phone = phone;
   if (role !== undefined) data.role = role;
   if (isActive !== undefined) data.isActive = isActive;
+
+  if (password) {
+    const salt = await bcryptJs.genSalt(10);
+    data.passwordHash = await bcryptJs.hash(password, salt);
+  }
 
   const user = await prisma.user
     .update({
@@ -249,6 +253,47 @@ const updateCustomer = async (request, reply) => {
   };
 };
 
+const getCustomerDetails = async (request, reply) => {
+  const { id } = request.params;
+
+  const user = await prisma.user.findUnique({
+    where: { id: Number(id) },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      role: true,
+      isActive: true,
+      createdAt: true,
+      orders: {
+        orderBy: { createdAt: "desc" },
+        include: {
+          _count: { select: { orderItems: true } },
+        },
+      },
+      addresses: true,
+    },
+  });
+
+  if (!user)
+    return reply.status(404).send({ success: false, error: "User not found." });
+
+  const formattedOrders = user.orders.map((o) => ({
+    ...o,
+    item_count: o._count.orderItems,
+    _count: undefined,
+  }));
+
+  return {
+    success: true,
+    user: {
+      ...user,
+      orders: formattedOrders,
+    },
+  };
+};
+
 export {
   getDashboardStats,
   listAllOrders,
@@ -257,4 +302,5 @@ export {
   createCustomer,
   updateCustomer,
   getOrderDetails,
+  getCustomerDetails,
 };

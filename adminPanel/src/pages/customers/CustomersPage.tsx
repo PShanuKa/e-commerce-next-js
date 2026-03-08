@@ -17,7 +17,14 @@ import {
   TableHeaderRow,
 } from "@/components/common/Table";
 import Pagination from "@/components/common/Pagination";
-import { FiMail, FiPhone, FiCalendar, FiPlus, FiEdit } from "react-icons/fi";
+import {
+  FiMail,
+  FiPhone,
+  FiCalendar,
+  FiPlus,
+  FiEdit,
+  FiEye,
+} from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "@/components/common/Button";
 
@@ -144,6 +151,14 @@ const CustomersPage = () => {
                     <TableBodyCell className="text-center">
                       <div className="flex items-center justify-center gap-2">
                         <Link to={`/customers/${user.id}`}>
+                          <button
+                            className="p-1.5 hover:bg-gray-100 rounded text-(--Primary) transition-colors"
+                            title="View Details"
+                          >
+                            <FiEye size={18} />
+                          </button>
+                        </Link>
+                        <Link to={`/customers/${user.id}/edit`}>
                           <button
                             className="p-1.5 hover:bg-gray-100 rounded text-gray-600 transition-colors"
                             title="Edit"
