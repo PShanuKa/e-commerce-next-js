@@ -13,6 +13,7 @@ import {
   useRemoveFromCartMutation,
   useClearCartMutation,
 } from "@/services/cartSlice";
+import { useAddToWishlistMutation } from "@/services/wishlistSlice";
 
 /* ─── Skeleton ─────────────────────────────────────── */
 const SkeletonItem = () => (
@@ -56,6 +57,7 @@ const CartPage = () => {
   const [updateItem] = useUpdateCartItemMutation();
   const [removeItem] = useRemoveFromCartMutation();
   const [clearCart] = useClearCartMutation();
+  const [addToWishlist] = useAddToWishlistMutation();
 
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
@@ -69,6 +71,16 @@ const CartPage = () => {
   };
   const handleRemove = (productId: number) => removeItem(productId);
   const handleClearAll = () => clearCart();
+
+  const handleMoveToWishlist = async (productId: number) => {
+    try {
+      await addToWishlist(productId).unwrap();
+      removeItem(productId);
+      // Optional: show a toast notification here
+    } catch (err) {
+      console.error("Failed to move to wishlist:", err);
+    }
+  };
 
   const handleCoupon = () => {
     if (coupon.toUpperCase() === "SAVE10") {
@@ -467,6 +479,7 @@ const CartPage = () => {
                           </button>
                         </div>
                         <button
+                          onClick={() => handleMoveToWishlist(item.product_id)}
                           title="Move to Wishlist"
                           style={{
                             width: 30,
@@ -653,7 +666,7 @@ const CartPage = () => {
               </div>
 
               {/* Coupon */}
-              <div style={{ marginBottom: 20 }}>
+              {/* <div style={{ marginBottom: 20 }}>
                 <div style={{ display: "flex", gap: 8 }}>
                   <div style={{ flex: 1, position: "relative" }}>
                     <HiOutlineTag
@@ -724,7 +737,7 @@ const CartPage = () => {
                     ✓ Coupon applied! 10% off
                   </p>
                 )}
-              </div>
+              </div> */}
 
               <Link
                 to="/checkout"

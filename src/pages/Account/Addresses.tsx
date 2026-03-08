@@ -228,17 +228,20 @@ const AddressCard = ({
   </div>
 );
 
-/* ─── Address Form Modal ─────────────────────────── */
 const AddressFormModal = ({
   initial,
   onClose,
   onSave,
   saving,
+  errors = {},
+  onClearError,
 }: {
   initial?: Address | null;
   onClose: () => void;
   onSave: (data: AddressBody) => void;
   saving: boolean;
+  errors?: Record<string, string>;
+  onClearError: (field: string) => void;
 }) => {
   const [form, setForm] = useState<AddressBody>(
     initial
@@ -255,20 +258,37 @@ const AddressFormModal = ({
       : EMPTY_FORM,
   );
 
-  const set = (k: keyof AddressBody, v: string | boolean) =>
+  const set = (k: keyof AddressBody, v: string | boolean) => {
     setForm((f) => ({ ...f, [k]: v }));
+    if (typeof k === "string") onClearError(k);
+  };
 
-  const inputStyle: React.CSSProperties = {
+  const getStyle = (field: string): React.CSSProperties => ({
     width: "100%",
     padding: "10px 14px",
-    border: "1.5px solid var(--border)",
+    border: `1.5px solid ${errors[field] ? "var(--error)" : "var(--border)"}`,
     borderRadius: "var(--radius-sm)",
     fontSize: 13,
     color: "var(--text-primary)",
     boxSizing: "border-box",
     background: "var(--bg-card)",
     outline: "none",
-  };
+    transition: "border-color 0.2s",
+  });
+
+  const ErrorMsg = ({ field }: { field: string }) =>
+    errors[field] ? (
+      <p
+        style={{
+          color: "var(--error)",
+          fontSize: 11,
+          marginTop: 4,
+          marginLeft: 2,
+        }}
+      >
+        {errors[field]}
+      </p>
+    ) : null;
 
   return (
     <div
@@ -351,11 +371,12 @@ const AddressFormModal = ({
               Full Name *
             </label>
             <input
-              style={inputStyle}
+              style={getStyle("name")}
               value={form.name}
               onChange={(e) => set("name", e.target.value)}
               placeholder="Kasun Perera"
             />
+            <ErrorMsg field="name" />
           </div>
           {/* Phone */}
           <div>
@@ -372,12 +393,13 @@ const AddressFormModal = ({
               Phone *
             </label>
             <input
-              style={inputStyle}
+              style={getStyle("phone")}
               type="tel"
               value={form.phone}
               onChange={(e) => set("phone", e.target.value)}
               placeholder="+94 77 123 4567"
             />
+            <ErrorMsg field="phone" />
           </div>
           {/* Address Line 1 */}
           <div style={{ gridColumn: "span 2" }}>
@@ -394,11 +416,12 @@ const AddressFormModal = ({
               Address Line 1 *
             </label>
             <input
-              style={inputStyle}
+              style={getStyle("address_line1")}
               value={form.address_line1}
               onChange={(e) => set("address_line1", e.target.value)}
               placeholder="No. 123, Galle Road"
             />
+            <ErrorMsg field="address_line1" />
           </div>
           {/* Address Line 2 */}
           <div style={{ gridColumn: "span 2" }}>
@@ -415,11 +438,12 @@ const AddressFormModal = ({
               Address Line 2 (optional)
             </label>
             <input
-              style={inputStyle}
+              style={getStyle("address_line2")}
               value={form.address_line2}
               onChange={(e) => set("address_line2", e.target.value)}
               placeholder="Apartment, suite, floor…"
             />
+            <ErrorMsg field="address_line2" />
           </div>
           {/* City */}
           <div>
@@ -436,11 +460,12 @@ const AddressFormModal = ({
               City *
             </label>
             <input
-              style={inputStyle}
+              style={getStyle("city")}
               value={form.city}
               onChange={(e) => set("city", e.target.value)}
               placeholder="Colombo"
             />
+            <ErrorMsg field="city" />
           </div>
           {/* Postal Code */}
           <div>
@@ -457,11 +482,12 @@ const AddressFormModal = ({
               Postal Code
             </label>
             <input
-              style={inputStyle}
+              style={getStyle("postal_code")}
               value={form.postal_code}
               onChange={(e) => set("postal_code", e.target.value)}
               placeholder="00300"
             />
+            <ErrorMsg field="postal_code" />
           </div>
           {/* Province */}
           <div style={{ gridColumn: "span 2" }}>
@@ -478,7 +504,7 @@ const AddressFormModal = ({
               Province
             </label>
             <select
-              style={{ ...inputStyle }}
+              style={getStyle("province")}
               value={form.province}
               onChange={(e) => set("province", e.target.value)}
             >
@@ -489,6 +515,7 @@ const AddressFormModal = ({
                 </option>
               ))}
             </select>
+            <ErrorMsg field="province" />
           </div>
           {/* Default checkbox */}
           <div style={{ gridColumn: "span 2" }}>
@@ -539,13 +566,6 @@ const AddressFormModal = ({
           </button>
           <button
             onClick={() => onSave(form)}
-            disabled={
-              saving ||
-              !form.name ||
-              !form.phone ||
-              !form.address_line1 ||
-              !form.city
-            }
             style={{
               padding: "10px 24px",
               background: "var(--primary)",
@@ -594,21 +614,29 @@ const AddressesPage = () => {
   const [modal, setModal] = useState<"add" | "edit" | null>(null);
   const [editTarget, setEditTarget] = useState<Address | null>(null);
   const [saveError, setSaveError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const openAdd = () => {
     setEditTarget(null);
     setSaveError("");
+    setFieldErrors({});
     setModal("add");
   };
   const openEdit = (a: Address) => {
     setEditTarget(a);
     setSaveError("");
+    setFieldErrors({});
     setModal("edit");
   };
-  const closeModal = () => setModal(null);
+  const closeModal = () => {
+    setModal(null);
+    setFieldErrors({});
+  };
 
   const handleSave = async (form: AddressBody) => {
     setSaveError("");
+    setFieldErrors({});
+
     try {
       if (modal === "edit" && editTarget) {
         await updateAddress({ id: editTarget.id, ...form }).unwrap();
@@ -616,8 +644,26 @@ const AddressesPage = () => {
         await addAddress(form).unwrap();
       }
       closeModal();
-    } catch {
-      setSaveError("Failed to save address. Please try again.");
+    } catch (err: any) {
+      // Handle the cleaned-up object from our backend or the raw array from Fastify
+      if (err?.status === 400 && err?.data?.details) {
+        if (Array.isArray(err.data.details)) {
+          const errors: Record<string, string> = {};
+          err.data.details.forEach((d: any) => {
+            const field =
+              d.instancePath?.replace("/", "") || d.params?.missingProperty;
+            if (field) {
+              errors[field] = d.message;
+            }
+          });
+          setFieldErrors(errors);
+        } else {
+          // It's already our cleaned-up object { field: msg }
+          setFieldErrors(err.data.details);
+        }
+      } else {
+        setSaveError("Failed to save address. Please try again.");
+      }
     }
   };
 
@@ -805,6 +851,8 @@ const AddressesPage = () => {
           onClose={closeModal}
           onSave={handleSave}
           saving={adding || updating}
+          errors={fieldErrors}
+          onClearError={(f) => setFieldErrors((prev) => ({ ...prev, [f]: "" }))}
         />
       )}
 

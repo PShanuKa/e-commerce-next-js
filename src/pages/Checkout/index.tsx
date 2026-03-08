@@ -127,6 +127,7 @@ const CheckoutPage = () => {
   );
   const [payMethod, setPayMethod] = useState<"card" | "cod" | "bank">("cod");
   const [orderError, setOrderError] = useState("");
+  const [shippingError, setShippingError] = useState("");
 
   /* ── Add new address form ── */
   const [showNewAddr, setShowNewAddr] = useState(false);
@@ -163,6 +164,7 @@ const CheckoutPage = () => {
     try {
       const res = await addAddress(newForm).unwrap();
       setSelectedAddressId(res.address.id);
+      setShippingError("");
       setShowNewAddr(false);
       setNewForm(EMPTY_FORM);
     } catch {
@@ -194,10 +196,9 @@ const CheckoutPage = () => {
           };
           payhere.onError = (err: string) => {
             setOrderError(`Payment error: ${err}`);
-
           };
 
-          console.log('payRes.paymentParams', payRes.paymentParams);
+          console.log("payRes.paymentParams", payRes.paymentParams);
 
           payhere.startPayment(payRes.paymentParams);
         } else {
@@ -472,7 +473,10 @@ const CheckoutPage = () => {
                       {addresses.map((addr) => (
                         <label
                           key={addr.id}
-                          onClick={() => setSelectedAddressId(addr.id)}
+                          onClick={() => {
+                            setSelectedAddressId(addr.id);
+                            setShippingError("");
+                          }}
                           style={{
                             display: "flex",
                             gap: 12,
@@ -805,8 +809,36 @@ const CheckoutPage = () => {
                   ))}
                 </div>
 
+                {shippingError && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "12px 16px",
+                      background: "#FEF2F2",
+                      border: "1px solid #FECACA",
+                      borderRadius: "var(--radius-sm)",
+                      marginBottom: 12,
+                      fontSize: 13,
+                      color: "var(--error)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    <IoWarning size={16} /> {shippingError}
+                  </div>
+                )}
+
                 <button
-                  onClick={() => setStep(1)}
+                  onClick={() => {
+                    if (!effectiveAddressId) {
+                      setShippingError(
+                        "Please select or add a delivery address to continue.",
+                      );
+                      return;
+                    }
+                    setStep(1);
+                  }}
                   style={{
                     width: "100%",
                     padding: 14,
@@ -931,22 +963,7 @@ const CheckoutPage = () => {
                     </div>
                   )}
 
-                  {/* Card info */}
-                  {payMethod === "card" && (
-                    <div
-                      style={{
-                        padding: 16,
-                        background: "#EFF6FF",
-                        border: "1px solid #BFDBFE",
-                        borderRadius: "var(--radius-md)",
-                        fontSize: 13,
-                        color: "#1E40AF",
-                      }}
-                    >
-                      💳 Payment gateway integration coming soon. Your order
-                      will be created and marked as paid.
-                    </div>
-                  )}
+                
 
                   {/* Bank details */}
                   {payMethod === "bank" && (

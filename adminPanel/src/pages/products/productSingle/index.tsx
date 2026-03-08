@@ -60,14 +60,16 @@ const ProductSingle = ({
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { data: catData, isLoading: isLoadingCats } =
+  const { data: catData, isLoading: isLoadingCats  } =
     useGetAdminCategoriesQuery();
-  const { data: productData } = useGetProductQuery(id!, {
+  const { data: productData, isLoading: isLoadingProduct , isFetching } = useGetProductQuery(id!, {
     skip: type !== "edit" || !id,
   });
 
   const [createProduct, { isLoading: isCreating }] = useCreateProductMutation();
   const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
+
+  const isLoading = isFetching
 
   const [formData, setFormData] = useState({
     name: "",
@@ -174,9 +176,11 @@ const ProductSingle = ({
       if (type === "edit" && id) {
         await updateProduct({ id: Number(id), ...payload }).unwrap();
       } else {
-        await createProduct(payload).unwrap();
+        const res = await createProduct(payload).unwrap();
+        navigate(`/products/${res?.product?.id}`);
+        return;
       }
-      navigate("/products");
+      navigate(`/products/${id}`);
     } catch (err) {
       console.error("Failed to save product:", err);
       setErrors({ submit: "Failed to save product. Please try again." });
@@ -201,7 +205,7 @@ const ProductSingle = ({
       <FormWrap>
         <FormWrapHeader title="Product Information" />
 
-        <FormWrapBody>
+        <FormWrapBody isLoading={isLoading}>
           <Input
             name="name"
             label="Product Name"
@@ -261,7 +265,7 @@ const ProductSingle = ({
       <FormWrap>
         <FormWrapHeader title="Pricing & Inventory" />
 
-        <FormWrapBody>
+        <FormWrapBody isLoading={isLoading}>
           <Input
             type="number"
             name="original_price"

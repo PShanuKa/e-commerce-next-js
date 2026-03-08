@@ -2,7 +2,7 @@
 
 import * as handler from "./handler.js";
 
-export default async function authRoutes(fastify) {;
+export default async function authRoutes(fastify) {
   // POST /api/auth/register
   fastify.post("/register", {
     schema: {
@@ -60,10 +60,30 @@ export default async function authRoutes(fastify) {;
       summary: "Update profile",
       body: {
         type: "object",
+        required: ["name", "phone"],
+
         properties: {
-          name: { type: "string" },
-          phone: { type: "string" },
+          name: {
+            type: "string",
+            minLength: 2,
+            errorMessage: {
+              minLength: "Name must be at least 2 characters",
+            },
+          },
+          phone: {
+            type: "string",
+            pattern: "^[0-9]{10}$",
+            errorMessage: {
+              pattern: "Phone must be a valid 10-digit number",
+            },
+          },
           avatar_url: { type: "string" },
+        },
+        errorMessage: {
+          required: {
+            name: "Name is required",
+            phone: "Phone is required",
+          },
         },
       },
     },
@@ -88,4 +108,4 @@ export default async function authRoutes(fastify) {;
     preHandler: [fastify.authenticate],
     handler: handler.changePassword,
   });
-};
+}

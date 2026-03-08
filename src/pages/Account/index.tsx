@@ -354,6 +354,7 @@ const ProfilePage = () => {
   const [editAvatar, setEditAvatar] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   /* ── Change password state ── */
   const [pwOpen, setPwOpen] = useState(false);
@@ -368,12 +369,14 @@ const ProfilePage = () => {
     setEditPhone(user?.phone ?? "");
     setEditAvatar(user?.avatarUrl ?? "");
     setSaveError("");
+    setFieldErrors({});
     setSaveSuccess(false);
     setEditing(true);
   };
 
   const handleSave = async () => {
     setSaveError("");
+    setFieldErrors({});
     try {
       const result = await updateMe({
         name: editName.trim() || undefined,
@@ -384,8 +387,22 @@ const ProfilePage = () => {
       setEditing(false);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
-    } catch (e: unknown) {
-      setSaveError("Failed to save changes. Please try again.");
+    } catch (err: any) {
+      if (err?.status === 400 && err?.data?.details) {
+        if (Array.isArray(err.data.details)) {
+          const errors: Record<string, string> = {};
+          err.data.details.forEach((d: any) => {
+            const field =
+              d.instancePath?.replace("/", "") || d.params?.missingProperty;
+            if (field) errors[field] = d.message;
+          });
+          setFieldErrors(errors);
+        } else {
+          setFieldErrors(err.data.details);
+        }
+      } else {
+        setSaveError("Failed to save changes. Please try again.");
+      }
     }
   };
 
@@ -439,6 +456,7 @@ const ProfilePage = () => {
     onEdit,
     type = "text",
     readOnly = false,
+    error,
   }: {
     label: string;
     value: string;
@@ -446,6 +464,7 @@ const ProfilePage = () => {
     onEdit?: (v: string) => void;
     type?: string;
     readOnly?: boolean;
+    error?: string;
   }) => (
     <div>
       <label
@@ -464,11 +483,22 @@ const ProfilePage = () => {
         <input
           type={type}
           value={editValue ?? ""}
-          onChange={(e) => onEdit?.(e.target.value)}
-          style={inputStyle}
+          onChange={(e) => {
+            onEdit?.(e.target.value);
+            const fieldName = label.toLowerCase().includes("phone")
+              ? "phone"
+              : "name";
+            setFieldErrors((prev) => ({ ...prev, [fieldName]: "" }));
+          }}
+          style={{
+            ...inputStyle,
+            borderColor: error ? "var(--error)" : "var(--border)",
+          }}
           onFocus={(e) => Object.assign(e.target.style, focusStyle)}
           onBlur={(e) =>
-            Object.assign(e.target.style, { borderColor: "var(--border)" })
+            Object.assign(e.target.style, {
+              borderColor: error ? "var(--error)" : "var(--border)",
+            })
           }
         />
       ) : (
@@ -481,6 +511,11 @@ const ProfilePage = () => {
           }}
         >
           {value || "—"}
+        </p>
+      )}
+      {editing && error && (
+        <p style={{ color: "var(--error)", fontSize: 11, marginTop: 4 }}>
+          {error}
         </p>
       )}
     </div>
@@ -627,10 +662,23 @@ const ProfilePage = () => {
             <input
               type="url"
               value={editAvatar}
-              onChange={(e) => setEditAvatar(e.target.value)}
+              onChange={(e) => {
+                setEditAvatar(e.target.value);
+                setFieldErrors((prev) => ({ ...prev, avatar_url: "" }));
+              }}
               placeholder="https://…"
-              style={{ ...inputStyle }}
+              style={{
+                ...inputStyle,
+                borderColor: fieldErrors.avatar_url
+                  ? "var(--error)"
+                  : "var(--border)",
+              }}
             />
+            {fieldErrors.avatar_url && (
+              <p style={{ color: "var(--error)", fontSize: 11, marginTop: 4 }}>
+                {fieldErrors.avatar_url}
+              </p>
+            )}
           </div>
         )}
 
@@ -644,6 +692,7 @@ const ProfilePage = () => {
             value={user?.name ?? ""}
             editValue={editName}
             onEdit={setEditName}
+            error={fieldErrors.name}
           />
           <Field label="Email Address" value={user?.email ?? ""} readOnly />
           <Field
@@ -652,6 +701,7 @@ const ProfilePage = () => {
             editValue={editPhone}
             onEdit={setEditPhone}
             type="tel"
+            error={fieldErrors.phone}
           />
           <Field
             label="Member Since"

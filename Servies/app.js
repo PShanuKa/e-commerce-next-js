@@ -1,6 +1,7 @@
 "use strict";
 
 import fastify from "fastify";
+import ajvErrors from "ajv-errors";
 
 import corsPlugin from "./plugins/cors.js";
 import jwtPlugin from "./plugins/jwt.js";
@@ -22,6 +23,12 @@ import paymentsRoutes from "./routes/payments/index.js";
 async function buildApp() {
   const app = fastify({
     logger: process.env.NODE_ENV !== "production",
+    ajv: {
+      customOptions: {
+        allErrors: true,
+      },
+      plugins: [ajvErrors],
+    },
   });
 
   // ── Plugins ───────────────────────────────────────
@@ -37,6 +44,56 @@ async function buildApp() {
     timestamp: new Date().toISOString(),
   }));
 
+  // ── Global Error Handler ──────────────────────────
+  // IMPORTANT: Register before routes to ensure inheritance
+  app.setErrorHandler((error, request, reply) => {
+    // Validation Errors (Fastify / AJV)
+    if (error.validation) {
+      const errors = {};
+      error.validation.forEach((err) => {
+        // Find field name: prioritizes standard AJV sources
+        let field =
+          err.params?.missingProperty ||
+          (err.instancePath ? err.instancePath.replace(/^\//, "") : null);
+
+        // Fallback for ajv-errors: it sometimes aggregates errors or doesn't set instancePath
+        // effectively on required errors. If field is still null/empty, check params.errors
+        if (!field && err.params?.errors) {
+          const innerErr = err.params.errors[0];
+          field =
+            innerErr.params?.missingProperty ||
+            (innerErr.instancePath
+              ? innerErr.instancePath.replace(/^\//, "")
+              : null);
+        }
+
+        if (field) {
+          errors[field] = err.message;
+        }
+      });
+
+      return reply.status(400).send({
+        success: false,
+        error: "Validation Error",
+        message: "Please check the highlighted fields",
+        details: errors,
+      });
+    }
+
+    // Other App Errors
+    const statusCode = error.statusCode || 500;
+    const message = statusCode < 500 ? error.message : "Internal Server Error";
+
+    if (statusCode >= 500) {
+      app.log.error(error);
+    }
+
+    return reply.status(statusCode).send({
+      success: false,
+      error: message,
+    });
+  });
+
   // ── Routes ────────────────────────────────────────
   await app.register(authRoutes, { prefix: "/api/auth" });
   await app.register(productsRoutes, { prefix: "/api/products" });
@@ -49,22 +106,6 @@ async function buildApp() {
   await app.register(adminRoutes, { prefix: "/api/admin" });
   await app.register(payhereRoutes, { prefix: "/api/payhere" });
   await app.register(paymentsRoutes, { prefix: "/api/payments" });
-
-  // ── Global Error Handler ──────────────────────────
-  app.setErrorHandler((error, request, reply) => {
-    if (error.validation) {
-      return reply.status(400).send({
-        success: false,
-        error: "Validation Error",
-        message: error.message,
-        details: error.validation,
-      });
-    }
-    const statusCode = error.statusCode || 500;
-    const message = statusCode < 500 ? error.message : "Internal Server Error";
-    app.log.error(error);
-    return reply.status(statusCode).send({ success: false, error: message });
-  });
 
   // ── 404 Handler ───────────────────────────────────
   app.setNotFoundHandler((request, reply) => {
