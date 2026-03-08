@@ -61,15 +61,6 @@ const CategorySingle = ({ type = "add" }: { type?: "add" | "edit" }) => {
   };
 
   const handleSubmit = async () => {
-    // Basic validation
-    const newErrors: Record<string, string> = {};
-    if (!formData.name) newErrors.name = "Name is required";
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
     try {
       const payload: any = {
         name: formData.name,
@@ -79,8 +70,6 @@ const CategorySingle = ({ type = "add" }: { type?: "add" | "edit" }) => {
         payload.image_url = formData.imageUrl;
       } else if (formData.imageUrl instanceof File) {
         // In a real app, upload to S3/Cloudinary and get URL.
-        // Payload currently expects image_url string for create/update.
-        // payload.image_url = "uploaded_url";
       }
 
       if (type === "edit" && id) {
@@ -89,9 +78,18 @@ const CategorySingle = ({ type = "add" }: { type?: "add" | "edit" }) => {
         await createCategory(payload).unwrap();
       }
       navigate("/categories");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to save category:", err);
-      setErrors({ submit: "Failed to save category. Please try again." });
+      if (err.data?.details) {
+        setErrors(err.data.details);
+      } else {
+        setErrors({
+          submit:
+            err.data?.message ||
+            err.data?.error ||
+            "Failed to save category. Please try again.",
+        });
+      }
     }
   };
 

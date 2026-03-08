@@ -60,16 +60,20 @@ const ProductSingle = ({
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { data: catData, isLoading: isLoadingCats  } =
+  const { data: catData, isLoading: isLoadingCats } =
     useGetAdminCategoriesQuery();
-  const { data: productData, isLoading: isLoadingProduct , isFetching } = useGetProductQuery(id!, {
+  const {
+    data: productData,
+    isLoading: isLoadingProduct,
+    isFetching,
+  } = useGetProductQuery(id!, {
     skip: type !== "edit" || !id,
   });
 
   const [createProduct, { isLoading: isCreating }] = useCreateProductMutation();
   const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
 
-  const isLoading = isFetching
+  const isLoading = isFetching;
 
   const [formData, setFormData] = useState({
     name: "",
@@ -133,15 +137,6 @@ const ProductSingle = ({
 
   const handleSubmit = async () => {
     // Basic validation
-    const newErrors: Record<string, string> = {};
-    if (!formData.name) newErrors.name = "Name is required";
-    if (!formData.price) newErrors.price = "Price is required";
-    if (!formData.category_id) newErrors.category_id = "Category is required";
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
 
     try {
       const payload: any = {
@@ -181,9 +176,18 @@ const ProductSingle = ({
         return;
       }
       navigate(`/products/${id}`);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to save product:", err);
-      setErrors({ submit: "Failed to save product. Please try again." });
+      if (err.data?.details) {
+        setErrors(err.data.details);
+      } else {
+        setErrors({
+          submit:
+            err.data?.message ||
+            err.data?.error ||
+            "Failed to save product. Please try again.",
+        });
+      }
     }
   };
 
@@ -291,6 +295,7 @@ const ProductSingle = ({
             placeholder="0"
             value={formData.stock_qty}
             onChange={handleChange}
+            errorMessage={errors.stock_qty}
             required
           />
           <div className="flex items-center gap-2 mt-6">

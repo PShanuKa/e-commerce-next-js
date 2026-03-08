@@ -63,14 +63,14 @@ export default async function productsRoutes(fastify) {
       summary: "Create product (Admin)",
       body: {
         type: "object",
-        required: ["name", "price", "stock_qty"],
+        required: ["name", "price", "stock_qty", "category_id"],
         properties: {
-          name: { type: "string" },
+          name: { type: "string", minLength: 1 },
           description: { type: "string" },
-          price: { type: "number" },
-          original_price: { type: "number" },
-          stock_qty: { type: "integer" },
-          category_id: { type: "integer" },
+          price: { type: "number", minimum: 0.01 },
+          original_price: { type: "number", minimum: 0 },
+          stock_qty: { type: "integer", minimum: 0 },
+          category_id: { type: "integer", minimum: 1 },
           brand: { type: "string" },
           badge: { type: "string" },
           availability: {
@@ -78,6 +78,20 @@ export default async function productsRoutes(fastify) {
             enum: ["in_stock", "ships_2_3_days", "pre_order"],
           },
           images: { type: "array", items: { type: "string" } },
+        },
+        errorMessage: {
+          required: {
+            name: "Product name is required",
+            price: "Price is required",
+            stock_qty: "Stock quantity is required",
+            category_id: "Category is required",
+          },
+          properties: {
+            name: "Product name cannot be empty",
+            price: "Price must be at least 0.01",
+            stock_qty: "Stock quantity must be a non-negative integer",
+            category_id: "Please select a valid category",
+          },
         },
       },
     },
@@ -87,7 +101,41 @@ export default async function productsRoutes(fastify) {
 
   // PUT /api/products/:id
   fastify.put("/:id", {
-    schema: { tags: ["Products"], summary: "Update product (Admin)" },
+    schema: {
+      tags: ["Products"],
+      summary: "Update product (Admin)",
+      params: {
+        type: "object",
+        properties: { id: { type: "integer" } },
+      },
+      body: {
+        type: "object",
+        properties: {
+          name: { type: "string", minLength: 1 },
+          description: { type: "string" },
+          price: { type: "number", minimum: 0.01 },
+          original_price: { type: "number", minimum: 0 },
+          stock_qty: { type: "integer", minimum: 0 },
+          category_id: { type: "integer", minimum: 1 },
+          brand: { type: "string" },
+          badge: { type: "string" },
+          availability: {
+            type: "string",
+            enum: ["in_stock", "ships_2_3_days", "pre_order"],
+          },
+          images: { type: "array", items: { type: "string" } },
+          is_active: { type: "boolean" },
+        },
+        errorMessage: {
+          properties: {
+            name: "Product name cannot be empty",
+            price: "Price must be at least 0.01",
+            stock_qty: "Stock quantity must be a non-negative integer",
+            category_id: "Please select a valid category",
+          },
+        },
+      },
+    },
     preHandler: [fastify.authenticateAdmin],
     handler: handler.updateProduct,
   });

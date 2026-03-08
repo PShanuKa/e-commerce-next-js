@@ -35,9 +35,17 @@ export default async function categoriesRoutes(fastify) {
         type: "object",
         required: ["name"],
         properties: {
-          name: { type: "string" },
+          name: { type: "string", minLength: 1 },
           image_url: { type: "string" },
           parent_id: { type: "integer" },
+        },
+        errorMessage: {
+          required: {
+            name: "Category name is required",
+          },
+          properties: {
+            name: "Category name cannot be empty",
+          },
         },
       },
     },
@@ -46,7 +54,27 @@ export default async function categoriesRoutes(fastify) {
   });
 
   fastify.put("/:id", {
-    schema: { tags: ["Categories"], summary: "Update category (Admin)" },
+    schema: {
+      tags: ["Categories"],
+      summary: "Update category (Admin)",
+      params: {
+        type: "object",
+        properties: { id: { type: "integer" } },
+      },
+      body: {
+        type: "object",
+        properties: {
+          name: { type: "string", minLength: 1 },
+          image_url: { type: "string" },
+          parent_id: { type: "integer" },
+        },
+        errorMessage: {
+          properties: {
+            name: "Category name cannot be empty",
+          },
+        },
+      },
+    },
     preHandler: [fastify.authenticateAdmin],
     handler: handler.updateCategory,
   });
