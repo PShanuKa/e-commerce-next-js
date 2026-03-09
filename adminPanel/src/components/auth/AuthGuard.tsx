@@ -29,7 +29,7 @@ const AuthGuard = () => {
     }
   }, [isSuccess, isError, data, dispatch]);
 
-  if (!hasToken) return <Navigate to="/admin/login" replace />;
+  if (!hasToken) return <Navigate to="/login" replace />;
   if (isLoading)
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
