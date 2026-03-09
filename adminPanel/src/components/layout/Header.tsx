@@ -17,7 +17,7 @@ const Header = ({ title }: HeaderProps) => {
       {/* Right Side */}
       <div className="flex items-center gap-3">
         {/* Search */}
-        <div className="hidden md:flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 w-56">
+        <div className="hidden md:flex items-center gap-2 bg-gray-50 border  border-gray-200 rounded-lg px-3 py-2 w-56">
           <MdSearch size={18} className="text-gray-400 shrink-0" />
           <input
             type="text"

@@ -54,7 +54,7 @@ const PaymentsPage = () => {
           description="Track and manage all transactions"
         >
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 w-64 focus-within:ring-2 focus-within:ring-(--Primary)/20 focus-within:border-(--Primary) transition-all">
+            <div className="flex items-center gap-2 bg-gray-50 border  border-gray-200 rounded-lg px-3 py-1.5 w-64 focus-within:ring-2 focus-within:ring-(--Primary)/20 focus-within:border-(--Primary) transition-all">
               <FiSearch size={16} className="text-gray-400" />
               <input
                 type="text"
@@ -65,7 +65,7 @@ const PaymentsPage = () => {
               />
             </div>
 
-            <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 transition-all">
+            <div className="flex items-center gap-2 bg-gray-50 border  border-gray-200 rounded-lg px-3 py-1.5 transition-all">
               <FiFilter size={16} className="text-gray-400" />
               <select
                 className="bg-transparent border-none outline-none text-sm text-gray-700 cursor-pointer"

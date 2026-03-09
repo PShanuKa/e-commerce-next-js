@@ -6,7 +6,7 @@ import {
 } from "@/services/productSlice";
 import { useGetAdminCategoriesQuery } from "@/services/categorySlice";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import Card from "@/components/ui/Card";
+
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/common/Button";
 import { MdAdd, MdSearch } from "react-icons/md";
@@ -117,13 +117,9 @@ const ProductsPage = () => {
       />
       <Breadcrumb title="Products Management" path="Products " />
       {/* Top bar */}
-     
 
       <TableWrap>
-        <TableWrapHeader
-          title="Products"
-          description="Manage your products"
-        >
+        <TableWrapHeader title="Products" description="Manage your products">
           <Link to="/products/add">
             <Button variant="outline" size="sm">
               Add Product
@@ -178,7 +174,7 @@ const ProductsPage = () => {
                 >
                   <SelectTrigger
                     size="sm"
-                    className="h-[30px] w-[180px] text-[12px] border-border-(--border-color-secondary) rounded-(--border-rounded-primary)"
+                    className="h-[30px] w-[180px] text-[12px] border-gray-200 rounded-(--border-rounded-primary)"
                   >
                     <SelectValue placeholder="Select Category" />
                   </SelectTrigger>
@@ -202,7 +198,7 @@ const ProductsPage = () => {
                 >
                   <SelectTrigger
                     size="sm"
-                    className="h-[30px] w-[180px]  text-[12px] border-border-(--border-color-secondary) rounded-(--border-rounded-primary)"
+                    className="h-[30px] w-[180px]  text-[12px] border-gray-200 rounded-(--border-rounded-primary)"
                   >
                     <SelectValue placeholder="Select Status" />
                   </SelectTrigger>
@@ -218,7 +214,7 @@ const ProductsPage = () => {
                 onClick={() =>
                   setFilter({ status: "", category: "", search: "" })
                 }
-                className="cursor-pointer h-[30px] px-4 text-[12px] text-(--Primary) underline border-border-(--border-color-secondary) rounded-(--border-rounded-primary)"
+                className="cursor-pointer h-[30px] px-4 text-[12px] text-(--Primary) underline border-gray-200) rounded-(--border-rounded-primary)"
               >
                 Clear Filters
               </button>

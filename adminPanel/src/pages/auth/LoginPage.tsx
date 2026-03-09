@@ -80,7 +80,7 @@ const LoginPage = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@shoplk.com"
                   required
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                  className="w-full pl-10 pr-4 py-2.5 border  border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
                 />
               </div>
             </div>
@@ -101,7 +101,7 @@ const LoginPage = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   required
-                  className="w-full pl-10 pr-10 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                  className="w-full pl-10 pr-10 py-2.5 border  border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
                 />
                 <button
                   type="button"
