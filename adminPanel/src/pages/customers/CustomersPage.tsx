@@ -25,19 +25,34 @@ import {
   FiEdit,
   FiEye,
 } from "react-icons/fi";
+import { CiFilter } from "react-icons/ci";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "@/components/common/Button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const CustomersPage = () => {
   const navigate = useNavigate();
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
+
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [pagination, setPagination] = useState({ page: 1, limit: 10 });
+  const [filter, setFilter] = useState({
+    search: "",
+    role: "",
+    isActive: "",
   });
 
   const { data, isLoading } = useGetAdminUsersQuery({
     page: pagination.page,
     limit: pagination.limit,
+    search: filter.search || undefined,
+    role: filter.role || undefined,
+    isActive: filter.isActive || undefined,
   });
 
   const users = data?.users ?? [];
@@ -49,6 +64,11 @@ const CustomersPage = () => {
 
   const handleLimitChange = (newLimit: number) => {
     setPagination((p) => ({ ...p, limit: newLimit, page: 1 }));
+  };
+
+  const clearFilters = () => {
+    setFilter({ search: "", role: "", isActive: "" });
+    setPagination((p) => ({ ...p, page: 1 }));
   };
 
   return (
@@ -69,6 +89,94 @@ const CustomersPage = () => {
             <FiPlus size={16} /> New Customer
           </Button>
         </TableWrapHeader>
+
+        {/* Search Bar Row */}
+        <TableWrapBody>
+          <div className="w-full border-t border-(--border-color-primary) px-4">
+            <div className="h-16 flex items-center justify-between w-1/4 gap-2">
+              <p className="text-[12px] text-(--table-body-font-color) font-light">
+                Search:
+              </p>
+              <input
+                type="text"
+                placeholder="Name, email or phone..."
+                value={filter.search}
+                onChange={(e) =>
+                  setFilter((f) => ({ ...f, search: e.target.value }))
+                }
+                className="w-full h-[30px] border border-(--border-color-secondary) rounded-(--border-rounded-primary) px-4 text-[12px] text-(--table-body-font-color) outline-none"
+              />
+              <button
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className="h-[30px] w-10 border border-(--border-color-secondary) rounded-(--border-rounded-primary) text-[12px] flex items-center justify-center hover:bg-secondary transition-all duration-200"
+              >
+                <CiFilter
+                  size={16}
+                  className="text-(--table-body-font-color) transition-transform duration-300"
+                />
+              </button>
+            </div>
+          </div>
+        </TableWrapBody>
+
+        {/* Filter Drawer */}
+        <TableWrapBody>
+          <div
+            className={`w-full border-t border-(--border-color-primary) px-4 transition-all duration-300 ease-in-out overflow-hidden ${
+              isFilterOpen ? "max-h-[200px] opacity-100" : "max-h-0 opacity-0"
+            }`}
+          >
+            <div className="h-16 flex items-center gap-3">
+              <p className="text-[12px] text-(--table-body-font-color) font-light">
+                Filter:
+              </p>
+
+              {/* Role Filter */}
+              <Select
+                value={filter.role}
+                onValueChange={(val) => setFilter((f) => ({ ...f, role: val }))}
+              >
+                <SelectTrigger
+                  size="sm"
+                  className="h-[30px] w-[180px] text-[12px] border-gray-200 rounded-(--border-rounded-primary)"
+                >
+                  <SelectValue placeholder="Select Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="customer">Customer</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Status Filter */}
+              <Select
+                value={filter.isActive}
+                onValueChange={(val) =>
+                  setFilter((f) => ({ ...f, isActive: val }))
+                }
+              >
+                <SelectTrigger
+                  size="sm"
+                  className="h-[30px] w-[180px] text-[12px] border-gray-200 rounded-(--border-rounded-primary)"
+                >
+                  <SelectValue placeholder="Select Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="true">Active</SelectItem>
+                  <SelectItem value="false">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Clear Button */}
+              <button
+                onClick={clearFilters}
+                className="cursor-pointer h-[30px] px-4 text-[12px] text-(--Primary) underline rounded-(--border-rounded-primary)"
+              >
+                Clear Filters
+              </button>
+            </div>
+          </div>
+        </TableWrapBody>
 
         <TableWrapBody>
           <Table>

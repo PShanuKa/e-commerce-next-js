@@ -300,14 +300,14 @@ const OrderDetailsPage = () => {
               )}
             </div>
 
-            <Button
+            {/* <Button
               onClick={() => navigate("/customers")}
               variant="secondary"
               size="sm"
               className="w-full mt-5 text-xs h-[32px]"
             >
               Customer History
-            </Button>
+            </Button> */}
           </div>
         </div>
       </div>

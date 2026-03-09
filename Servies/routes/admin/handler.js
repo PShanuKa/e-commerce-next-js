@@ -141,11 +141,26 @@ const getOrderDetails = async (request, reply) => {
 };
 
 const listAllUsers = async (request, reply) => {
-  const { page = 1, limit = 20 } = request.query;
+  const { page = 1, limit = 20, search, role, isActive } = request.query;
   const skip = (Number(page) - 1) * Number(limit);
+
+  const where = {};
+
+  if (role) where.role = role;
+  if (isActive !== undefined)
+    where.isActive = isActive === "true" ? true : false;
+
+  if (search) {
+    where.OR = [
+      { name: { contains: search, mode: "insensitive" } },
+      { email: { contains: search, mode: "insensitive" } },
+      { phone: { contains: search, mode: "insensitive" } },
+    ];
+  }
 
   const [users, total] = await Promise.all([
     prisma.user.findMany({
+      where,
       skip,
       take: Number(limit),
       orderBy: { createdAt: "desc" },
@@ -160,7 +175,7 @@ const listAllUsers = async (request, reply) => {
         _count: { select: { orders: true } },
       },
     }),
-    prisma.user.count({ where: { role: "customer" } }),
+    prisma.user.count({ where }),
   ]);
 
   const formatted = users.map((u) => ({

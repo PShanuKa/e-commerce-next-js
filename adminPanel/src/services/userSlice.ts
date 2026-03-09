@@ -15,7 +15,13 @@ export const userSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getAdminUsers: builder.query<
       { success: boolean; users: User[]; meta: any },
-      { page?: number; limit?: number } | void
+      {
+        page?: number;
+        limit?: number;
+        search?: string;
+        role?: string;
+        isActive?: string;
+      } | void
     >({
       query: (params) => ({
         url: "/admin/users",

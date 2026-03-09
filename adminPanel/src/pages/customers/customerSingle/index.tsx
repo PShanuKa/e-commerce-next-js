@@ -152,8 +152,8 @@ const CustomerSingle = ({
         path="Customers"
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid  gap-3">
+        <div className=" space-y-6">
           <FormWrap>
             <FormWrapHeader title="Customer Information" />
             <FormWrapBody>
@@ -310,46 +310,54 @@ const CustomerSingle = ({
             </FormWrapBody>
           </FormWrap>
 
-          {type === "view" ? (
+        
+          
+        </div>
+
+<div >
+        <div className="flex justify-end">
+            {type === "view" ? (
             <Button
               variant="primary"
-              className="w-full"
+              className=""
               size="md"
               onClick={() => navigate(`/customers/${id}/edit`)}
             >
               Edit Profile
             </Button>
           ) : (
-            <div className="flex flex-col gap-2">
+            <div className="flex  gap-2">
               {errors.submit && (
                 <p className="text-xs text-red-500 mb-2">{errors.submit}</p>
               )}
               <Button
+                variant="outline"
+                className=""
+                size="md"
+                onClick={() => navigate("/customers")}
+              >
+                Back to List
+              </Button>
+              <Button
                 variant="primary"
-                className="w-full"
+                className=""
                 size="md"
                 onClick={handleSubmit}
                 loading={isCreating || isUpdating}
               >
                 {type === "edit" ? "Save Changes" : "Create Customer"}
               </Button>
-              <Button
-                variant="outline"
-                className="w-full"
-                size="md"
-                onClick={() => navigate("/customers")}
-              >
-                Back to List
-              </Button>
             </div>
           )}
-          
         </div>
+        </div>
+
+        
         
       </div>
       {type === "view" && user && (
 
-       <FormWrap>
+       <FormWrap className="mt-5">
                 <FormWrapHeader title="Order History" />
                 <div className="overflow-x-auto">
                   <Table>

@@ -64,7 +64,20 @@ export default async function adminRoutes(fastify) {
   });
   fastify.get("/users", {
     ...admin,
-    schema: { tags: ["Admin"], summary: "All customers" },
+    schema: {
+      tags: ["Admin"],
+      summary: "All customers",
+      querystring: {
+        type: "object",
+        properties: {
+          search: { type: "string" },
+          role: { type: "string" },
+          isActive: { type: "string" },
+          page: { type: "integer" },
+          limit: { type: "integer" },
+        },
+      },
+    },
     handler: handler.listAllUsers,
   });
   fastify.post("/users", {
