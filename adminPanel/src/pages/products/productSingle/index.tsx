@@ -1,20 +1,3 @@
-// const merchantSchema = z.object({
-//   name: z.string().min(1, { message: "Merchant name is required" }),
-//   category: z.string().min(1, { message: "Category is required" }),
-//   personName: z.string(),
-//   personNumber: z.string().regex(/^(?:\+94|94|0)?7[0-9]{8}$/, {
-//     message: "Invalid Sri Lankan mobile number",
-//   }),
-//   discountPercentage: z
-//     .number()
-//     .min(0, { message: "Discount percentage must be greater than 0" })
-//     .max(100, { message: "Discount percentage must be less than 100" }),
-//   commissionPercentage: z
-//     .number()
-//     .min(0, { message: "Commission percentage must be greater than 0" })
-//     .max(100, { message: "Commission percentage must be less than 100" }),
-// });
-
 import Breadcrumb from "@/components/common/Breadcrumb";
 import FormWrap, {
   FormWrapBody,
@@ -62,18 +45,15 @@ const ProductSingle = ({
 
   const { data: catData, isLoading: isLoadingCats } =
     useGetAdminCategoriesQuery();
-  const {
-    data: productData,
-    isLoading: isLoadingProduct,
-    isFetching,
-  } = useGetProductQuery(id!, {
-    skip: type !== "edit" || !id,
+  const { data: productData, isFetching } = useGetProductQuery(id!, {
+    skip: type === "add" || !id,
   });
 
   const [createProduct, { isLoading: isCreating }] = useCreateProductMutation();
   const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
 
   const isLoading = isFetching;
+  const isView = type === "view";
 
   const [formData, setFormData] = useState({
     name: "",
@@ -92,7 +72,7 @@ const ProductSingle = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (type === "edit" && productData?.product) {
+    if ((type === "edit" || type === "view") && productData?.product) {
       const p = productData.product;
       setFormData({
         name: p.name,
@@ -136,8 +116,6 @@ const ProductSingle = ({
   };
 
   const handleSubmit = async () => {
-    // Basic validation
-
     try {
       const payload: any = {
         name: formData.name,
@@ -154,28 +132,17 @@ const ProductSingle = ({
         is_active: formData.is_active,
       };
 
-      // Handle image - if it's a string, it's an existing URL. If it's a File, we might need to upload it first.
-      // For now, mirroring the old modal logic which just sent the string.
-      // If we have a File, we'd ideally upload it to S3/Cloudinary and get a URL.
-      // I'll check if there's an upload logic in the project.
       if (typeof formData.image === "string") {
         payload.images = [formData.image];
-      } else if (formData.image instanceof File) {
-        // Mocking upload or just sending placeholder for now if no upload API is found
-        // payload.images = ["uploaded_url"];
-        // Better: let's see if there's an image upload service.
-        // Given the instructions, I'll just send the file name or a mock for now, but in a real app, I'd upload it.
-        // Actually, I'll look for an upload route.
       }
 
       if (type === "edit" && id) {
         await updateProduct({ id: Number(id), ...payload }).unwrap();
+        navigate(`/products/${id}`);
       } else {
         const res = await createProduct(payload).unwrap();
         navigate(`/products/${res?.product?.id}`);
-        return;
       }
-      navigate(`/products/${id}`);
     } catch (err: any) {
       console.error("Failed to save product:", err);
       if (err.data?.details) {
@@ -191,8 +158,6 @@ const ProductSingle = ({
     }
   };
 
-  // Populate form data when merchant data is loaded
-
   return (
     <DashboardLayout title="Products">
       <Breadcrumb
@@ -206,6 +171,25 @@ const ProductSingle = ({
         path="Products"
       />
 
+      {/* View Mode Banner */}
+      {isView && (
+        <div className="flex items-center justify-between my-3 px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center gap-2">
+            <span className="text-blue-600 text-sm">👁️</span>
+            <p className="text-sm text-blue-700 font-medium">
+              You are in <strong>View Mode</strong>. Fields are read-only.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate(`/products/${id}/edit`)}
+            className="text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 px-4 py-1.5 rounded-md transition-colors"
+          >
+            ✏️ Edit Product
+          </button>
+        </div>
+      )}
+
+      {/* Product Information */}
       <FormWrap>
         <FormWrapHeader title="Product Information" />
 
@@ -218,6 +202,7 @@ const ProductSingle = ({
             onChange={handleChange}
             errorMessage={errors.name}
             required
+            disabled={isView}
           />
           <Select
             label="Category"
@@ -227,7 +212,7 @@ const ProductSingle = ({
             onChange={(val) => handleSelectChange("category_id", val)}
             errorMessage={errors.category_id}
             required
-            disabled={isLoadingCats}
+            disabled={isView || isLoadingCats}
           />
           <Input
             name="brand"
@@ -235,6 +220,7 @@ const ProductSingle = ({
             placeholder="Enter brand name"
             value={formData.brand}
             onChange={handleChange}
+            disabled={isView}
           />
           <Select
             label="Availability"
@@ -242,6 +228,7 @@ const ProductSingle = ({
             options={AVAILABILITY_OPTIONS}
             value={formData.availability}
             onChange={(val) => handleSelectChange("availability", val)}
+            disabled={isView}
           />
           <Select
             label="Badge"
@@ -249,6 +236,7 @@ const ProductSingle = ({
             options={BADGE_OPTIONS}
             value={formData.badge}
             onChange={(val) => handleSelectChange("badge", val)}
+            disabled={isView}
           />
           <div className="items-end sm:col-span-2 col-span-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Textarea
@@ -256,16 +244,19 @@ const ProductSingle = ({
               placeholder="Enter product description"
               value={formData.description}
               onChange={handleChange}
+              disabled={isView}
             />
             <ImageUpload
               label="Product Image"
               value={formData.image}
               onChange={handleImageChange}
+              disabled={isView}
             />
           </div>
         </FormWrapBody>
       </FormWrap>
 
+      {/* Pricing & Inventory */}
       <FormWrap>
         <FormWrapHeader title="Pricing & Inventory" />
 
@@ -277,6 +268,7 @@ const ProductSingle = ({
             placeholder="0.00"
             value={formData.original_price}
             onChange={handleChange}
+            disabled={isView}
           />
           <Input
             type="number"
@@ -287,6 +279,7 @@ const ProductSingle = ({
             onChange={handleChange}
             errorMessage={errors.price}
             required
+            disabled={isView}
           />
           <Input
             type="number"
@@ -297,6 +290,7 @@ const ProductSingle = ({
             onChange={handleChange}
             errorMessage={errors.stock_qty}
             required
+            disabled={isView}
           />
           <div className="flex items-center gap-2 mt-6">
             <input
@@ -309,7 +303,8 @@ const ProductSingle = ({
                   is_active: e.target.checked,
                 }))
               }
-              className="accent-(--Primary)"
+              disabled={isView}
+              className="accent-(--Primary) disabled:cursor-not-allowed"
             />
             <label
               htmlFor="is_active"
@@ -325,23 +320,39 @@ const ProductSingle = ({
         <p className="text-sm text-red-500 mt-2">{errors.submit}</p>
       )}
 
-      <div className="flex items-center justify-end gap-2 mt-5">
-        <Button
-          variant="outline"
-          size="md"
-          onClick={() => navigate("/products")}
-        >
-          Cancel
-        </Button>
-        <Button
-          variant="primary"
-          size="md"
-          onClick={handleSubmit}
-          loading={isCreating || isUpdating}
-        >
-          {type === "edit" ? "Save Changes" : "Add Product"}
-        </Button>
-      </div>
+      {/* Action Buttons - hidden in view mode */}
+      {!isView && (
+        <div className="flex items-center justify-end gap-2 mt-5">
+          <Button
+            variant="outline"
+            size="md"
+            onClick={() => navigate("/products")}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            size="md"
+            onClick={handleSubmit}
+            loading={isCreating || isUpdating}
+          >
+            {type === "edit" ? "Save Changes" : "Add Product"}
+          </Button>
+        </div>
+      )}
+
+      {/* Back button - only in view mode */}
+      {isView && (
+        <div className="flex items-center justify-end gap-2 mt-5">
+          <Button
+            variant="outline"
+            size="md"
+            onClick={() => navigate("/products")}
+          >
+            ← Back to Products
+          </Button>
+        </div>
+      )}
     </DashboardLayout>
   );
 };

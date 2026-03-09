@@ -24,7 +24,7 @@ import {
   TableHeaderRow,
 } from "@/components/common/Table";
 import { Link } from "react-router-dom";
-import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import { FiEdit2, FiEye, FiTrash2 } from "react-icons/fi";
 import Breadcrumb from "@/components/common/Breadcrumb";
 import Pagination from "@/components/common/Pagination";
 import { CiFilter } from "react-icons/ci";
@@ -312,6 +312,15 @@ const ProductsPage = () => {
                     <TableBodyCell className="text-center">
                       <div className="flex items-center justify-center gap-2">
                         <Link to={`/products/${p.id}`}>
+                          <button
+                            className="p-1.5 hover:bg-(--Primary)/10 rounded transition-colors"
+                            title="View Details"
+                          >
+                            <FiEye size={18} className="text-(--Primary)" />
+                          </button>
+                        </Link>
+
+                        <Link to={`/products/${p.id}/edit`}>
                           <button
                             className="p-1.5 hover:bg-(--Primary)/10 rounded transition-colors"
                             title="Edit"

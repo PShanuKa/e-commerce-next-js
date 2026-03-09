@@ -25,7 +25,11 @@ const AppRoutes = () => (
       <Route path="/categories/:id" element={<CategorySingle type="edit" />} />
       <Route path="/products" element={<ProductsPage />} />
       <Route path="/products/add" element={<ProductSingle type="add" />} />
-      <Route path="/products/:id" element={<ProductSingle type="edit" />} />
+      <Route path="/products/:id" element={<ProductSingle type="view" />} />
+      <Route
+        path="/products/:id/edit"
+        element={<ProductSingle type="edit" />}
+      />
       <Route path="/orders" element={<OrdersPage />} />
       <Route path="/orders/:id" element={<OrderDetailsPage />} />
       <Route path="/payments" element={<PaymentsPage />} />
