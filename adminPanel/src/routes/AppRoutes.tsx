@@ -15,31 +15,31 @@ import CustomerSingle from "@/pages/customers/customerSingle";
 const AppRoutes = () => (
   <Routes>
     {/* Public */}
-    <Route path="/login" element={<LoginPage />} />
+    <Route path="/admin/login" element={<LoginPage />} />
 
     {/* Protected admin routes */}
     <Route element={<AuthGuard />}>
-      <Route path="/dashboard" element={<DashboardPage />} />
-      <Route path="/categories" element={<CategoriesPage />} />
-      <Route path="/categories/add" element={<CategorySingle type="add" />} />
-      <Route path="/categories/:id" element={<CategorySingle type="edit" />} />
-      <Route path="/products" element={<ProductsPage />} />
-      <Route path="/products/add" element={<ProductSingle type="add" />} />
-      <Route path="/products/:id" element={<ProductSingle type="edit" />} />
-      <Route path="/orders" element={<OrdersPage />} />
-      <Route path="/orders/:id" element={<OrderDetailsPage />} />
-      <Route path="/payments" element={<PaymentsPage />} />
-      <Route path="/customers" element={<CustomersPage />} />
-      <Route path="/customers/add" element={<CustomerSingle type="add" />} />
-      <Route path="/customers/:id" element={<CustomerSingle type="view" />} />
+      <Route path="/admin/dashboard" element={<DashboardPage />} />
+      <Route path="/admin/categories" element={<CategoriesPage />} />
+      <Route path="/admin/categories/add" element={<CategorySingle type="add" />} />
+      <Route path="/admin/categories/:id" element={<CategorySingle type="edit" />} />
+      <Route path="/admin/products" element={<ProductsPage />} />
+      <Route path="/admin/products/add" element={<ProductSingle type="add" />} />
+      <Route path="/admin/products/:id" element={<ProductSingle type="edit" />} />
+      <Route path="/admin/orders" element={<OrdersPage />} />
+      <Route path="/admin/orders/:id" element={<OrderDetailsPage />} />
+      <Route path="/admin/payments" element={<PaymentsPage />} />
+      <Route path="/admin/customers" element={<CustomersPage />} />
+      <Route path="/admin/customers/add" element={<CustomerSingle type="add" />} />
+      <Route path="/admin/customers/:id" element={<CustomerSingle type="view" />} />
       <Route
-        path="/customers/:id/edit"
+        path="/admin/customers/:id/edit"
         element={<CustomerSingle type="edit" />}
       />
     </Route>
 
     {/* Fallback */}
-    <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    <Route path="/admin/*" element={<Navigate to="/admin/dashboard" replace />} />
   </Routes>
 );
 
