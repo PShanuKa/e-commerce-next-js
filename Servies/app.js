@@ -40,7 +40,7 @@ async function buildApp() {
   // ── Health ────────────────────────────────────────
   app.get("/api/health", async () => ({
     status: "ok",
-    service: "ShopLK API",
+    service: "Sellora API",
     timestamp: new Date().toISOString(),
   }));
 

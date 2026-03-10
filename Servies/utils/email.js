@@ -22,7 +22,7 @@ class EmailService {
 
     this.templatesDir = path.join(__dirname, "..", "templates", "emails");
     this.companyInfo = {
-      companyName: process.env.MAIL_FROM_NAME || "ShopLK",
+      companyName: process.env.MAIL_FROM_NAME || "Sellora",
       companyAddress: "Colombo, Sri Lanka",
       year: new Date().getFullYear(),
       accentColor: "#6366f1",
@@ -92,7 +92,7 @@ class EmailService {
         accentColor: "#10b981",
       },
     );
-    return await this.sendEmail(email, "Welcome to ShopLK!", html);
+    return await this.sendEmail(email, "Welcome to Sellora!", html);
   }
 
   async sendPasswordResetEmail(email, userName, resetUrl) {
@@ -110,7 +110,7 @@ class EmailService {
         accentColor: "#f43f5e",
       },
     );
-    return await this.sendEmail(email, "Password Reset - ShopLK", html);
+    return await this.sendEmail(email, "Password Reset - Sellora", html);
   }
 }
 

@@ -37,7 +37,7 @@ const MILESTONES = [
   {
     year: "2018",
     title: "Founded in Colombo",
-    desc: "ShopLK started as a small electronics retailer with a vision to bring quality products online.",
+    desc: "Sellora started as a small electronics retailer with a vision to bring quality products online.",
   },
   {
     year: "2019",
@@ -79,7 +79,7 @@ const AboutPage = () => (
             letterSpacing: 2,
           }}
         >
-          About ShopLK
+          About Sellora
         </div>
         <h1
           style={{
@@ -102,7 +102,7 @@ const AboutPage = () => (
             lineHeight: 1.7,
           }}
         >
-          Founded in 2018, ShopLK has been committed to delivering quality
+          Founded in 2018, Sellora has been committed to delivering quality
           products at competitive prices to customers across Sri Lanka.
         </p>
       </div>
@@ -189,7 +189,7 @@ after:w-[40px] after:h-[3px] after:bg-[var(--primary)] after:rounded-[2px] "
             {
               icon: <IoShieldCheckmarkOutline size={28} color="#9333EA" />,
               title: "Trust & Safety",
-              desc: "Verified sellers, genuine products, and secure payments protect every transaction on ShopLK.",
+              desc: "Verified sellers, genuine products, and secure payments protect every transaction on Sellora.",
             },
           ].map((val, i) => (
             <div

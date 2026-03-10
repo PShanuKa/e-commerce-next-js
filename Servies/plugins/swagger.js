@@ -8,8 +8,8 @@ export default fp(async (fastify) => {;
   await fastify.register(swagger, {
     openapi: {
       info: {
-        title: "ShopLK E-Commerce API",
-        description: "Fastify + PostgreSQL REST API for ShopLK",
+        title: "Sellora E-Commerce API",
+        description: "Fastify + PostgreSQL REST API for Sellora",
         version: "1.0.0",
       },
       components: {

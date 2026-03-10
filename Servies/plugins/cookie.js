@@ -5,7 +5,7 @@ import cookie from "@fastify/cookie";
 
 export default fp(async (fastify) => {;
   await fastify.register(cookie, {
-    secret: process.env.JWT_SECRET || "shoplk_cookie_secret",
+    secret: process.env.JWT_SECRET || "sellora_cookie_secret",
     parseOptions: {},
   });
 });

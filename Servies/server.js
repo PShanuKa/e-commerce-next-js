@@ -21,7 +21,7 @@ const start = async () => {
 
   try {
     await app.listen({ port: Number(PORT), host: "0.0.0.0" });
-    console.log(`\n🚀 ShopLK API running on http://localhost:${PORT}`);
+    console.log(`\n🚀 Sellora API running on http://localhost:${PORT}`);
     console.log(`📚 Swagger Docs   → http://localhost:${PORT}/docs`);
     console.log(`❤️  Health Check  → http://localhost:${PORT}/health\n`);
   } catch (err) {

@@ -5,7 +5,7 @@ import jwt from "@fastify/jwt";
 
 export default fp(async (fastify) => {;
   await fastify.register(jwt, {
-    secret: process.env.JWT_SECRET || "shoplk_super_secret_jwt_key_2025",
+    secret: process.env.JWT_SECRET || "sellora_super_secret_jwt_key_2025",
     sign: { expiresIn: process.env.JWT_EXPIRES_IN || "7d" },
     cookie: { cookieName: "token", signed: false },
   });

@@ -986,7 +986,7 @@ const CheckoutPage = () => {
                       </p>
                       {[
                         ["Bank", "Commercial Bank of Ceylon"],
-                        ["Account Name", "ShopLK (Pvt) Ltd"],
+                        ["Account Name", "Sellora (Pvt) Ltd"],
                         ["Account No.", "1234567890"],
                         ["Branch", "Colombo Branch"],
                       ].map(([l, v]) => (

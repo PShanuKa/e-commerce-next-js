@@ -76,7 +76,7 @@ const AuthDefault = ({ children }: { children: React.ReactNode }) => {
               letterSpacing: "-1px",
             }}
           >
-            ShopLK
+            Sellora
           </span>
         </Link>
 

@@ -102,7 +102,7 @@ const Register = () => {
           Create your account 🛍️
         </h2>
         <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>
-          Join millions of happy shoppers on ShopLK
+          Join millions of happy shoppers on Sellora
         </p>
       </div>
 

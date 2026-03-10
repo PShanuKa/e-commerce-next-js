@@ -48,7 +48,7 @@ const LoginPage = () => {
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-500 mb-4 shadow-lg">
             <span className="text-white font-bold text-2xl">S</span>
           </div>
-          <h1 className="text-2xl font-bold text-white">ShopLK Admin</h1>
+          <h1 className="text-2xl font-bold text-white">Sellora Admin</h1>
           <p className="text-gray-400 text-sm mt-1">
             Sign in to your admin account
           </p>
@@ -78,7 +78,7 @@ const LoginPage = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@shoplk.com"
+                  placeholder="admin@Sellora.com"
                   required
                   className="w-full pl-10 pr-4 py-2.5 border  border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
                 />
@@ -128,7 +128,7 @@ const LoginPage = () => {
         </div>
 
         <p className="text-center text-xs text-gray-500 mt-6">
-          © 2025 ShopLK · Admin Portal
+          © 2025 Sellora · Admin Portal
         </p>
       </div>
     </div>

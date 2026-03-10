@@ -147,7 +147,7 @@ const Navbar = () => {
                   letterSpacing: "-0.5px",
                 }}
               >
-                ShopLK
+                Sellora
               </span>
             </div>
           </Link>

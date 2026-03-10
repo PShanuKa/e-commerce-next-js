@@ -18,7 +18,7 @@ const FAQ = [
   },
   {
     q: "Are all products genuine?",
-    a: "Yes! All products on ShopLK are 100% genuine. We verify every seller and offer a quality guarantee on all purchases.",
+    a: "Yes! All products on Sellora are 100% genuine. We verify every seller and offer a quality guarantee on all purchases.",
   },
   {
     q: "How do I track my order?",
@@ -94,7 +94,7 @@ const ContactPage = () => {
               {
                 icon: <IoMail size={22} color="var(--secondary)" />,
                 title: "Email",
-                lines: ["support@shoplk.lk", "business@shoplk.lk"],
+                lines: ["support@Sellora.lk", "business@Sellora.lk"],
                 sub: "We reply within 24 hours",
               },
               {

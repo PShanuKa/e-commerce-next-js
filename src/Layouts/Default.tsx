@@ -21,7 +21,7 @@ const Default = ({ children }: { children: React.ReactNode }) => {
           fontSize: 13,
         }}
       >
-        © 2025 ShopLK. All rights reserved.
+        © 2025 Sellora. All rights reserved.
       </footer>
     </div>
   );

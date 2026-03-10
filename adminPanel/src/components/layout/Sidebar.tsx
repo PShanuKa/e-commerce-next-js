@@ -39,7 +39,7 @@ const Sidebar = () => {
           <span className="text-white font-bold text-sm">S</span>
         </div>
         <div>
-          <p className="text-white font-bold text-sm leading-tight">ShopLK</p>
+          <p className="text-white font-bold text-sm leading-tight">Sellora</p>
           <p className="text-gray-400 text-xs">Admin Panel</p>
         </div>
       </div>

@@ -1,7 +1,7 @@
 {
   "name": "ecom-api",
   "version": "1.0.0",
-  "description": "ShopLK E-Commerce Fastify API",
+  "description": "Sellora E-Commerce Fastify API",
   "main": "server.js",
   "type": "module",
   "scripts": {
