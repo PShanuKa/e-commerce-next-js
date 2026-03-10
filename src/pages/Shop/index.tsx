@@ -962,7 +962,7 @@ const ShopPage = () => {
                         >
                           <input
                             type="radio"
-                            name="category"
+                            name="category-mobile"
                             checked={isSelected}
                             onChange={() => handleCategoryChange(cat.slug)}
                             style={{
@@ -1014,7 +1014,7 @@ const ShopPage = () => {
                         >
                           <input
                             type="radio"
-                            name="availability"
+                            name="availability-mobile"
                             checked={isSelected}
                             onChange={() => {
                               setSelectedAvailability(opt.value);
