@@ -65,9 +65,13 @@ const ProductSingle = ({
     price: "",
     original_price: "",
     stock_qty: "0",
-    image: null as File | string | null,
+    image: "",
     is_active: true,
   });
+
+  console.log(formData)
+
+
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -111,9 +115,7 @@ const ProductSingle = ({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleImageChange = (file: File | null) => {
-    setFormData((prev) => ({ ...prev, image: file }));
-  };
+
 
   const handleSubmit = async () => {
     try {
@@ -130,6 +132,7 @@ const ProductSingle = ({
         badge: formData.badge || undefined,
         availability: formData.availability,
         is_active: formData.is_active,
+        images: formData.image,
       };
 
       if (typeof formData.image === "string") {
@@ -238,7 +241,15 @@ const ProductSingle = ({
             onChange={(val) => handleSelectChange("badge", val)}
             disabled={isView}
           />
-          <div className="items-end sm:col-span-2 col-span-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+           name="image"
+           label="Image URL"
+           placeholder="Enter image URL"
+           value={formData.image}
+           onChange={handleChange}
+           disabled={isView}
+         />
+          <div className="items-start sm:col-span-2 col-span-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Textarea
               label="Description"
               placeholder="Enter product description"
@@ -246,12 +257,12 @@ const ProductSingle = ({
               onChange={handleChange}
               disabled={isView}
             />
-            <ImageUpload
+            {/* <ImageUpload
               label="Product Image"
               value={formData.image}
               onChange={handleImageChange}
               disabled={isView}
-            />
+            /> */}
           </div>
         </FormWrapBody>
       </FormWrap>
