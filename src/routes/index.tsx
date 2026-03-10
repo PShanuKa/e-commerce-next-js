@@ -14,6 +14,8 @@ import AboutPage from "../pages/About";
 import ContactPage from "../pages/Contact";
 import NotFound from "../pages/NotFound";
 import CategoriesPage from "../pages/Categories";
+import ForgotPassword from "@/pages/Auth/ForgotPassword";
+import ResetPassword from "@/pages/Auth/ResetPassword";
 
 export const PublicRoutes = [
   { path: "/", element: <HomePage /> },
@@ -35,4 +37,6 @@ export const PublicRoutes = [
 export const AuthRoutes = [
   { path: "/login", element: <Login /> },
   { path: "/register", element: <Register /> },
+  { path: "/forgot-password", element: <ForgotPassword /> },
+  { path: "/reset-password", element: <ResetPassword /> },
 ];

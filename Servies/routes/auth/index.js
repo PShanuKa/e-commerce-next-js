@@ -1,5 +1,3 @@
-"use strict";
-
 import * as handler from "./handler.js";
 
 export default async function authRoutes(fastify) {
@@ -61,7 +59,6 @@ export default async function authRoutes(fastify) {
       body: {
         type: "object",
         required: ["name", "phone"],
-
         properties: {
           name: {
             type: "string",
@@ -107,5 +104,38 @@ export default async function authRoutes(fastify) {
     },
     preHandler: [fastify.authenticate],
     handler: handler.changePassword,
+  });
+
+  // POST /api/auth/forgot-password
+  fastify.post("/forgot-password", {
+    schema: {
+      tags: ["Auth"],
+      summary: "Request password reset email",
+      body: {
+        type: "object",
+        required: ["email"],
+        properties: {
+          email: { type: "string", format: "email" },
+        },
+      },
+    },
+    handler: handler.forgotPassword,
+  });
+
+  // POST /api/auth/reset-password
+  fastify.post("/reset-password", {
+    schema: {
+      tags: ["Auth"],
+      summary: "Reset password using token",
+      body: {
+        type: "object",
+        required: ["token", "password"],
+        properties: {
+          token: { type: "string" },
+          password: { type: "string", minLength: 8 },
+        },
+      },
+    },
+    handler: handler.resetPassword,
   });
 }

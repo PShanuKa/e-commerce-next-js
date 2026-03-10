@@ -25,13 +25,28 @@ model User {
   updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
   // Relations
-  cartItems    CartItem[]
-  orders       Order[]
-  addresses    Address[]
-  wishlist     Wishlist[]
-  reviews      Review[]
+  cartItems           CartItem[]
+  orders              Order[]
+  addresses           Address[]
+  wishlist            Wishlist[]
+  reviews             Review[]
+  passwordResetTokens PasswordResetToken[]
 
   @@map("users")
+}
+
+// ─── Password Reset Tokens ────────────────────────────────────────────────────
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  token     String   @unique @db.VarChar(255)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
 }
 
 // ─── Categories ───────────────────────────────────────────────────────────────

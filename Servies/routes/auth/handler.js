@@ -1,11 +1,15 @@
 "use strict";
 
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import prisma from "../../config/prisma.js";
-import { BadRequest,
+import emailService from "../../utils/email.js";
+import {
+  BadRequest,
   Unauthorized,
   Conflict,
-  NotFound, } from "../../utils/errors.js";
+  NotFound,
+} from "../../utils/errors.js";
 
 // ── Register ──────────────────────────────────────
 const register = async (request, reply) => {
@@ -152,4 +156,102 @@ const changePassword = async (request, reply) => {
   return { success: true, message: "Password changed successfully" };
 };
 
-export { register, login, logout, getMe, updateMe, changePassword };
+// ── Forgot Password ───────────────────────────────
+const forgotPassword = async (request, reply) => {
+  const { email } = request.body;
+
+  // Always respond with success to prevent email enumeration
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, name: true, email: true },
+  });
+
+  if (user) {
+    // Invalidate any existing unused tokens for this user
+    await prisma.passwordResetToken.updateMany({
+      where: { userId: user.id, used: false },
+      data: { used: true },
+    });
+
+    // Generate a secure random token
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    await prisma.passwordResetToken.create({
+      data: {
+        userId: user.id,
+        token: rawToken,
+        expiresAt,
+      },
+    });
+
+    const resetUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/reset-password?token=${rawToken}`;
+
+    try {
+      await emailService.sendPasswordResetEmail(
+        user.email,
+        user.name,
+        resetUrl,
+      );
+    } catch (emailErr) {
+      request.log.error(
+        { err: emailErr },
+        "Failed to send password reset email",
+      );
+    }
+  }
+
+  // Always return success (security best practice)
+  return {
+    success: true,
+    message:
+      "If that email is registered, you will receive a reset link shortly.",
+  };
+};
+
+// ── Reset Password ────────────────────────────────
+const resetPassword = async (request, reply) => {
+  const { token, password } = request.body;
+
+  if (!token) throw BadRequest("Reset token is required.");
+  if (!password || password.length < 8)
+    throw BadRequest("Password must be at least 8 characters.");
+
+  const resetRecord = await prisma.passwordResetToken.findUnique({
+    where: { token },
+    include: { user: { select: { id: true } } },
+  });
+
+  if (!resetRecord) throw BadRequest("Invalid or expired reset link.");
+  if (resetRecord.used)
+    throw BadRequest("This reset link has already been used.");
+  if (new Date() > resetRecord.expiresAt)
+    throw BadRequest("This reset link has expired. Please request a new one.");
+
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  // Update password and mark token as used in a transaction
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: resetRecord.userId },
+      data: { passwordHash },
+    }),
+    prisma.passwordResetToken.update({
+      where: { id: resetRecord.id },
+      data: { used: true },
+    }),
+  ]);
+
+  return { success: true, message: "Password has been reset successfully." };
+};
+
+export {
+  register,
+  login,
+  logout,
+  getMe,
+  updateMe,
+  changePassword,
+  forgotPassword,
+  resetPassword,
+};

@@ -18,6 +18,20 @@ export interface ChangePasswordBody {
   newPassword: string;
 }
 
+export interface ForgotPasswordBody {
+  email: string;
+}
+
+export interface ResetPasswordBody {
+  token: string;
+  password: string;
+}
+
+export interface MessageResponse {
+  success: boolean;
+  message: string;
+}
+
 /* ─── RTK endpoints ──────────────────────────────── */
 export const authApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
@@ -43,6 +57,20 @@ export const authApiSlice = apiSlice.injectEndpoints({
     >({
       query: (body) => ({ url: "auth/me/password", method: "PUT", body }),
     }),
+    forgotPassword: builder.mutation<MessageResponse, ForgotPasswordBody>({
+      query: (body) => ({
+        url: "auth/forgot-password",
+        method: "POST",
+        body,
+      }),
+    }),
+    resetPassword: builder.mutation<MessageResponse, ResetPasswordBody>({
+      query: (body) => ({
+        url: "auth/reset-password",
+        method: "POST",
+        body,
+      }),
+    }),
   }),
 });
 
@@ -52,4 +80,6 @@ export const {
   useGetMeQuery,
   useUpdateMeMutation,
   useChangePasswordMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
 } = authApiSlice;
