@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { IoChevronForwardOutline, IoChevronBackOutline } from "react-icons/io5";
 import { MdLocalOffer, MdVerified } from "react-icons/md";
@@ -168,12 +168,23 @@ const HomePage = () => {
     useGetProductsQuery({ limit: 8, sort: "created_at" });
   const featuredProducts = productsData?.products ?? [];
 
-  const nextSlide = () =>
-    setHeroSlide((prev) => (prev + 1) % HERO_SLIDES.length);
-  const prevSlide = () =>
-    setHeroSlide(
-      (prev) => (prev - 1 + HERO_SLIDES.length) % HERO_SLIDES.length,
-    );
+  const nextSlide = useCallback(
+    () => setHeroSlide((prev) => (prev + 1) % HERO_SLIDES.length),
+    [],
+  );
+  const prevSlide = useCallback(
+    () =>
+      setHeroSlide(
+        (prev) => (prev - 1 + HERO_SLIDES.length) % HERO_SLIDES.length,
+      ),
+    [],
+  );
+
+  // Auto-advance hero slide every 5 seconds
+  useEffect(() => {
+    const timer = setInterval(nextSlide, 5000);
+    return () => clearInterval(timer);
+  }, [nextSlide]);
 
   return (
     <div style={{ background: "var(--bg-base)" }}>
@@ -586,7 +597,7 @@ after:w-[40px] after:h-[3px] after:bg-[var(--primary)] after:rounded-[2px] "
             {CATEGORIES.map((cat) => (
               <Link
                 key={cat.id}
-                to={`/category/${cat.name.toLowerCase()}`}
+                to={`/products?category=${cat.name.toLowerCase()}`}
                 style={{ textDecoration: "none" }}
               >
                 <div

@@ -18,6 +18,7 @@ import { MdSearch } from "react-icons/md";
 import { useGetProductsQuery, type Product } from "@/services/productSlice";
 import { useGetCategoriesQuery } from "@/services/categorySlice";
 import ProductCard from "@/components/ProductCard";
+import console from "console";
 
 /* ─── Constants ─────────────────────────────────────────────── */
 const SORT_OPTIONS = [
@@ -689,6 +690,9 @@ const ShopPage = () => {
                       ...apiCategories,
                     ].map((cat) => {
                       const isSelected = selectedCategory === cat.slug;
+
+
+                      
                       return (
                         <label
                           key={cat.slug}
