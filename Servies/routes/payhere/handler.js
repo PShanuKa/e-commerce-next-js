@@ -30,13 +30,19 @@ const initPayment = async (request, reply) => {
 
   const merchant_id = process.env.PAYHERE_MERCHANT_ID;
   const merchant_secret = process.env.PAYHERE_SECRET;
-  const amount =  parseFloat( order.total ).toLocaleString( 'en-us', { minimumFractionDigits : 2 } ).replaceAll(',', '');
+  const amount = parseFloat(order.total)
+    .toLocaleString("en-us", { minimumFractionDigits: 2 })
+    .replaceAll(",", "");
   const currency = "LKR";
 
   // Generate Hash
   // MD5(Merchant ID + Order ID + Amount + Currency + MD5(Merchant Secret))
   const hashedSecret = md5(merchant_secret).toString().toUpperCase();
-  const mainHash =md5(merchant_id + order.id.toString() + amount + currency + hashedSecret).toString().toUpperCase();
+  const mainHash = md5(
+    merchant_id + order.id.toString() + amount + currency + hashedSecret,
+  )
+    .toString()
+    .toUpperCase();
 
   const paymentParams = {
     sandbox: process.env.NODE_ENV !== "production",
@@ -63,6 +69,8 @@ const initPayment = async (request, reply) => {
 };
 
 const notifyPayment = async (request, reply) => {
+  console.log("Payhere", request.body);
+  
   const {
     merchant_id,
     order_id,
