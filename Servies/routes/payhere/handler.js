@@ -44,12 +44,23 @@ const initPayment = async (request, reply) => {
     .toString()
     .toUpperCase();
 
+  // ── Payment record "pending" විදිහට init ගේදීම create කරනවා ─────────────
+  const payment = await prisma.payment.create({
+    data: {
+      orderId: order.id,
+      paymentMethod: "PayHere",
+      amount: amount,
+      currency: currency,
+      status: "pending",
+    },
+  });
+
   const paymentParams = {
     sandbox: process.env.NODE_ENV !== "production",
     merchant_id,
     return_url: `${request.headers.origin}/order-success?id=${order.id}`,
     cancel_url: `${request.headers.origin}/checkout`,
-    notify_url: `${request.headers.origin}/api/payhere/notify`, // For server-side update (WebHook)
+    notify_url: `${process.env.PAYHERE_NOTIFY_URL || request.headers.origin}/api/payhere/notify`,
     order_id: order.id.toString(),
     items: `Order #${order.id}`,
     amount: amount,
@@ -63,14 +74,15 @@ const initPayment = async (request, reply) => {
     city: order.address?.city || "",
     country: "Sri Lanka",
     hash: mainHash,
+    custom_1: payment.id.toString(), // ← Payment DB id — notify ලා update කරන්ඩ return වෙනවා
   };
 
   return { success: true, paymentParams };
 };
 
 const notifyPayment = async (request, reply) => {
-  console.log("Payhere", request.body);
-  
+  console.log("PayHere notify body:", request.body);
+
   const {
     merchant_id,
     order_id,
@@ -78,8 +90,7 @@ const notifyPayment = async (request, reply) => {
     payhere_currency,
     status_code,
     md5sig,
-    custom_1,
-    custom_2,
+    custom_1,           // ← Payment DB id (init handler ගෙ pass කළේ)
     payhere_payment_id,
     method,
     status_message,
@@ -114,37 +125,36 @@ const notifyPayment = async (request, reply) => {
 
   const orderIdNum = Number(order_id);
   const statusCodeInt = Number(status_code);
+  const paymentIdNum = Number(custom_1); // init handler ගෙ Payment.id
+
+  // PayHere status_code → අපේ status string
+  // 2 = Success | -2 = Failed | 0 = Pending | -1 = Canceled | -3 = Chargedback
+  let paymentStatus = "pending";
+  if (statusCodeInt === 2) paymentStatus = "success";
+  else if (statusCodeInt < 0) paymentStatus = "failed";
 
   await prisma.$transaction(async (tx) => {
-    // 1. Create Payment record
-    await tx.payment.create({
-      data: {
-        orderId: orderIdNum,
-        paymentMethod: method || "PayHere",
-        transactionId: payhere_payment_id,
-        amount: payhere_amount,
-        currency: payhere_currency,
-        status:
-          statusCodeInt === 2
-            ? "success"
-            : statusCodeInt === -2
-              ? "failed"
-              : "pending",
-        payhereStatus: statusCodeInt,
-        payhereMessage: status_message,
-        payhereReference: payhere_payment_id,
-      },
-    });
+    // 1. Init ගෙදී create කළ Payment record update කරනවා (create නෙවෙයි)
+    if (paymentIdNum) {
+      await tx.payment.update({
+        where: { id: paymentIdNum },
+        data: {
+          status: paymentStatus,
+          paymentMethod: method || "PayHere",
+          transactionId: payhere_payment_id,
+          payhereStatus: statusCodeInt,
+          payhereMessage: status_message,
+          payhereReference: payhere_payment_id,
+        },
+      });
+    }
 
-    // 2. Update Order status
+    // 2. Payment success → Order "processing" update
     if (statusCodeInt === 2) {
       await tx.order.update({
         where: { id: orderIdNum },
         data: { status: "processing" },
       });
-    } else if (statusCodeInt === -2) {
-      // Logic for failed payment - optional: update order status to 'failed' or keep 'pending'
-      // For now, let's just record it in payments and maybe let it stay pending
     }
   });
 
