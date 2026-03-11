@@ -7,6 +7,7 @@ import corsPlugin from "./plugins/cors.js";
 import jwtPlugin from "./plugins/jwt.js";
 import cookiePlugin from "./plugins/cookie.js";
 import swaggerPlugin from "./plugins/swagger.js";
+import formbody from "@fastify/formbody";
 
 import authRoutes from "./routes/auth/index.js";
 import productsRoutes from "./routes/products/index.js";
@@ -34,13 +35,17 @@ async function buildApp() {
   console.log('test')
 
   // ── Plugins ───────────────────────────────────────
+  await app.register(formbody); // Parses application/x-www-form-urlencoded (PayHere webhook)
   await app.register(corsPlugin);
   await app.register(jwtPlugin);
   await app.register(cookiePlugin);
   await app.register(swaggerPlugin);
 
   // ── Health ────────────────────────────────────────
-  app.get("/api/health", async () => ({
+  app.get("/api/health", async () => (
+    console.log('test'),
+    
+    {
     status: "ok",
     service: "Sellora API",
     timestamp: new Date().toISOString(),
