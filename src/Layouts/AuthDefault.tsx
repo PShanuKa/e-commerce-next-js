@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { FaTag } from "react-icons/fa";
+import logo from "../assets/logo.png";
 
 const AuthDefault = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -53,7 +54,8 @@ const AuthDefault = ({ children }: { children: React.ReactNode }) => {
             marginBottom: 48,
           }}
         >
-          <div
+          <img src={logo} alt=""  className="h-20 rounded-lg shadow-xl"/>
+          {/* <div
             style={{
               width: 70,
               height: 70,
@@ -77,7 +79,7 @@ const AuthDefault = ({ children }: { children: React.ReactNode }) => {
             }}
           >
             Sellora
-          </span>
+          </span> */}
         </Link>
 
         <h1

@@ -12,6 +12,7 @@ import {
 import { useDispatch } from "react-redux";
 import { clearUser } from "@/features/authSlice";
 import type { AppDispatch } from "@/app/store";
+import logo from "../../assets/hor_logo_non_bgpng.png";
 
 interface NavItem {
   to: string;
@@ -34,13 +35,10 @@ const Sidebar = () => {
   return (
     <aside className="fixed inset-y-0 left-0 w-60 bg-gray-900 flex flex-col z-30">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-700/50">
-        <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center">
-          <span className="text-white font-bold text-sm">S</span>
-        </div>
+      <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-700/50 justify-center">
+        
         <div>
-          <p className="text-white font-bold text-sm leading-tight">Sellora</p>
-          <p className="text-gray-400 text-xs">Admin Panel</p>
+          <img src={logo} alt=""  className="h-8 md:h-10"/>
         </div>
       </div>
 

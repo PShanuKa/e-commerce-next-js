@@ -15,6 +15,7 @@ import { MdOutlineLocalShipping } from "react-icons/md";
 import { useGetCartQuery } from "@/services/cartSlice";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/app/store";
+import logo from "../assets/hor_logo_non_bgpng.png";
 
 const NAV_LINKS = [
   { label: "Home", path: "/" },
@@ -125,7 +126,8 @@ const Navbar = () => {
           {/* Logo */}
           <Link to="/" style={{ flexShrink: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div
+              <img src={logo} alt=""  className="h-8 md:h-12"/>
+              {/* <div
                 style={{
                   width: 38,
                   height: 38,
@@ -148,7 +150,7 @@ const Navbar = () => {
                 }}
               >
                 Sellora
-              </span>
+              </span> */}
             </div>
           </Link>
 
