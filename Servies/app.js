@@ -31,6 +31,8 @@ async function buildApp() {
     },
   });
 
+  console.log('test')
+
   // ── Plugins ───────────────────────────────────────
   await app.register(corsPlugin);
   await app.register(jwtPlugin);
