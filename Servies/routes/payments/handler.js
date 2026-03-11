@@ -4,11 +4,12 @@ import prisma from "../../config/prisma.js";
 import { NotFound } from "../../utils/errors.js";
 
 const listAllPayments = async (request, reply) => {
-  const { page = 1, limit = 20, status } = request.query;
+  const { page = 1, limit = 20, status, orderId } = request.query;
   const skip = (Number(page) - 1) * Number(limit);
 
   const where = {};
   if (status) where.status = status;
+  if (orderId) where.orderId = Number(orderId);
 
   const [payments, totalCount] = await Promise.all([
     prisma.payment.findMany({

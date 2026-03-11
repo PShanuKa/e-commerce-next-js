@@ -131,7 +131,7 @@ const PaymentsPage = () => {
                     </TableBodyCell>
                     <TableBodyCell>
                       <span className="font-bold text-gray-900">
-                        {pay.currency} {pay.amount.toFixed(2)}
+                        {pay.currency} {Number(pay.amount).toFixed(2)}
                       </span>
                     </TableBodyCell>
                     <TableBodyCell>

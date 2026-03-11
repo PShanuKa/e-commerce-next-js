@@ -14,6 +14,7 @@ export default async function paymentsRoutes(fastify) {
         type: "object",
         properties: {
           status: { type: "string" },
+          orderId: { type: "integer" },
           page: { type: "integer" },
           limit: { type: "integer" },
         },

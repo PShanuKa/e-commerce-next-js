@@ -91,7 +91,7 @@ const notifyPayment = async (request, reply) => {
     status_code,
     md5sig,
     custom_1,           // ← Payment DB id (init handler ගෙ pass කළේ)
-    payhere_payment_id,
+    payment_id,
     method,
     status_message,
   } = request.body;
@@ -141,10 +141,10 @@ const notifyPayment = async (request, reply) => {
         data: {
           status: paymentStatus,
           paymentMethod: method || "PayHere",
-          transactionId: payhere_payment_id,
+          transactionId: payment_id,
           payhereStatus: statusCodeInt,
           payhereMessage: status_message,
-          payhereReference: payhere_payment_id,
+          payhereReference: payment_id,
         },
       });
     }

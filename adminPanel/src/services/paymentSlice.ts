@@ -26,7 +26,7 @@ export const paymentSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getAdminPayments: builder.query<
       { success: boolean; payments: Payment[]; meta: any },
-      { status?: string; page?: number; limit?: number } | void
+      { status?: string; page?: number; limit?: number; orderId?: number } | void
     >({
       query: (params) => ({
         url: "/payments",

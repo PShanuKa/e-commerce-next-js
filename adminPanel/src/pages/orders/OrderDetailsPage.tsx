@@ -4,6 +4,7 @@ import {
   useUpdateOrderStatusMutation,
   type OrderItem,
 } from "@/services/orderSlice";
+import { useGetAdminPaymentsQuery } from "@/services/paymentSlice";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
@@ -13,6 +14,7 @@ import {
   MdLocationOn,
   MdAccessTime,
   MdPayment,
+  MdHistory,
 } from "react-icons/md";
 import Breadcrumb from "@/components/common/Breadcrumb";
 import {
@@ -23,6 +25,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FiArrowLeft } from "react-icons/fi";
+import {
+  Table,
+  TableBody,
+  TableBodyCell,
+  TableBodyRow,
+  TableHeaderCell,
+  TableHeaderRow,
+} from "@/components/common/Table";
 
 const STATUS_VARIANTS: Record<
   string,
@@ -47,8 +57,12 @@ const OrderDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data, isLoading, error } = useGetAdminOrderByIdQuery(Number(id));
+  const { data: paymentsData, isLoading: paymentsLoading } =
+    useGetAdminPaymentsQuery({ orderId: Number(id) });
   const [updateStatus, { isLoading: isUpdating }] =
     useUpdateOrderStatusMutation();
+
+  const orderPayments = paymentsData?.payments || [];
 
   if (isLoading) {
     return (
@@ -232,6 +246,88 @@ const OrderDetailsPage = () => {
               </div>
             )}
           </div>
+
+          <div className="bg-white rounded-lg border border-(--border-color-primary) overflow-hidden max-w-full overflow-x-auto">
+            <div className="px-6 py-4 border-b border-(--border-color-primary) bg-gray-50/30 flex items-center gap-2">
+              <MdHistory className="text-(--Primary)" size={18} />
+              <h3 className="font-semibold text-(--font-color-primary)">
+                Payment Transactions
+              </h3>
+            </div>
+            <Table>
+              <TableHeaderRow>
+                <TableHeaderCell className="text-[10px] uppercase">
+                  ID
+                </TableHeaderCell>
+                <TableHeaderCell className="text-[10px] uppercase">
+                  Method
+                </TableHeaderCell>
+                <TableHeaderCell className="text-[10px] uppercase">
+                  Amount
+                </TableHeaderCell>
+                <TableHeaderCell className="text-[10px] uppercase">
+                  Date
+                </TableHeaderCell>
+                <TableHeaderCell className="text-[10px] uppercase text-right">
+                  Status
+                </TableHeaderCell>
+              </TableHeaderRow>
+              <TableBody>
+                {paymentsLoading ? (
+                  <TableBodyRow>
+                    <TableBodyCell colSpan={5} className="py-8 text-center">
+                      <div className="flex items-center justify-center">
+                        <div className="w-5 h-5 border-2 border-(--Primary) border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    </TableBodyCell>
+                  </TableBodyRow>
+                ) : orderPayments.length === 0 ? (
+                  <TableBodyRow>
+                    <TableBodyCell
+                      colSpan={5}
+                      className="py-8 text-center text-xs text-gray-400"
+                    >
+                      No payments recorded for this order.
+                    </TableBodyCell>
+                  </TableBodyRow>
+                ) : (
+                  orderPayments.map((pay: any) => (
+                    <TableBodyRow key={pay.id}>
+                      <TableBodyCell className="font-mono text-[10px] text-gray-500">
+                        {pay.transactionId || "INTERNAL-" + pay.id}
+                      </TableBodyCell>
+                      <TableBodyCell>
+                        <Badge
+                          label={pay.paymentMethod.toUpperCase()}
+                          variant="info"
+                          className="text-[9px] font-bold"
+                        />
+                      </TableBodyCell>
+                      <TableBodyCell className="text-xs font-semibold">
+                        {pay.currency} {Number(pay.amount).toFixed(2)}
+                      </TableBodyCell>
+                      <TableBodyCell className="text-[10px] text-gray-400">
+                        {new Date(pay.createdAt).toLocaleString()}
+                      </TableBodyCell>
+                      <TableBodyCell className="text-right">
+                        <Badge
+                          label={pay.status.toUpperCase()}
+                          className="text-[9px]"
+                          variant={
+                            pay.status === "success"
+                              ? "success"
+                              : pay.status === "pending"
+                                ? "warning"
+                                : "danger"
+                          }
+                        />
+                      </TableBodyCell>
+                    </TableBodyRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
 
         {/* Sidebar */}
@@ -257,6 +353,27 @@ const OrderDetailsPage = () => {
                 </div>
                 <span className="font-medium text-(--font-color-primary) uppercase">
                   {order.paymentMethod}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2 text-(--font-color-secondary)">
+                  <MdHistory size={16} />
+                  <span>Payment Status</span>
+                </div>
+                <span
+                  className={`font-bold ${
+                    orderPayments.some((p: any) => p.status === "success")
+                      ? "text-green-600"
+                      : orderPayments.some((p: any) => p.status === "pending")
+                        ? "text-orange-500"
+                        : "text-red-500"
+                  }`}
+                >
+                  {orderPayments.some((p: any) => p.status === "success")
+                    ? "Paid"
+                    : orderPayments.some((p: any) => p.status === "pending")
+                      ? "Pending"
+                      : "Unpaid"}
                 </span>
               </div>
               <div className="pt-2">
@@ -299,15 +416,6 @@ const OrderDetailsPage = () => {
                 </div>
               )}
             </div>
-
-            {/* <Button
-              onClick={() => navigate("/customers")}
-              variant="secondary"
-              size="sm"
-              className="w-full mt-5 text-xs h-[32px]"
-            >
-              Customer History
-            </Button> */}
           </div>
         </div>
       </div>
